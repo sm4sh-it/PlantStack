@@ -1,0 +1,53 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  plants    Plant[]
+  createdAt DateTime @default(now())
+}
+
+model AppConfig {
+  id               Int      @id @default(1)
+  onboardingSeen   Boolean  @default(false)
+  language         String   @default("en")
+  gridColumns      Int      @default(4)
+  dashboardTitle   String   @default("My Jungle")
+  updatedAt        DateTime @updatedAt
+}
+
+model Plant {
+  id                 String   @id @default(uuid())
+  name               String
+  alias              String?
+  scientificName     String?
+  
+  locationId         String
+  location           Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  
+  waterInterval      Int      // in days
+  fertilizerInterval Int?     // optional, in days
+  bugInterval        Int?     // optional, in days
+  fungusInterval     Int?     // optional, in days
+  
+  wateringInfo       String?
+  sunlightInfo       String?
+  
+  lastWatered        DateTime @default(now())
+  lastFertilized     DateTime?
+  lastBug            DateTime?
+  lastFungus         DateTime?
+  
+  imagePath          String?
+  notes              String?
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

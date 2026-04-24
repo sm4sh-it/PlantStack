@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  plantstack:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantstack
+    restart: unless-stopped
+    ports:
+      - "9666:3000"
+    volumes:
+      - plantstack_data:/app/data
+    environment:
+      - NODE_ENV=production
+      # - PERENUAL_API_KEY=your_optional_api_key_here
+
+volumes:
+  plantstack_data:
