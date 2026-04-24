@@ -32,7 +32,7 @@ This is the recommended way for users on NAS systems (Synology, Unraid, etc.) or
 
    services:
      plantstack:
-       image: ghcr.io/YOUR_GITHUB_USERNAME/plantstack:latest
+       image: ghcr.io/sm4sh-it/plantstack:latest
        container_name: plantstack
        restart: unless-stopped
        ports:

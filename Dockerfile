@@ -22,15 +22,16 @@ RUN npx prisma generate
 # Create the placeholder for data directory
 RUN mkdir -p /app/data/uploads
 
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL="file:/app/data/database.db"
 
 # Next.js build
 RUN npm run build
 
 # Production image
 FROM base AS runner
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="file:/app/data/database.db"
 ENV DATA_DIR="/app/data/uploads"
 
