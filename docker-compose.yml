@@ -13,6 +13,8 @@ services:
       - plantstack_data:/app/data
     environment:
       - NODE_ENV=production
-      
+      - OPENPLANTBOOK_CLIENT_ID=${OPENPLANTBOOK_CLIENT_ID}
+      - OPENPLANTBOOK_CLIENT_SECRET=${OPENPLANTBOOK_CLIENT_SECRET}
+
 volumes:
   plantstack_data:
