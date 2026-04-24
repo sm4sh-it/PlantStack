@@ -13,7 +13,6 @@ services:
       - plantstack_data:/app/data
     environment:
       - NODE_ENV=production
-      # - PERENUAL_API_KEY=your_optional_api_key_here
-
+      
 volumes:
   plantstack_data:
