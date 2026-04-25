@@ -35,25 +35,19 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="file:/app/data/database.db"
 ENV DATA_DIR="/app/data/uploads"
 
-# Create next user and group for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
 # Set correct permissions
-RUN mkdir -p /app/data/uploads && chown -R nextjs:nodejs /app/data
+RUN mkdir -p /app/data/uploads
 
 # Copy built application and required production dependencies
 RUN mkdir -p /app/public
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 # Copy prisma stuff for migrations run at startup
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
-
-USER nextjs
 
 EXPOSE 3000
 ENV PORT=3000
