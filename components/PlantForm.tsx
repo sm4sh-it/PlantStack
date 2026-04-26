@@ -77,11 +77,15 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
       const details = await res.json();
       
       let waterDays = 7;
-      if (details.min_soil_moist > 40) waterDays = 3;
-      else if (details.min_soil_moist < 15) waterDays = 14;
+      if (details.watering_interval_days) {
+        waterDays = details.watering_interval_days;
+      } else {
+        if (details.min_soil_moist > 40) waterDays = 3;
+        else if (details.min_soil_moist < 15) waterDays = 14;
+      }
 
-      const sunlightText = `${details.min_light_lux || 0} - ${details.max_light_lux || 0} Lux | ${t('temperature', lang)}: ${details.min_temp || 0} - ${details.max_temp || 0} °C`;
-      const wateringText = `${t('soilMoisture', lang)}: ${details.min_soil_moist || 0} - ${details.max_soil_moist || 0}% | ${t('humidity', lang)}: ${details.min_env_humid || 0} - ${details.max_env_humid || 0}%`;
+      const sunlightText = details.sunlight_text ? details.sunlight_text : `${details.min_light_lux || 0} - ${details.max_light_lux || 0} Lux | ${t('temperature', lang)}: ${details.min_temp || 0} - ${details.max_temp || 0} °C`;
+      const wateringText = details.watering_interval_days ? `${t('watering', lang)}: ~${details.watering_interval_days} ${t('days', lang)}` : `${t('soilMoisture', lang)}: ${details.min_soil_moist || 0} - ${details.max_soil_moist || 0}% | ${t('humidity', lang)}: ${details.min_env_humid || 0} - ${details.max_env_humid || 0}%`;
 
       setFormData(prev => ({
         ...prev,
@@ -218,12 +222,28 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                 )}
               </div>
               
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Location *</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
+                  <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg w-full">
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData({...formData, locationType: 'INDOOR'})} 
+                      className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${formData.locationType === 'INDOOR' ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
+                    >
+                      {t('indoor', lang)}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData({...formData, locationType: 'OUTDOOR'})} 
+                      className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${formData.locationType === 'OUTDOOR' ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
+                    >
+                      {t('outdoor', lang)}
+                    </button>
+                  </div>
                   <select 
                     required 
-                    className="flex-1 bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand appearance-none" 
+                    className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand appearance-none" 
                     value={formData.locationId} 
                     onChange={e => setFormData({...formData, locationId: e.target.value})}
                   >
@@ -231,14 +251,6 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                     {locations.map(loc => (
                       <option key={loc.id} value={loc.id}>{loc.name}</option>
                     ))}
-                  </select>
-                  <select
-                    className="w-32 bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand appearance-none font-medium"
-                    value={formData.locationType}
-                    onChange={e => setFormData({...formData, locationType: e.target.value})}
-                  >
-                    <option value="INDOOR">{t('indoor', lang)}</option>
-                    <option value="OUTDOOR">{t('outdoor', lang)}</option>
                   </select>
                 </div>
               </div>
