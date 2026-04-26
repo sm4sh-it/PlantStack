@@ -33,6 +33,9 @@
     "cross-spawn": "^7.0.5",
     "minimatch": "^9.0.7",
     "glob": "^11.1.0",
-    "tar": "^7.5.11"
+    "tar": "^7.5.11",
+    "picomatch": "^4.0.4",
+    "postcss": "^8.5.10",
+    "brace-expansion": "^2.0.3"
   }
 }
