@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0] - 2026-04-26
+### Added
+- **Local Crops DB**: Introduced a new offline-first local database (`lib/crops.ts`) containing exact care data for common vegetables, herbs, berries, and fruits.
+- **Smart Search**: The search function now uses a two-stage strategy. It first checks the local database for German and English names before falling back to Open Plantbook. This provides perfectly tailored watering and sunlight instructions instantly.
+
+### Changed
+- **Location UI**: Redesigned the "Indoor / Outdoor" selector in the Add Plant form. It is now a modern segmented switch instead of a cramped dropdown.
 ## [2.2.0] - 2026-04-26
 ### Changed
 - **Major Upgrade**: Upgraded core framework to Next.js 15 and React 19.
