@@ -19,6 +19,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         alias: data.alias !== undefined ? data.alias : undefined,
         wateringInfo: data.wateringInfo !== undefined ? data.wateringInfo : undefined,
         sunlightInfo: data.sunlightInfo !== undefined ? data.sunlightInfo : undefined,
+        locationType: data.locationType !== undefined ? data.locationType : undefined,
+        pruningInfo: data.pruningInfo !== undefined ? data.pruningInfo : undefined,
       },
     });
     return NextResponse.json(plant);

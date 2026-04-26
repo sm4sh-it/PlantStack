@@ -19,6 +19,9 @@ export async function PUT(req: Request) {
       language: data.language !== undefined ? data.language : undefined,
       gridColumns: data.gridColumns !== undefined ? data.gridColumns : undefined,
       dashboardTitle: data.dashboardTitle !== undefined ? data.dashboardTitle : undefined,
+      latitude: data.latitude !== undefined ? data.latitude : undefined,
+      longitude: data.longitude !== undefined ? data.longitude : undefined,
+      locationName: data.locationName !== undefined ? data.locationName : undefined,
     },
     create: {
       id: 1,
@@ -26,6 +29,9 @@ export async function PUT(req: Request) {
       language: data.language || "en",
       gridColumns: data.gridColumns || 4,
       dashboardTitle: data.dashboardTitle || "My Jungle",
+      latitude: data.latitude || null,
+      longitude: data.longitude || null,
+      locationName: data.locationName || null,
     }
   });
   return NextResponse.json(config);

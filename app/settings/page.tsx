@@ -14,6 +14,13 @@ export default function SettingsPage() {
   const [gridCols, setGridCols] = useState(4);
   const [customTitle, setCustomTitle] = useState("");
 
+  const [lat, setLat] = useState("");
+  const [lon, setLon] = useState("");
+  const [locName, setLocName] = useState("");
+  const [weatherExpert, setWeatherExpert] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchingLoc, setSearchingLoc] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
@@ -39,6 +46,9 @@ export default function SettingsPage() {
         if (conf.language) setLang(conf.language);
         if (conf.gridColumns) setGridCols(conf.gridColumns);
         if (conf.dashboardTitle) setCustomTitle(conf.dashboardTitle);
+        if (conf.latitude !== null) setLat(conf.latitude.toString());
+        if (conf.longitude !== null) setLon(conf.longitude.toString());
+        if (conf.locationName) setLocName(conf.locationName);
       }
       setLocations(loc);
     } catch (e) {
@@ -55,7 +65,14 @@ export default function SettingsPage() {
       await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language: lang, gridColumns: gridCols, dashboardTitle: customTitle })
+        body: JSON.stringify({ 
+          language: lang, 
+          gridColumns: gridCols, 
+          dashboardTitle: customTitle,
+          latitude: lat ? parseFloat(lat) : null,
+          longitude: lon ? parseFloat(lon) : null,
+          locationName: locName || null
+        })
       });
       alert(t('save', lang) + " OK!");
     } catch (e) {
@@ -66,6 +83,27 @@ export default function SettingsPage() {
   };
 
 
+  const handleSearchLocation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setSearchingLoc(true);
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=1`);
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        const best = data.results[0];
+        setLat(best.latitude.toString());
+        setLon(best.longitude.toString());
+        setLocName(`${best.name}, ${best.country || ""}`);
+      } else {
+        alert("Location not found / Ort nicht gefunden");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSearchingLoc(false);
+    }
+  };
 
   const handleAddLocation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,6 +209,62 @@ export default function SettingsPage() {
               {savingConfig ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} {t('save', lang)}
             </button>
           </form>
+        </section>
+
+        {/* Weather Location */}
+        <section className="bg-surface p-6 rounded-3xl shadow-sm border border-black/5 dark:border-white/5">
+          <h2 className="text-xl font-bold mb-1">{t('weatherLocation', lang)}</h2>
+          <p className="text-sm text-surface-foreground/70 mb-6">{t('weatherDesc', lang)}</p>
+
+          <div className="space-y-6">
+            {!weatherExpert ? (
+              <form onSubmit={handleSearchLocation} className="space-y-2">
+                <label className="text-sm font-medium">{t('cityZip', lang)}</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="e.g. Berlin, 10115"
+                    className="flex-1 bg-background border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand"
+                  />
+                  <button type="submit" disabled={searchingLoc} className="bg-surface-foreground/10 hover:bg-brand hover:text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2">
+                    {searchingLoc ? <Loader2 size={18} className="animate-spin" /> : t('search', lang)}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">{t('latitude', lang)}</label>
+                  <input type="number" step="any" value={lat} onChange={(e) => setLat(e.target.value)} className="w-full bg-background border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">{t('longitude', lang)}</label>
+                  <input type="number" step="any" value={lon} onChange={(e) => setLon(e.target.value)} className="w-full bg-background border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand" />
+                </div>
+              </div>
+            )}
+
+            {locName && (
+              <div className="bg-brand/10 text-brand p-3 rounded-xl flex items-center justify-between text-sm font-medium border border-brand/20">
+                <span>{locName} ({lat}, {lon})</span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center pt-2">
+              <button onClick={() => setWeatherExpert(!weatherExpert)} className="text-xs text-surface-foreground/50 hover:text-brand underline">
+                {weatherExpert ? "Use Simple Search" : "Expert Mode (Lat/Lon)"}
+              </button>
+              <button 
+                onClick={handleSaveConfig}
+                disabled={savingConfig}
+                className="bg-brand text-white px-6 py-2 rounded-xl font-medium hover:bg-brand-dark transition-colors flex items-center gap-2"
+              >
+                {savingConfig ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} {t('save', lang)}
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* Locations */}
