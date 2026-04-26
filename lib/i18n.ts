@@ -23,6 +23,8 @@ export const translations = {
     delete: "Delete",
     daysOverdue: "days overdue",
     daysLeft: "d", // short for days
+    watering: "Watering",
+    days: "Days",
     // Settings
     configureApp: "Configure your app and manage locations.",
 
@@ -77,6 +79,8 @@ export const translations = {
     delete: "Löschen",
     daysOverdue: "Tage überfällig",
     daysLeft: "T", // short for Tage
+    watering: "Bewässerung",
+    days: "Tage",
     // Settings
     configureApp: "Passe die App an und verwalte deine Räume.",
 
