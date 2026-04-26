@@ -5,8 +5,9 @@ import { stat } from "fs/promises";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { filename: string } }
+  props: { params: Promise<{ filename: string }> }
 ) {
+  const params = await props.params;
   // Read from the data directory which will be mounted in Docker
   // Default to ../data/uploads for local dev without Docker, or /app/data/uploads inside Docker
   const dataDir = process.env.DATA_DIR || join(process.cwd(), "..", "data", "uploads");

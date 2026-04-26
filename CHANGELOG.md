@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.0] - 2026-04-26
+### Changed
+- **Major Upgrade**: Upgraded core framework to Next.js 15 and React 19.
+- **Security Patch**: Mitigated vulnerabilities in deep npm dependencies (`minimatch`, `glob`, `tar`, `cross-spawn`) via version overrides.
+- **Docker Base**: Updated Docker Alpine image to Node 22 to fix OS-level vulnerabilities (e.g., `busybox`).
+- **Codebase Refactor**: Refactored API routes to use Next.js 15 async route parameters.
 ## [2.1.0] - 2026-04-26
 ### Added
 - **Outdoor Plants & Weather Logic**: Define outdoor plants and get dynamic watering adjustments based on Open-Meteo weather forecasts.
