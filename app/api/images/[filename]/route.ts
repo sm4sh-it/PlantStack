@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createReadStream, existsSync } from "fs";
-import { join } from "path";
+import { join, basename } from "path";
 import { stat } from "fs/promises";
 
 export async function GET(
@@ -11,7 +11,8 @@ export async function GET(
   // Read from the data directory which will be mounted in Docker
   // Default to ../data/uploads for local dev without Docker, or /app/data/uploads inside Docker
   const dataDir = process.env.DATA_DIR || join(process.cwd(), "..", "data", "uploads");
-  const filePath = join(dataDir, params.filename);
+  const secureFilename = basename(params.filename);
+  const filePath = join(dataDir, secureFilename);
 
   if (!existsSync(filePath)) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
