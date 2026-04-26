@@ -7,7 +7,7 @@ import Image from "next/image";
 import { t } from "@/lib/i18n";
 
 type PlantFormProps = {
-  initialData?: Plant & { location?: Location };
+  initialData?: Plant & { location?: Location; locationType?: string; pruningInfo?: string | null };
   lang: string;
   onSave: () => void;
   onCancel: () => void;
@@ -25,6 +25,8 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
     fertilizerInterval: initialData?.fertilizerInterval || "",
     bugInterval: initialData?.bugInterval || "",
     fungusInterval: initialData?.fungusInterval || "",
+    locationType: initialData?.locationType || "INDOOR",
+    pruningInfo: initialData?.pruningInfo || "",
     notes: initialData?.notes || "",
     imagePath: initialData?.imagePath || "",
   });
@@ -88,6 +90,7 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
         wateringInfo: wateringText,
         sunlightInfo: sunlightText,
         waterInterval: prev.waterInterval === 7 ? waterDays : prev.waterInterval,
+        pruningInfo: details.pruning_month ? (Array.isArray(details.pruning_month) ? details.pruning_month.join(', ') : details.pruning_month) : prev.pruningInfo,
       }));
     } catch (e) {
       console.error(e);
@@ -217,17 +220,27 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
               
               <div className="space-y-1">
                 <label className="text-sm font-medium">Location *</label>
-                <select 
-                  required 
-                  className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand appearance-none" 
-                  value={formData.locationId} 
-                  onChange={e => setFormData({...formData, locationId: e.target.value})}
-                >
-                  <option value="" disabled>Select Location...</option>
-                  {locations.map(loc => (
-                    <option key={loc.id} value={loc.id}>{loc.name}</option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select 
+                    required 
+                    className="flex-1 bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand appearance-none" 
+                    value={formData.locationId} 
+                    onChange={e => setFormData({...formData, locationId: e.target.value})}
+                  >
+                    <option value="" disabled>Select Location...</option>
+                    {locations.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="w-32 bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand appearance-none font-medium"
+                    value={formData.locationType}
+                    onChange={e => setFormData({...formData, locationType: e.target.value})}
+                  >
+                    <option value="INDOOR">{t('indoor', lang)}</option>
+                    <option value="OUTDOOR">{t('outdoor', lang)}</option>
+                  </select>
+                </div>
               </div>
             </div>
 

@@ -1,11 +1,11 @@
 import { Plant, Location } from "@prisma/client";
-import { Droplet, BugOff, FlaskConical, SprayCan, Leaf, MoreVertical, Edit2, Trash2 } from "lucide-react";
+import { Droplet, BugOff, FlaskConical, SprayCan, Leaf, MoreVertical, Edit2, Trash2, Sun, Snowflake, Scissors } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { t } from "@/lib/i18n";
 
 type PlantCardProps = {
-  plant: Plant & { location?: Location };
+  plant: Plant & { location?: Location; frostWarning?: boolean; locationType?: string; pruningInfo?: string | null };
   lang: string;
   onAction: (plantId: string, action: "water" | "fertilize" | "bug" | "fungus") => void;
   onEdit: (plant: Plant) => void;
@@ -22,12 +22,12 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
     return r;
   };
 
-  const isOverdue = (last: Date, interval: number | null) => {
+  const isOverdue = (last: Date | null, interval: number | null) => {
     if (!interval || !last) return false;
     return addDays(new Date(last), interval) < new Date();
   };
 
-  const getDaysLeft = (last: Date, interval: number | null) => {
+  const getDaysLeft = (last: Date | null, interval: number | null) => {
     if (!interval || !last) return null;
     const due = addDays(new Date(last), interval);
     const diff = Math.ceil((due.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
@@ -35,15 +35,15 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
   };
   
   const formatDays = (days: number | null) => {
-    if (days === null) return "";
+    if (days === null) return t('notSet', lang);
     if (days < 0) return `${Math.abs(days)} ${t('daysLeft', lang)} late`;
     return `${days} ${t('daysLeft', lang)}`;
   };
 
   const waterDue = isOverdue(plant.lastWatered, plant.waterInterval);
-  const fertDue = isOverdue(plant.lastFertilized || new Date(0), plant.fertilizerInterval);
-  const bugDue = isOverdue(plant.lastBug || new Date(0), plant.bugInterval);
-  const fungDue = isOverdue(plant.lastFungus || new Date(0), plant.fungusInterval);
+  const fertDue = isOverdue(plant.lastFertilized, plant.fertilizerInterval);
+  const bugDue = isOverdue(plant.lastBug, plant.bugInterval);
+  const fungDue = isOverdue(plant.lastFungus, plant.fungusInterval);
 
   const anyDue = waterDue || fertDue || bugDue || fungDue;
 
@@ -53,6 +53,16 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
         {anyDue && (
           <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow cursor-default">
             {t('needsCare', lang)}
+          </div>
+        )}
+        {plant.frostWarning && (
+          <div className="bg-blue-500 text-white p-1 rounded-full shadow cursor-default flex items-center justify-center animate-pulse" title="Frost Warning!">
+            <Snowflake size={16} />
+          </div>
+        )}
+        {plant.locationType === 'OUTDOOR' && (
+          <div className="bg-amber-500 text-white p-1 rounded-full shadow cursor-default flex items-center justify-center" title="Outdoor Plant">
+            <Sun size={16} />
           </div>
         )}
         <div className="relative">
@@ -89,7 +99,15 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
 
       <div className="p-4 flex-1 flex flex-col">
         <h3 className="text-xl font-bold mb-1 line-clamp-1 cursor-pointer hover:text-brand transition-colors" onClick={() => onShowDetails(plant)}>{plant.name}</h3>
-        <p className="text-sm text-surface-foreground/70 mb-4">{plant.location?.name || "No Location"}</p>
+        <div className="flex justify-between items-start mb-4">
+          <p className="text-sm text-surface-foreground/70">{plant.location?.name || "No Location"}</p>
+          {plant.pruningInfo && (
+            <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-full" title="Pruning Season">
+              <Scissors size={12} />
+              <span>{plant.pruningInfo}</span>
+            </div>
+          )}
+        </div>
         
         <div className="grid grid-cols-2 gap-2 mb-2 text-sm mt-auto">
           {/* Watering */}
@@ -111,7 +129,7 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
                 <FlaskConical size={16} />
               </button>
               <span className={fertDue ? 'text-red-500 font-medium' : ''}>
-                {formatDays(getDaysLeft(plant.lastFertilized || new Date(0), plant.fertilizerInterval))}
+                {formatDays(getDaysLeft(plant.lastFertilized, plant.fertilizerInterval))}
               </span>
             </div>
           ) : <div />}
@@ -124,7 +142,7 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
                 <BugOff size={16} />
               </button>
               <span className={bugDue ? 'text-red-500 font-medium' : ''}>
-                {formatDays(getDaysLeft(plant.lastBug || new Date(0), plant.bugInterval))}
+                {formatDays(getDaysLeft(plant.lastBug, plant.bugInterval))}
               </span>
             </div>
           ) : <div />}
@@ -137,7 +155,7 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
                 <SprayCan size={16} />
               </button>
               <span className={fungDue ? 'text-red-500 font-medium' : ''}>
-                {formatDays(getDaysLeft(plant.lastFungus || new Date(0), plant.fungusInterval))}
+                {formatDays(getDaysLeft(plant.lastFungus, plant.fungusInterval))}
               </span>
             </div>
           ) : <div />}

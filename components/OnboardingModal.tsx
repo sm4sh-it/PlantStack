@@ -62,9 +62,9 @@ export default function OnboardingModal() {
             </div>
             <div className="flex gap-3 items-start">
               <div className="bg-brand/10 text-brand p-2 rounded-full mt-1"><Check size={16} /></div>
-              <div>
-                <p className="font-semibold">2. Setup Plant Database (Optional)</p>
-                <p className="text-sm text-surface-foreground/70">Add your Perenual API key in the Settings to get care instructions automatically when adding a plant.</p>
+              <div className="flex-1">
+                <h4 className="font-bold mb-1">Open Plantbook Integration</h4>
+                <p className="text-sm text-surface-foreground/70">Add your Open Plantbook API credentials in the .env file to get care instructions automatically when adding a plant.</p>
               </div>
             </div>
             <div className="flex gap-3 items-start">

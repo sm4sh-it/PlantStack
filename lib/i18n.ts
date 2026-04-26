@@ -43,7 +43,17 @@ export const translations = {
     searchAlias: "Search Name (Alias)",
     temperature: "Temperature",
     humidity: "Humidity",
-    soilMoisture: "Soil Moisture"
+    soilMoisture: "Soil Moisture",
+    notSet: "Not set",
+    indoor: "Indoor",
+    outdoor: "Outdoor",
+    weatherLocation: "Weather Location",
+    weatherDesc: "Set your location for smart outdoor watering adjustments.",
+    cityZip: "City or Zip Code",
+    search: "Search",
+    latitude: "Latitude",
+    longitude: "Longitude",
+    about: "About PlantStack"
   },
   de: {
     // Navigation
@@ -87,7 +97,17 @@ export const translations = {
     searchAlias: "Rufname (Suchen)",
     temperature: "Temperatur",
     humidity: "Luftfeuchtigkeit",
-    soilMoisture: "Bodenfeuchtigkeit"
+    soilMoisture: "Bodenfeuchtigkeit",
+    notSet: "Noch nie",
+    indoor: "Drinnen",
+    outdoor: "Garten",
+    weatherLocation: "Wetter-Standort",
+    weatherDesc: "Standort für dynamische Gieß-Intervalle (Outdoor) festlegen.",
+    cityZip: "PLZ oder Ort",
+    search: "Suchen",
+    latitude: "Breitengrad",
+    longitude: "Längengrad",
+    about: "Über PlantStack"
   }
 };
 

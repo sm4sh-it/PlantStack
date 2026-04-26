@@ -14,13 +14,19 @@ model Location {
   createdAt DateTime @default(now())
 }
 
-model AppConfig {
+ model AppConfig {
   id               Int      @id @default(1)
   onboardingSeen   Boolean  @default(false)
   language         String   @default("en")
-  gridColumns      Int      @default(4)
-  dashboardTitle   String   @default("My Jungle")
-  updatedAt        DateTime @updatedAt
+  gridColumns      Int       @default(4)
+  dashboardTitle   String    @default("My Jungle")
+  
+  latitude         Float?
+  longitude        Float?
+  locationName     String?
+  lastWeatherSync  DateTime?
+
+  updatedAt        DateTime  @updatedAt
 }
 
 model Plant {
@@ -30,7 +36,10 @@ model Plant {
   scientificName     String?
   
   locationId         String
-  location           Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  location           Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  
+  locationType       String       @default("INDOOR")
+  pruningInfo        String?
   
   waterInterval      Int      // in days
   fertilizerInterval Int?     // optional, in days
