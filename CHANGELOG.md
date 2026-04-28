@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.3.2] - 2026-04-28
+### Fixed
+- **Localization**: All section labels in the plant detail pop-up (Pruning, Sowing, Good/Bad Neighbors) are now fully translated based on the active language setting.
+- **Month Names**: Sowing months are now displayed as real month names ("Mai" / "May") instead of raw numbers ("5").
+- **Neighbor Names**: Neighbor IDs (e.g. `crop_lemon_balm`) are now resolved to their localized plant names ("Zitronenmelisse" / "Lemon Balm"). Unknown IDs are filtered out.
+- **Language Reactivity**: Changing the app language now correctly re-fetches and re-renders all localized detail data.
+
+## [2.3.1] - 2026-04-27
+### Changed
+- **UI Adjustments**: Reduced the size of the Logo, Version text, and Heading on the About page.
+- **Card Cleanup**: Removed the 'Pruning Season' tag from the dashboard plant cards for a cleaner look. Changed the outdoor sun icon to a tree icon.
+- **Enhanced Plant Details**: The detailed pop-up view now dynamically fetches and displays extended local data (like Good/Bad Neighbors and Outdoor Sowing Months).
+- **Translations**: Fixed the German 'Add Plant' button text.
 ## [2.3.0] - 2026-04-26
 ### Added
 - **Local Crops DB**: Introduced a new offline-first local database (`lib/crops.ts`) containing exact care data for common vegetables, herbs, berries, and fruits.

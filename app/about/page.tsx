@@ -20,12 +20,12 @@ export default async function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto pb-24 px-4 pt-12">
       <div className="flex flex-col items-center justify-center text-center mb-12">
-        <div className="p-4 rounded-full bg-brand-light dark:bg-brand-dark/30 text-brand mb-4 shadow-lg">
-          <Leaf size={48} />
+        <div className="p-3 rounded-full bg-brand-light dark:bg-brand-dark/30 text-brand mb-3 shadow-lg">
+          <Leaf size={32} />
         </div>
-        <h1 className="text-4xl font-extrabold tracking-tight mb-2">PlantStack</h1>
-        <p className="text-xl text-surface-foreground/70 mb-4">A minimalist, self-hosted Plant-Tracker.</p>
-        <div className="bg-surface border border-black/10 dark:border-white/10 px-4 py-1.5 rounded-full font-mono text-sm font-bold text-brand shadow-sm">
+        <h1 className="text-3xl font-extrabold tracking-tight mb-2">PlantStack</h1>
+        <p className="text-lg text-surface-foreground/70 mb-4">A minimalist, self-hosted Plant-Tracker.</p>
+        <div className="bg-surface border border-black/10 dark:border-white/10 px-3 py-1 rounded-full font-mono text-xs font-bold text-brand shadow-sm">
           Version {version}
         </div>
       </div>

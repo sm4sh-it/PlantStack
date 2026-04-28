@@ -1,5 +1,5 @@
 import { Plant, Location } from "@prisma/client";
-import { Droplet, BugOff, FlaskConical, SprayCan, Leaf, MoreVertical, Edit2, Trash2, Sun, Snowflake, Scissors } from "lucide-react";
+import { Droplet, BugOff, FlaskConical, SprayCan, Leaf, MoreVertical, Edit2, Trash2, Trees, Snowflake, Scissors } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { t } from "@/lib/i18n";
@@ -62,7 +62,7 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
         )}
         {plant.locationType === 'OUTDOOR' && (
           <div className="bg-amber-500 text-white p-1 rounded-full shadow cursor-default flex items-center justify-center" title="Outdoor Plant">
-            <Sun size={16} />
+            <Trees size={16} />
           </div>
         )}
         <div className="relative">
@@ -101,12 +101,6 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
         <h3 className="text-xl font-bold mb-1 line-clamp-1 cursor-pointer hover:text-brand transition-colors" onClick={() => onShowDetails(plant)}>{plant.name}</h3>
         <div className="flex justify-between items-start mb-4">
           <p className="text-sm text-surface-foreground/70">{plant.location?.name || "No Location"}</p>
-          {plant.pruningInfo && (
-            <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-full" title="Pruning Season">
-              <Scissors size={12} />
-              <span>{plant.pruningInfo}</span>
-            </div>
-          )}
         </div>
         
         <div className="grid grid-cols-2 gap-2 mb-2 text-sm mt-auto">

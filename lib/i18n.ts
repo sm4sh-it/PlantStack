@@ -55,7 +55,11 @@ export const translations = {
     search: "Search",
     latitude: "Latitude",
     longitude: "Longitude",
-    about: "About PlantStack"
+    about: "About PlantStack",
+    pruning: "Pruning",
+    sowingOutdoors: "Sowing (Outdoors)",
+    goodNeighbors: "Good Neighbors",
+    badNeighbors: "Bad Neighbors"
   },
   de: {
     // Navigation
@@ -65,7 +69,7 @@ export const translations = {
     rooms: "Räume",
     careNeeded: "Pflege fällig",
     az: "A-Z",
-    addPlant: "Pflanze +",
+    addPlant: "Pflanze",
     noPlantsYet: "Noch keine Pflanzen",
     startBuildingJungle: "Füge deine erste Pflanze hinzu, um deinen Urban Jungle zu starten.",
     addFirstPlant: "Erste Pflanze anlegen",
@@ -111,7 +115,11 @@ export const translations = {
     search: "Suchen",
     latitude: "Breitengrad",
     longitude: "Längengrad",
-    about: "Über PlantStack"
+    about: "Über PlantStack",
+    pruning: "Rückschnitt",
+    sowingOutdoors: "Aussaat (Freiland)",
+    goodNeighbors: "Gute Nachbarn",
+    badNeighbors: "Schlechte Nachbarn"
   }
 };
 

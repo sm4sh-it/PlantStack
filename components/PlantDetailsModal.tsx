@@ -1,7 +1,8 @@
 "use client";
 
 import { Plant, Location } from "@prisma/client";
-import { X, Droplet, Sun, AlignLeft, FlaskConical, BugOff, SprayCan, Leaf } from "lucide-react";
+import { X, Droplet, Sun, AlignLeft, FlaskConical, BugOff, SprayCan, Leaf, Smile, Frown } from "lucide-react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { t } from "@/lib/i18n";
 
@@ -12,6 +13,27 @@ type PlantDetailsModalProps = {
 };
 
 export default function PlantDetailsModal({ plant, lang, onClose }: PlantDetailsModalProps) {
+  const [extraInfo, setExtraInfo] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchExtra() {
+      const searchTerm = plant.alias || plant.name;
+      if (!searchTerm) return;
+      try {
+        const res1 = await fetch(`/api/openplantbook/search?q=${encodeURIComponent(searchTerm)}`);
+        const data1 = await res1.json();
+        if (data1.results && data1.results[0]) {
+          const res2 = await fetch(`/api/openplantbook/detail?pid=${encodeURIComponent(data1.results[0].pid)}&lang=${lang}`);
+          const data2 = await res2.json();
+          setExtraInfo(data2);
+        }
+      } catch (e) {
+        console.error("Failed to fetch extra info", e);
+      }
+    }
+    fetchExtra();
+  }, [plant.alias, plant.name, lang]);
+
   return (
     <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
       <div className="bg-surface w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
@@ -47,7 +69,7 @@ export default function PlantDetailsModal({ plant, lang, onClose }: PlantDetails
                   <div className="flex gap-3">
                     <Droplet className="text-blue-500 shrink-0 mt-0.5" size={20} />
                     <div>
-                      <p className="text-sm font-bold text-surface-foreground/80 mb-1">Watering</p>
+                      <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('water', lang)}</p>
                       <p className="text-sm text-surface-foreground/70">{plant.wateringInfo}</p>
                     </div>
                   </div>
@@ -58,6 +80,48 @@ export default function PlantDetailsModal({ plant, lang, onClose }: PlantDetails
                     <div>
                       <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('sunlight', lang)}</p>
                       <p className="text-sm text-surface-foreground/70">{plant.sunlightInfo}</p>
+                    </div>
+                  </div>
+                )}
+                {plant.pruningInfo && (
+                  <div className="flex gap-3 pt-3 border-t border-black/5 dark:border-white/5">
+                    <Leaf className="text-green-500 shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('pruning', lang)}</p>
+                      <p className="text-sm text-surface-foreground/70">{plant.pruningInfo}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Extra API Data Block */}
+            {extraInfo && (extraInfo.good_neighbors || extraInfo.bad_neighbors || extraInfo.sowing_outdoors_month) && (
+              <div className="bg-surface-foreground/5 border border-black/5 dark:border-white/5 rounded-2xl p-5 space-y-4">
+                {extraInfo.sowing_outdoors_month && (
+                  <div className="flex gap-3">
+                    <Sun className="text-orange-500 shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('sowingOutdoors', lang)}</p>
+                      <p className="text-sm text-surface-foreground/70">{extraInfo.sowing_outdoors_month}</p>
+                    </div>
+                  </div>
+                )}
+                {extraInfo.good_neighbors && extraInfo.good_neighbors.length > 0 && (
+                  <div className="flex gap-3">
+                    <Smile className="text-emerald-500 shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('goodNeighbors', lang)}</p>
+                      <p className="text-sm text-surface-foreground/70">{extraInfo.good_neighbors.join(", ")}</p>
+                    </div>
+                  </div>
+                )}
+                {extraInfo.bad_neighbors && extraInfo.bad_neighbors.length > 0 && (
+                  <div className="flex gap-3">
+                    <Frown className="text-red-500 shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('badNeighbors', lang)}</p>
+                      <p className="text-sm text-surface-foreground/70">{extraInfo.bad_neighbors.join(", ")}</p>
                     </div>
                   </div>
                 )}
