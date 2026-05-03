@@ -8,7 +8,10 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     const now = new Date();
 
     let updateData: any = {};
-    if (action === "water") updateData.lastWatered = now;
+    if (action === "water") {
+      updateData.lastWatered = now;
+      updateData.wateredCount = { increment: 1 };
+    }
     if (action === "fertilize") updateData.lastFertilized = now;
     if (action === "bug") updateData.lastBug = now;
     if (action === "fungus") updateData.lastFungus = now;

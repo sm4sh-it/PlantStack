@@ -22,6 +22,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         sunlightInfo: data.sunlightInfo !== undefined ? data.sunlightInfo : undefined,
         locationType: data.locationType !== undefined ? data.locationType : undefined,
         pruningInfo: data.pruningInfo !== undefined ? data.pruningInfo : undefined,
+        apiId: data.apiId !== undefined ? data.apiId : undefined,
       },
     });
     return NextResponse.json(plant);
@@ -33,9 +34,20 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params;
-    await prisma.plant.delete({
-      where: { id: params.id },
-    });
+    const { searchParams } = new URL(req.url);
+    const force = searchParams.get("force") === "true";
+
+    if (force) {
+      await prisma.plant.delete({
+        where: { id: params.id },
+      });
+    } else {
+      await prisma.plant.update({
+        where: { id: params.id },
+        data: { isArchived: true },
+      });
+    }
+    
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete plant" }, { status: 500 });

@@ -59,7 +59,8 @@ export const translations = {
     pruning: "Pruning",
     sowingOutdoors: "Sowing (Outdoors)",
     goodNeighbors: "Good Neighbors",
-    badNeighbors: "Bad Neighbors"
+    badNeighbors: "Bad Neighbors",
+    statistics: "Statistics"
   },
   de: {
     // Navigation
@@ -119,7 +120,8 @@ export const translations = {
     pruning: "Rückschnitt",
     sowingOutdoors: "Aussaat (Freiland)",
     goodNeighbors: "Gute Nachbarn",
-    badNeighbors: "Schlechte Nachbarn"
+    badNeighbors: "Schlechte Nachbarn",
+    statistics: "Statistiken"
   }
 };
 

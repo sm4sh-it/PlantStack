@@ -27,6 +27,7 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
     fungusInterval: initialData?.fungusInterval || "",
     locationType: initialData?.locationType || "INDOOR",
     pruningInfo: initialData?.pruningInfo || "",
+    apiId: (initialData as any)?.apiId || "",
     notes: initialData?.notes || "",
     imagePath: initialData?.imagePath || "",
   });
@@ -93,6 +94,7 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
         scientificName: details.display_pid || plantInfo.display_pid || prev.scientificName,
         wateringInfo: wateringText,
         sunlightInfo: sunlightText,
+        apiId: plantInfo.pid || prev.apiId,
         waterInterval: prev.waterInterval === 7 ? waterDays : prev.waterInterval,
         pruningInfo: details.pruning_month ? (Array.isArray(details.pruning_month) ? details.pruning_month.join(', ') : details.pruning_month) : prev.pruningInfo,
       }));

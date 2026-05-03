@@ -40,6 +40,10 @@ model Plant {
   
   locationType       String       @default("INDOOR")
   pruningInfo        String?
+  apiId              String?
+  
+  wateredCount       Int          @default(0)
+  isArchived         Boolean      @default(false)
   
   waterInterval      Int      // in days
   fertilizerInterval Int?     // optional, in days

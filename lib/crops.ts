@@ -784,5 +784,45 @@ export const cropsData: Crop[] = [
     good_neighbors: [],
     bad_neighbors: [],
     frost_hardy: false // In Deutschland meist Winterschutz (Vlies) nötig
+  },
+  
+  // ==========================================
+  // 5. EASTER EGGS (Secret Gamification)
+  // ==========================================
+  {
+    id: "crop_easteregg_piranha",
+    category: "fruit",
+    name: { de: "Piranha-Pflanze", en: "Piranha Plant" },
+    sunlight: "full_sun",
+    watering_interval_days: 1,
+    pruning: {
+      de: "Vorsicht bissig! Keine grünen Röhren in der Nähe platzieren.",
+      en: "Beware, it bites! Keep away from green pipes."
+    },
+    sowing_outdoors_month: 6,
+    harvest_months: [6, 7, 8],
+    nutrition_level: "heavy",
+    spacing_cm: "100x100",
+    good_neighbors: [],
+    bad_neighbors: [],
+    frost_hardy: false
+  },
+  {
+    id: "crop_easteregg_bohni",
+    category: "fruit",
+    name: { de: "Bohni", en: "Bohni" },
+    sunlight: "partial_shade",
+    watering_interval_days: 14,
+    pruning: {
+      de: "Sieht so aus, als wolltest du Kaffee kochen. Soll ich dir dabei helfen? (Tipp: Einmal im Jahr zurückschneiden).",
+      en: "It looks like you're trying to brew coffee. Would you like some help with that? (Tip: Prune once a year)."
+    },
+    sowing_outdoors_month: 6,
+    harvest_months: [10, 11],
+    nutrition_level: "heavy",
+    spacing_cm: "200x200",
+    good_neighbors: [],
+    bad_neighbors: [],
+    frost_hardy: false
   }
 ];

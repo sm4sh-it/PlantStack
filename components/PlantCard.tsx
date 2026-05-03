@@ -90,7 +90,9 @@ export default function PlantCard({ plant, lang, onAction, onEdit, onDelete, onS
         className="h-48 relative bg-black/5 dark:bg-white/5 flex items-center justify-center cursor-pointer group"
         onClick={() => onShowDetails(plant)}
       >
-        {plant.imagePath ? (
+        {plant.apiId === "crop_easteregg_bohni" ? (
+          <Image src="/Bohni.png" alt="Bohni" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+        ) : plant.imagePath ? (
           <Image src={`/api/images/${plant.imagePath}`} alt={plant.name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
           <Leaf className="w-16 h-16 text-black/10 dark:text-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:text-brand/50" />

@@ -39,7 +39,9 @@ export default function PlantDetailsModal({ plant, lang, onClose }: PlantDetails
       <div className="bg-surface w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         
         <div className="relative h-64 bg-black/5 dark:bg-white/5 flex items-center justify-center">
-          {plant.imagePath ? (
+          {plant.apiId === "crop_easteregg_bohni" ? (
+            <Image src="/Bohni.png" alt="Bohni" fill className="object-cover" />
+          ) : plant.imagePath ? (
             <Image src={`/api/images/${plant.imagePath}`} alt={plant.name} fill className="object-cover" />
           ) : (
             <Leaf className="w-24 h-24 text-black/10 dark:text-white/10" />

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.0] - 2026-05-03
+### Added
+- **Gamification & Statistics**: Introduced a brand new Statistics page! You can now track how much water your jungle consumes, view your top thirsty plants, and earn fun Badges like "Rainmaker" and "Botany Nerd".
+- **Plant Archive**: Instead of permanently deleting plants, they are now sent to the "Pet Sematary" archive. You can revive them later or compost them permanently.
+
+
 ## [2.3.2] - 2026-04-28
 ### Fixed
 - **Localization**: All section labels in the plant detail pop-up (Pruning, Sowing, Good/Bad Neighbors) are now fully translated based on the active language setting.
