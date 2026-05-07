@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Droplet, Trophy, Apple, Ghost, Monitor, BarChart2, Globe, Pizza, Utensils, CloudRain, Sun, TreePine } from "lucide-react";
+import { ScatterChart, Scatter, ZAxis, CartesianGrid, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Droplet, Trophy, Apple, Ghost, Monitor, BarChart2, Globe, Pizza, Utensils, CloudRain, Sun, TreePine, GlassWater, Crown, Skull, MoonStar, Activity } from "lucide-react";
 import { t } from "@/lib/i18n";
 
 type StatisticsClientProps = {
@@ -19,12 +19,19 @@ type StatisticsClientProps = {
     rainforest: boolean;
     desert: boolean;
     worldTour: boolean;
+    ginTonic: boolean;
+    dramaQueen: boolean;
+    serialKiller: boolean;
+    gothicGarden: boolean;
   };
   stats: {
     totalWatered: number;
     activeCount: number;
     archivedCount: number;
     oldestPlantDate: Date | null;
+    eventSummary: any;
+    topOrigins: any[];
+    matrixData: any[];
   };
 };
 
@@ -59,6 +66,28 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
 
   const litersWatered = (stats.totalWatered * 0.15).toFixed(1);
   const oldestDateString = stats.oldestPlantDate ? new Date(stats.oldestPlantDate).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US') : '-';
+
+  const tooltipStyle = {
+    backgroundColor: 'var(--surface)',
+    color: 'var(--foreground)',
+    borderColor: 'var(--border)',
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+  };
+
+  const CustomScatterTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-surface border border-black/10 dark:border-white/10 p-3 rounded-xl shadow-lg">
+          <p className="font-bold text-sm mb-1">{data.name}</p>
+          <p className="text-xs opacity-70">Interval: {data.originalInterval} days</p>
+          <p className="text-xs opacity-70">Light: {data.originalSunlight || 'Unknown'}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="pb-24 space-y-8 animate-in fade-in duration-500">
@@ -160,6 +189,61 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
             color="text-blue-400"
           />
 
+          <BadgeCard 
+            icon={<GlassWater size={32} />}
+            title="Gin-Tonic"
+            desc={lang === 'de' ? 'Zitrone & Gurke' : 'Lemon & Cucumber'}
+            unlocked={badges.ginTonic}
+            color="text-emerald-400"
+          />
+          <BadgeCard 
+            icon={<Crown size={32} />}
+            title="Drama Queen"
+            desc={lang === 'de' ? 'Spathiphyllum/Fittonia' : 'Peace Lily/Fittonia'}
+            unlocked={badges.dramaQueen}
+            color="text-pink-500"
+          />
+          <BadgeCard 
+            icon={<Skull size={32} />}
+            title="Serial Killer"
+            desc={lang === 'de' ? '3 archiviert in 2 Mon.' : '3 archived in 2 mo'}
+            unlocked={badges.serialKiller}
+            color="text-red-600"
+          />
+          <BadgeCard 
+            icon={<MoonStar size={32} />}
+            title="Gothic Garden"
+            desc={lang === 'de' ? '3x Schatten/Dark' : '3x Shade/Dark'}
+            unlocked={badges.gothicGarden}
+            color="text-indigo-500"
+          />
+
+        </div>
+      </section>
+
+      {/* Action Logs Summary */}
+      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Activity className="text-brand" /> 
+          {lang === 'de' ? 'Aktivitäten' : 'Activities'}
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-blue-500/10 rounded-2xl">
+            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Gegossen' : 'Watered'}</p>
+            <p className="text-2xl font-bold">{stats.eventSummary.monthWater} <span className="text-sm font-normal opacity-50">/ {stats.eventSummary.yearWater} yr</span></p>
+          </div>
+          <div className="p-4 bg-amber-500/10 rounded-2xl">
+            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Gedüngt' : 'Fertilized'}</p>
+            <p className="text-2xl font-bold">{stats.eventSummary.monthFertilize} <span className="text-sm font-normal opacity-50">/ {stats.eventSummary.yearFertilize} yr</span></p>
+          </div>
+          <div className="p-4 bg-green-500/10 rounded-2xl">
+            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Neu gepflanzt' : 'Newly Planted'}</p>
+            <p className="text-2xl font-bold">{stats.eventSummary.monthCreate} <span className="text-sm font-normal opacity-50">/ {stats.eventSummary.yearCreate} yr</span></p>
+          </div>
+          <div className="p-4 bg-gray-500/10 rounded-2xl">
+            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Archiviert' : 'Archived'}</p>
+            <p className="text-2xl font-bold">{stats.eventSummary.monthArchive} <span className="text-sm font-normal opacity-50">/ {stats.eventSummary.yearArchive} yr</span></p>
+          </div>
         </div>
       </section>
 
@@ -188,7 +272,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
               <BarChart data={thirstyData} layout="vertical" margin={{ top: 0, right: 0, left: 40, bottom: 0 }}>
                 <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} className="text-xs" width={100} />
-                <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={tooltipStyle} itemStyle={{color: 'var(--foreground)'}} />
                 <Bar dataKey="watered" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
@@ -196,30 +280,42 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
         </div>
 
         <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 h-96 flex flex-col">
-          <h3 className="text-lg font-bold mb-4">{lang === 'de' ? 'Dschungel-Verhältnis' : 'Jungle Ratio'}</h3>
+          <h3 className="text-lg font-bold mb-4">{lang === 'de' ? 'Top 5 Herkünfte' : 'Top 5 Origins'}</h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({name, percent}) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-              </PieChart>
+              <BarChart data={stats.topOrigins} layout="vertical" margin={{ top: 0, right: 0, left: 80, bottom: 0 }}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} className="text-xs" width={80} />
+                <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={tooltipStyle} itemStyle={{color: 'var(--foreground)'}} />
+                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
+
+      {/* Green Thumb Matrix */}
+      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm h-96 flex flex-col">
+        <div className="mb-4 flex justify-between items-end">
+          <h2 className="text-xl font-bold">Green Thumb Matrix</h2>
+          <div className="text-xs opacity-60 text-right">
+            <p>X: Schattenparker ➝ Sonnenanbeter</p>
+            <p>Y: Kaktus-Vibes ➝ Wasser-Junkie</p>
+          </div>
+        </div>
+        <div className="flex-1 w-full min-h-0 relative">
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis type="number" dataKey="x" name="Light" domain={[0, 4]} hide />
+              <YAxis type="number" dataKey="y" name="Water" domain={[0, 30]} hide />
+              <ZAxis range={[100, 100]} />
+              <Tooltip content={<CustomScatterTooltip />} cursor={{strokeDasharray: '3 3'}} />
+              <Scatter name="Plants" data={stats.matrixData} fill="#10b981" />
+            </ScatterChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
 
     </div>
   );

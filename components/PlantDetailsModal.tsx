@@ -1,7 +1,7 @@
 "use client";
 
 import { Plant, Location } from "@prisma/client";
-import { X, Droplet, Sun, AlignLeft, FlaskConical, BugOff, SprayCan, Leaf, Smile, Frown } from "lucide-react";
+import { X, Droplet, Sun, AlignLeft, FlaskConical, BugOff, SprayCan, Leaf, Smile, Frown, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { t } from "@/lib/i18n";
@@ -59,6 +59,9 @@ export default function PlantDetailsModal({ plant, lang, onClose }: PlantDetails
             {plant.scientificName && (
                <p className="text-brand font-medium italic">{plant.scientificName}</p>
             )}
+            <div className="flex items-center gap-1.5 text-surface-foreground/60 mt-2 text-sm">
+              <Globe size={16} /> <span>{(plant as any).origin || (lang === 'de' ? 'Unbekannt' : 'Unknown')}</span>
+            </div>
             <p className="text-surface-foreground/60 text-sm mt-1">{plant.location?.name || "Unassigned"}</p>
           </div>
 

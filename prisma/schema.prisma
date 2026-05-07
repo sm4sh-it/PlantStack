@@ -45,6 +45,7 @@ model Plant {
   
   wateredCount       Int          @default(0)
   isArchived         Boolean      @default(false)
+  archivedAt         DateTime?
   
   waterInterval      Int      // in days
   fertilizerInterval Int?     // optional, in days
@@ -64,4 +65,14 @@ model Plant {
   
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+
+  events             PlantEvent[]
+}
+
+model PlantEvent {
+  id        String   @id @default(uuid())
+  plantId   String
+  plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  type      String   // "WATER", "FERTILIZE", "CREATE", "ARCHIVE"
+  createdAt DateTime @default(now())
 }

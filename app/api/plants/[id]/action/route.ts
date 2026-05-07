@@ -20,6 +20,16 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       where: { id: params.id },
       data: updateData,
     });
+
+    if (action === "water" || action === "fertilize") {
+      await prisma.plantEvent.create({
+        data: {
+          plantId: params.id,
+          type: action.toUpperCase()
+        }
+      });
+    }
+
     return NextResponse.json(plant);
   } catch (error) {
     return NextResponse.json({ error: "Failed to perform action" }, { status: 500 });

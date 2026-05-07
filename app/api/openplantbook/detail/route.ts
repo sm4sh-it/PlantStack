@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await getPlantDetails(pid);
+    data.origin = data.origin || data.Origin || "";
     return NextResponse.json(data);
   } catch (error) {
     console.error(error);

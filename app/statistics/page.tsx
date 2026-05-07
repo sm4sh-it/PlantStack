@@ -68,7 +68,38 @@ export default async function StatisticsPage() {
 
   const desertCount = activePlants.filter(p => hasName(p, ['kaktus', 'cactus', 'aloe', 'sukkulente', 'succulent']) || p.waterInterval >= 21).length;
 
-  const uniqueOrigins = new Set(activePlants.map(p => p.origin).filter(o => o && o.trim() !== ''));
+  const isValidOrigin = (o: string | null | undefined) => {
+    if (!o) return false;
+    const trimmed = o.trim();
+    return trimmed !== '' && trimmed.toLowerCase() !== 'unbekannt' && trimmed.toLowerCase() !== 'unknown';
+  };
+
+  const validOriginsList = activePlants.map(p => p.origin).filter(isValidOrigin) as string[];
+  const uniqueOrigins = new Set(validOriginsList);
+
+  const originCounts: Record<string, number> = {};
+  validOriginsList.forEach(o => {
+    originCounts[o] = (originCounts[o] || 0) + 1;
+  });
+  const topOrigins = Object.entries(originCounts)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+
+  const hasLemon = activePlants.some(p => p.apiId === 'crop_lemon' || hasName(p, ['lemon', 'zitrone', 'citrus']));
+  const hasCucumber = activePlants.some(p => p.apiId === 'crop_cucumber' || hasName(p, ['cucumber', 'gurke']));
+  const hasDramaQueen = activePlants.some(p => hasName(p, ['spathiphyllum', 'peace lily', 'einblatt', 'fittonia', 'mosaikpflanze']));
+  
+  const twoMonthsAgo = new Date();
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+  const recentArchivedCount = plants.filter(p => p.isArchived && p.archivedAt && new Date(p.archivedAt) >= twoMonthsAgo).length;
+
+  const isGothic = (p: any) => {
+    if (p.sunlightInfo && p.sunlightInfo.toLowerCase().includes('shade')) return true;
+    if (hasName(p, ['dark', 'black', 'raven', 'schwarz', 'dunkel'])) return true;
+    return false;
+  };
+  const gothicCount = activePlants.filter(isGothic).length;
 
   const badges = {
     rainmaker: totalWatered >= 100,
@@ -81,18 +112,68 @@ export default async function StatisticsPage() {
     jungle: monsteraCount >= 4,
     rainforest: monsteraCount >= 1 && hasStrelitzie,
     desert: desertCount >= 3,
-    worldTour: uniqueOrigins.size >= 3
+    worldTour: uniqueOrigins.size >= 3,
+    ginTonic: hasLemon && hasCucumber,
+    dramaQueen: hasDramaQueen,
+    serialKiller: recentArchivedCount >= 3,
+    gothicGarden: gothicCount >= 3
   };
 
   const oldestPlantDate = plants.length > 0 
     ? new Date(Math.min(...plants.map(p => new Date(p.createdAt).getTime()))) 
     : null;
 
+  // Fetch Events for Monthly/Yearly summary
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const events = await prisma.plantEvent.findMany({
+    where: {
+      createdAt: {
+        gte: new Date(currentYear, 0, 1) // From start of year
+      }
+    }
+  });
+
+  const eventSummary = {
+    monthWater: 0, monthFertilize: 0, monthCreate: 0, monthArchive: 0,
+    yearWater: 0, yearFertilize: 0, yearCreate: 0, yearArchive: 0,
+  };
+
+  events.forEach(e => {
+    const isCurrentMonth = e.createdAt.getMonth() === currentMonth;
+    if (e.type === "WATER") { eventSummary.yearWater++; if (isCurrentMonth) eventSummary.monthWater++; }
+    if (e.type === "FERTILIZE") { eventSummary.yearFertilize++; if (isCurrentMonth) eventSummary.monthFertilize++; }
+    if (e.type === "CREATE") { eventSummary.yearCreate++; if (isCurrentMonth) eventSummary.monthCreate++; }
+    if (e.type === "ARCHIVE") { eventSummary.yearArchive++; if (isCurrentMonth) eventSummary.monthArchive++; }
+  });
+
+  // Calculate matrix data
+  const getSunlightScore = (p: any) => {
+    const s = p.sunlightInfo?.toLowerCase() || "";
+    if (s.includes('full_sun') || s.includes('direct')) return 3;
+    if (s.includes('partial_shade') || s.includes('indirect')) return 2;
+    if (s.includes('shade') || s.includes('low')) return 1;
+    return 2; // Default to partial
+  };
+
+  const matrixData = activePlants.map(p => ({
+    name: p.name,
+    x: getSunlightScore(p), // 1 = Shade, 2 = Partial, 3 = Sun
+    y: Math.max(1, 30 - p.waterInterval), // Inverted: low days -> high Y
+    originalInterval: p.waterInterval,
+    originalSunlight: p.sunlightInfo
+  }));
+
   const stats = {
     totalWatered,
     activeCount,
     archivedCount,
     oldestPlantDate,
+    eventSummary,
+    topOrigins,
+    matrixData
   };
 
   return (

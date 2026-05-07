@@ -45,10 +45,19 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     } else {
       await prisma.plant.update({
         where: { id: params.id },
-        data: { isArchived: true },
+        data: { 
+          isArchived: true,
+          archivedAt: new Date()
+        },
+      });
+
+      await prisma.plantEvent.create({
+        data: {
+          plantId: params.id,
+          type: "ARCHIVE"
+        }
       });
     }
-    
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete plant" }, { status: 500 });

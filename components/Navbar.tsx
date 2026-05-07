@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Moon, Sun, Leaf, Settings, BarChart2, Archive } from "lucide-react";
+import { Moon, Sun, Leaf, Settings, BarChart2, Archive, LayoutDashboard } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
 export default function Navbar() {
@@ -17,6 +17,15 @@ export default function Navbar() {
           <span className="font-bold text-xl tracking-tight text-brand">PlantStack</span>
         </Link>
         <div className="flex items-center gap-2">
+          <Link href="/" className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-foreground">
+            <LayoutDashboard size={20} />
+          </Link>
+          <Link href="/statistics" className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-foreground">
+            <BarChart2 size={20} />
+          </Link>
+          <Link href="/archive" className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-foreground">
+            <Archive size={20} />
+          </Link>
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-foreground"
@@ -24,12 +33,6 @@ export default function Navbar() {
           >
             {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </button>
-          <Link href="/archive" className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-foreground">
-            <Archive size={20} />
-          </Link>
-          <Link href="/statistics" className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-foreground">
-            <BarChart2 size={20} />
-          </Link>
           <Link href="/settings" className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-foreground">
             <Settings size={20} />
           </Link>

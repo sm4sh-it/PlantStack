@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     let plants = await prisma.plant.findMany({
-      where: { isArchived: false },
       orderBy: { createdAt: "desc" },
       include: { location: true }
     });
@@ -35,7 +34,6 @@ export async function GET() {
                 });
                 // Re-fetch plants to get updated lastWatered
                 plants = await prisma.plant.findMany({
-                  where: { isArchived: false },
                   orderBy: { createdAt: "desc" },
                   include: { location: true }
                 });
@@ -124,6 +122,14 @@ export async function POST(req: NextRequest) {
         lastFertilized: data.fertilizerInterval ? new Date() : null,
       },
     });
+
+    await prisma.plantEvent.create({
+      data: {
+        plantId: plant.id,
+        type: "CREATE"
+      }
+    });
+
     return NextResponse.json(plant);
   } catch (error) {
     console.error(error);

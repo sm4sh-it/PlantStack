@@ -48,7 +48,6 @@ This is the recommended way for users on NAS systems (Synology, Unraid, etc.) or
    volumes:
      plantstack_data:
    ```
-   *(Note: Replace `YOUR_GITHUB_USERNAME` with the actual GitHub username where the repository is hosted).*
 
 2. Run the stack:
    ```bash
