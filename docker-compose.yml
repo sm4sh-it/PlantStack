@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  plantstack:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plantstack
+    restart: unless-stopped
+    ports:
+      - "9666:3000"
+    volumes:
+      - plantstack_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - OPENPLANTBOOK_CLIENT_ID=${OPENPLANTBOOK_CLIENT_ID}
+      - OPENPLANTBOOK_CLIENT_SECRET=${OPENPLANTBOOK_CLIENT_SECRET}
+
+volumes:
+  plantstack_data:
