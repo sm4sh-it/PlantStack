@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Moon, Sun, Leaf, Settings, BarChart2, Archive, LayoutDashboard } from "lucide-react";
+import { Moon, Sun, Leaf, Settings, BarChart2, Ghost, LayoutDashboard } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
 export default function Navbar() {
@@ -24,7 +24,7 @@ export default function Navbar() {
             <BarChart2 size={20} />
           </Link>
           <Link href="/archive" className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-foreground">
-            <Archive size={20} />
+            <Ghost size={20} />
           </Link>
           <button
             onClick={toggleTheme}

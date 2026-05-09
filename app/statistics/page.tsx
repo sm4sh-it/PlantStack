@@ -47,6 +47,9 @@ export default async function StatisticsPage() {
 
   const activePlants = enrichedPlants.filter(p => !p.isArchived);
 
+  const totalCount = activeCount + archivedCount;
+  const survivalRate = totalCount === 0 ? "N/A" : Math.round((activeCount / totalCount) * 100) + "%";
+
   const hasVegetableOrFruit = activePlants.some(p => p.isVegetableOrFruit);
   const hasEasterEgg = enrichedPlants.some(p => p.isBohniOrPiranha); // keep for all (even archived) or just active? Prompt: "owning" usually means active. We'll use active for gamification.
   const hasEasterEggActive = activePlants.some(p => p.isBohniOrPiranha);
@@ -101,6 +104,14 @@ export default async function StatisticsPage() {
   };
   const gothicCount = activePlants.filter(isGothic).length;
 
+  const uniqueLocations = new Set(plants.map(p => p.locationId).filter(Boolean));
+  const uniqueSpecies = new Set(activePlants.map(p => p.apiId || p.scientificName || p.name).filter(Boolean)).size;
+  
+  const hasThyme = activePlants.some(p => p.apiId === 'crop_thyme' || hasName(p, ['thymian', 'thyme']));
+  const hasOregano = activePlants.some(p => p.apiId === 'crop_oregano' || hasName(p, ['oregano']));
+  const hasMarjoram = activePlants.some(p => p.apiId === 'crop_marjoram' || hasName(p, ['majoran', 'marjoram']));
+  const mediterraneanCount = [hasThyme, hasRosemary, hasOregano, hasBasil, hasMarjoram].filter(Boolean).length;
+
   const badges = {
     rainmaker: totalWatered >= 100,
     botanyNerd: activeCount >= 10,
@@ -116,7 +127,13 @@ export default async function StatisticsPage() {
     ginTonic: hasLemon && hasCucumber,
     dramaQueen: hasDramaQueen,
     serialKiller: recentArchivedCount >= 3,
-    gothicGarden: gothicCount >= 3
+    gothicGarden: gothicCount >= 3,
+    castle: uniqueLocations.size >= 6,
+    hauntedCastle: archivedCount >= 10,
+    diversityBronze: uniqueSpecies >= 5,
+    diversitySilver: uniqueSpecies >= 10,
+    diversityGold: uniqueSpecies >= 20,
+    mediterraneanMix: mediterraneanCount >= 3
   };
 
   const oldestPlantDate = plants.length > 0 
@@ -170,6 +187,7 @@ export default async function StatisticsPage() {
     totalWatered,
     activeCount,
     archivedCount,
+    survivalRate,
     oldestPlantDate,
     eventSummary,
     topOrigins,

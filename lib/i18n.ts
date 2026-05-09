@@ -60,7 +60,11 @@ export const translations = {
     sowingOutdoors: "Sowing (Outdoors)",
     goodNeighbors: "Good Neighbors",
     badNeighbors: "Bad Neighbors",
-    statistics: "Statistics"
+    statistics: "Statistics",
+    conditions: "Conditions",
+    full_sun: "Full Sun",
+    partial_shade: "Partial Shade",
+    shade: "Shade"
   },
   de: {
     // Navigation
@@ -121,7 +125,11 @@ export const translations = {
     sowingOutdoors: "Aussaat (Freiland)",
     goodNeighbors: "Gute Nachbarn",
     badNeighbors: "Schlechte Nachbarn",
-    statistics: "Statistiken"
+    statistics: "Statistiken",
+    conditions: "Bedingungen",
+    full_sun: "Viel Sonne",
+    partial_shade: "Halbschatten",
+    shade: "Schatten"
   }
 };
 

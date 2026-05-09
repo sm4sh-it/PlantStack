@@ -4,7 +4,8 @@ import { Plant, Location } from "@prisma/client";
 import { X, Droplet, Sun, AlignLeft, FlaskConical, BugOff, SprayCan, Leaf, Smile, Frown, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { t } from "@/lib/i18n";
+import { t, Locale } from "@/lib/i18n";
+import { cropsData } from "@/lib/crops";
 
 type PlantDetailsModalProps = {
   plant: Plant & { location?: Location };
@@ -74,7 +75,7 @@ export default function PlantDetailsModal({ plant, lang, onClose }: PlantDetails
                   <div className="flex gap-3">
                     <Droplet className="text-blue-500 shrink-0 mt-0.5" size={20} />
                     <div>
-                      <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('water', lang)}</p>
+                      <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('conditions', lang as Locale)}</p>
                       <p className="text-sm text-surface-foreground/70">{plant.wateringInfo}</p>
                     </div>
                   </div>
@@ -84,7 +85,11 @@ export default function PlantDetailsModal({ plant, lang, onClose }: PlantDetails
                     <Sun className="text-amber-500 shrink-0 mt-0.5" size={20} />
                     <div>
                       <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('sunlight', lang)}</p>
-                      <p className="text-sm text-surface-foreground/70">{plant.sunlightInfo}</p>
+                      <p className="text-sm text-surface-foreground/70">
+                        {['full_sun', 'partial_shade', 'shade'].includes(plant.sunlightInfo || "")
+                          ? t(plant.sunlightInfo as any, lang as Locale)
+                          : plant.sunlightInfo}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -93,7 +98,11 @@ export default function PlantDetailsModal({ plant, lang, onClose }: PlantDetails
                     <Leaf className="text-green-500 shrink-0 mt-0.5" size={20} />
                     <div>
                       <p className="text-sm font-bold text-surface-foreground/80 mb-1">{t('pruning', lang)}</p>
-                      <p className="text-sm text-surface-foreground/70">{plant.pruningInfo}</p>
+                      <p className="text-sm text-surface-foreground/70">
+                        {plant.apiId?.startsWith("crop_")
+                          ? cropsData.find(c => c.id === plant.apiId)?.pruning[lang as Locale] || plant.pruningInfo
+                          : plant.pruningInfo}
+                      </p>
                     </div>
                   </div>
                 )}

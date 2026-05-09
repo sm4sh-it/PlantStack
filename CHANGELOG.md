@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.5.0] - 2026-05-09
+### Added
+- **Gamification Expansion**: Introduced new badges: Castle, Haunted Castle, Diversity Tiers (Bronze, Silver, Gold), and Mediterranean Mix!
+- **Survival Rate**: Track your success with the new Survival Rate metric on the Statistics page.
+- **Enhanced Localizations**: "Water" mapping has been changed to "Conditions" (Bedingungen). Sun exposure levels are now properly translated to the active language.
+- **Green Thumb Matrix**: The scatter plot now properly lists axis labels (e.g. Schattenparker -> Sonnenanbeter) and is fully compatible with Light and Dark Mode.
+- **Dynamic Pruning Rules**: Plant pruning rules dynamically update to match the active language setting instead of staying locked to the language used when creating the plant.
+### Changed
+- **Archive Icon**: The Archive nav icon has been changed to a Ghost.
+- **Footer**: The application footer now prominently displays the current app version.
+- **Statistics Layout**: Charts and action logs have been re-arranged for better UX. Action logs now show the Monthly Breakdown along with the Yearly Total.
+
 ## [2.4.0] - 2026-05-03
 ### Added
 - **Gamification & Statistics**: Introduced a brand new Statistics page! You can now track how much water your jungle consumes, view your top thirsty plants, and earn fun Badges like "Rainmaker" and "Botany Nerd".

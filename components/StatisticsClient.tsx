@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { ScatterChart, Scatter, ZAxis, CartesianGrid, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { Droplet, Trophy, Apple, Ghost, Monitor, BarChart2, Globe, Pizza, Utensils, CloudRain, Sun, TreePine, GlassWater, Crown, Skull, MoonStar, Activity } from "lucide-react";
+import { Droplet, Trophy, Apple, Ghost, Monitor, BarChart2, Globe, Pizza, Utensils, CloudRain, Sun, TreePine, GlassWater, Crown, Skull, MoonStar, Activity, Castle, Sprout } from "lucide-react";
 import { t } from "@/lib/i18n";
 
 type StatisticsClientProps = {
@@ -23,11 +23,18 @@ type StatisticsClientProps = {
     dramaQueen: boolean;
     serialKiller: boolean;
     gothicGarden: boolean;
+    castle: boolean;
+    hauntedCastle: boolean;
+    diversityBronze: boolean;
+    diversitySilver: boolean;
+    diversityGold: boolean;
+    mediterraneanMix: boolean;
   };
   stats: {
     totalWatered: number;
     activeCount: number;
     archivedCount: number;
+    survivalRate: string;
     oldestPlantDate: Date | null;
     eventSummary: any;
     topOrigins: any[];
@@ -217,49 +224,71 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
             unlocked={badges.gothicGarden}
             color="text-indigo-500"
           />
+          <BadgeCard 
+            icon={<Castle size={32} />}
+            title={lang === 'de' ? 'Schloss' : 'Castle'}
+            desc={lang === 'de' ? '>6 Räume/Bereiche' : '>6 rooms/areas'}
+            unlocked={badges.castle}
+            color="text-yellow-600"
+          />
+          <BadgeCard 
+            icon={<Ghost size={32} />}
+            title={lang === 'de' ? 'Geisterschloss' : 'Haunted Castle'}
+            desc={lang === 'de' ? '10+ archiviert' : '10+ archived'}
+            unlocked={badges.hauntedCastle}
+            color="text-gray-500"
+          />
+          <BadgeCard 
+            icon={<Sprout size={32} />}
+            title={lang === 'de' ? 'Diversität (Bronze)' : 'Diversity (Bronze)'}
+            desc={lang === 'de' ? '5+ Arten' : '5+ species'}
+            unlocked={badges.diversityBronze && !badges.diversitySilver && !badges.diversityGold}
+            color="text-amber-700"
+          />
+          <BadgeCard 
+            icon={<Leaf size={32} />}
+            title={lang === 'de' ? 'Diversität (Silber)' : 'Diversity (Silver)'}
+            desc={lang === 'de' ? '10+ Arten' : '10+ species'}
+            unlocked={badges.diversitySilver && !badges.diversityGold}
+            color="text-gray-400"
+          />
+          <BadgeCard 
+            icon={<TreePine size={32} />}
+            title={lang === 'de' ? 'Diversität (Gold)' : 'Diversity (Gold)'}
+            desc={lang === 'de' ? '20+ Arten' : '20+ species'}
+            unlocked={badges.diversityGold}
+            color="text-yellow-500"
+          />
+          <BadgeCard 
+            icon={<Utensils size={32} />}
+            title={lang === 'de' ? 'Mittelmeer Mix' : 'Mediterranean Mix'}
+            desc={lang === 'de' ? '3+ Kräuter' : '3+ herbs'}
+            unlocked={badges.mediterraneanMix}
+            color="text-emerald-500"
+          />
 
         </div>
       </section>
 
-      {/* Action Logs Summary */}
-      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Activity className="text-brand" /> 
-          {lang === 'de' ? 'Aktivitäten' : 'Activities'}
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-blue-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Gegossen' : 'Watered'}</p>
-            <p className="text-2xl font-bold">{stats.eventSummary.monthWater} <span className="text-sm font-normal opacity-50">/ {stats.eventSummary.yearWater} yr</span></p>
-          </div>
-          <div className="p-4 bg-amber-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Gedüngt' : 'Fertilized'}</p>
-            <p className="text-2xl font-bold">{stats.eventSummary.monthFertilize} <span className="text-sm font-normal opacity-50">/ {stats.eventSummary.yearFertilize} yr</span></p>
-          </div>
-          <div className="p-4 bg-green-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Neu gepflanzt' : 'Newly Planted'}</p>
-            <p className="text-2xl font-bold">{stats.eventSummary.monthCreate} <span className="text-sm font-normal opacity-50">/ {stats.eventSummary.yearCreate} yr</span></p>
-          </div>
-          <div className="p-4 bg-gray-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Archiviert' : 'Archived'}</p>
-            <p className="text-2xl font-bold">{stats.eventSummary.monthArchive} <span className="text-sm font-normal opacity-50">/ {stats.eventSummary.yearArchive} yr</span></p>
-          </div>
-        </div>
-      </section>
+
 
       {/* Fun Facts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-black text-brand mb-2">{litersWatered} L</span>
-          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Wasser gegossen (geschätzt)' : 'Water poured (estimated)'}</span>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
           <span className="text-4xl font-black text-brand mb-2">{stats.activeCount}</span>
-          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Aktive Pflanzen im Dschungel' : 'Active plants in jungle'}</span>
+          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Aktive Pflanzen' : 'Active plants'}</span>
+        </div>
+        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
+          <span className="text-4xl font-black text-brand mb-2">{litersWatered} L</span>
+          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Wasser (ca.)' : 'Water (est.)'}</span>
+        </div>
+        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
+          <span className="text-4xl font-black text-brand mb-2">{stats.survivalRate}</span>
+          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Überlebensrate' : 'Survival Rate'}</span>
         </div>
         <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
           <span className="text-2xl font-bold text-brand mb-2">{oldestDateString}</span>
-          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Älteste Pflanze seit' : 'Oldest plant since'}</span>
+          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Älteste Pflanze' : 'Oldest plant'}</span>
         </div>
       </div>
 
@@ -273,7 +302,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
                 <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} className="text-xs" width={100} />
                 <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={tooltipStyle} itemStyle={{color: 'var(--foreground)'}} />
-                <Bar dataKey="watered" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24} />
+                <Bar dataKey="watered" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -287,7 +316,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
                 <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} className="text-xs" width={80} />
                 <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={tooltipStyle} itemStyle={{color: 'var(--foreground)'}} />
-                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
+                <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -295,25 +324,70 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
       </div>
 
       {/* Green Thumb Matrix */}
-      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm h-96 flex flex-col">
-        <div className="mb-4 flex justify-between items-end">
-          <h2 className="text-xl font-bold">Green Thumb Matrix</h2>
-          <div className="text-xs opacity-60 text-right">
-            <p>X: Schattenparker ➝ Sonnenanbeter</p>
-            <p>Y: Kaktus-Vibes ➝ Wasser-Junkie</p>
-          </div>
-        </div>
+      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm h-[500px] flex flex-col">
+        <h2 className="text-xl font-bold mb-4">Green Thumb Matrix</h2>
         <div className="flex-1 w-full min-h-0 relative">
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+            <ScatterChart margin={{ top: 30, right: 30, bottom: 50, left: 30 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis type="number" dataKey="x" name="Light" domain={[0, 4]} hide />
-              <YAxis type="number" dataKey="y" name="Water" domain={[0, 30]} hide />
+              <XAxis 
+                type="number" 
+                dataKey="x" 
+                name="Light" 
+                domain={[0, 4]} 
+                ticks={[1,2,3]} 
+                tick={{ fill: 'currentColor' }} 
+                tickFormatter={(val) => val === 1 ? (lang === 'de' ? 'Schattenparker' : 'Shade Dweller') : val === 3 ? (lang === 'de' ? 'Sonnenanbeter' : 'Sun Worshipper') : ''} 
+              />
+              <YAxis 
+                type="number" 
+                dataKey="y" 
+                name="Water" 
+                domain={[0, 30]} 
+                ticks={[0,30]} 
+                tick={{ angle: -90, textAnchor: 'middle', fill: 'currentColor', dx: -15 }} 
+                tickFormatter={(val) => val === 0 ? (lang === 'de' ? 'Kaktus-Vibes' : 'Cactus Vibes') : val === 30 ? (lang === 'de' ? 'Wasser-Junkie' : 'Water Junkie') : ''} 
+              />
               <ZAxis range={[100, 100]} />
               <Tooltip content={<CustomScatterTooltip />} cursor={{strokeDasharray: '3 3'}} />
               <Scatter name="Plants" data={stats.matrixData} fill="#10b981" />
             </ScatterChart>
           </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* Action Logs Summary */}
+      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Activity className="text-brand" /> 
+            {lang === 'de' ? 'Aktivitäten' : 'Activities'}
+          </h2>
+          <div className="flex gap-4 text-sm font-bold bg-black/5 dark:bg-white/5 px-4 py-2 rounded-xl">
+            <span className="opacity-70">{lang === 'de' ? 'Gesamt Jahr:' : 'Yearly Total:'}</span>
+            <span className="text-blue-500">{stats.eventSummary.yearWater} 💧</span>
+            <span className="text-amber-500">{stats.eventSummary.yearFertilize} 🧪</span>
+            <span className="text-green-500">{stats.eventSummary.yearCreate} 🌱</span>
+            <span className="text-gray-500">{stats.eventSummary.yearArchive} 💀</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-blue-500/10 rounded-2xl">
+            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Gegossen (Monat)' : 'Watered (Month)'}</p>
+            <p className="text-2xl font-bold">{stats.eventSummary.monthWater}</p>
+          </div>
+          <div className="p-4 bg-amber-500/10 rounded-2xl">
+            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Gedüngt (Monat)' : 'Fertilized (Month)'}</p>
+            <p className="text-2xl font-bold">{stats.eventSummary.monthFertilize}</p>
+          </div>
+          <div className="p-4 bg-green-500/10 rounded-2xl">
+            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Neu gepflanzt (Monat)' : 'New (Month)'}</p>
+            <p className="text-2xl font-bold">{stats.eventSummary.monthCreate}</p>
+          </div>
+          <div className="p-4 bg-gray-500/10 rounded-2xl">
+            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Archiviert (Monat)' : 'Archived (Month)'}</p>
+            <p className="text-2xl font-bold">{stats.eventSummary.monthArchive}</p>
+          </div>
         </div>
       </section>
 
