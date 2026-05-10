@@ -25,6 +25,7 @@ model Location {
   longitude        Float?
   locationName     String?
   lastWeatherSync  DateTime?
+  badgesResetAt    DateTime?
 
   updatedAt        DateTime  @updatedAt
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.6.0] - 2026-05-10
+### Added
+- **Gamification "New Season"**: You can now reset your Gamification Badges via the Settings menu without deleting your plants. This starts a "New Season", meaning only plants and watering activities added *after* the reset will count towards unlocking new badges!
+- **Statistics Wipe**: Added a dedicated button to clear your watering history and activity logs, leaving your plants and unlocked badges intact.
+- **Privacy & Data Section**: Introduced a new settings category to safely manage and reset your data.
+
 ## [2.5.0] - 2026-05-09
 ### Added
 - **Gamification Expansion**: Introduced new badges: Castle, Haunted Castle, Diversity Tiers (Bronze, Silver, Gold), and Mediterranean Mix!

@@ -5,8 +5,29 @@ import { cropsData } from "@/lib/crops";
 export const dynamic = "force-dynamic";
 
 export default async function StatisticsPage() {
-  const plants = await prisma.plant.findMany();
+  const [plants, appConfig] = await Promise.all([
+    prisma.plant.findMany(),
+    prisma.appConfig.findUnique({ where: { id: 1 } })
+  ]);
+  const badgesResetAt = appConfig?.badgesResetAt || new Date(0);
   
+  // Helper for names
+  const hasName = (p: any, names: string[]) => {
+    const searchString = `${p.name} ${p.alias || ''} ${p.scientificName || ''}`.toLowerCase();
+    return names.some(n => searchString.includes(n.toLowerCase()));
+  };
+
+  const isValidOrigin = (o: string | null | undefined) => {
+    if (!o) return false;
+    const trimmed = o.trim();
+    return trimmed !== '' && trimmed.toLowerCase() !== 'unbekannt' && trimmed.toLowerCase() !== 'unknown';
+  };
+
+  const isGothic = (p: any) => {
+    if (p.sunlightInfo && p.sunlightInfo.toLowerCase().includes('shade')) return true;
+    if (hasName(p, ['dark', 'black', 'raven', 'schwarz', 'dunkel'])) return true;
+    return false;
+  };
   // Transform or enrich data if needed
   const enrichedPlants = plants.map((plant) => {
     let isVegetableOrFruit = false;
@@ -50,36 +71,33 @@ export default async function StatisticsPage() {
   const totalCount = activeCount + archivedCount;
   const survivalRate = totalCount === 0 ? "N/A" : Math.round((activeCount / totalCount) * 100) + "%";
 
-  const hasVegetableOrFruit = activePlants.some(p => p.isVegetableOrFruit);
-  const hasEasterEgg = enrichedPlants.some(p => p.isBohniOrPiranha); // keep for all (even archived) or just active? Prompt: "owning" usually means active. We'll use active for gamification.
-  const hasEasterEggActive = activePlants.some(p => p.isBohniOrPiranha);
+  // Calculate Badges Server-Side using New Season Logic
+  const badgePlants = enrichedPlants.filter(p => new Date(p.createdAt) >= badgesResetAt);
+  const badgeActivePlants = badgePlants.filter(p => !p.isArchived);
+  const badgeArchivedCount = badgePlants.filter(p => p.isArchived).length;
+  const badgeActiveCount = badgeActivePlants.length;
 
-  // Helper for names
-  const hasName = (p: any, names: string[]) => {
-    const searchString = `${p.name} ${p.alias || ''} ${p.scientificName || ''}`.toLowerCase();
-    return names.some(n => searchString.includes(n.toLowerCase()));
-  };
+  const badgeWaterings = await prisma.plantEvent.count({
+    where: {
+      type: "WATER",
+      createdAt: { gte: badgesResetAt }
+    }
+  });
 
-  // Combinations
-  const hasTomato = activePlants.some(p => p.apiId === 'crop_tomato' || hasName(p, ['tomato', 'tomate']));
-  const hasBasil = activePlants.some(p => p.apiId === 'crop_basil' || hasName(p, ['basil', 'basilikum']));
-  const hasPotato = activePlants.some(p => p.apiId === 'crop_potato' || hasName(p, ['potato', 'kartoffel']));
-  const hasRosemary = activePlants.some(p => p.apiId === 'crop_rosemary' || hasName(p, ['rosemary', 'rosmarin']));
+  const badgeHasVegetableOrFruit = badgeActivePlants.some(p => p.isVegetableOrFruit);
+  const badgeHasEasterEggActive = badgeActivePlants.some(p => p.isBohniOrPiranha);
+
+  const badgeHasTomato = badgeActivePlants.some(p => p.apiId === 'crop_tomato' || hasName(p, ['tomato', 'tomate']));
+  const badgeHasBasil = badgeActivePlants.some(p => p.apiId === 'crop_basil' || hasName(p, ['basil', 'basilikum']));
+  const badgeHasPotato = badgeActivePlants.some(p => p.apiId === 'crop_potato' || hasName(p, ['potato', 'kartoffel']));
+  const badgeHasRosemary = badgeActivePlants.some(p => p.apiId === 'crop_rosemary' || hasName(p, ['rosemary', 'rosmarin']));
   
-  const monsteraCount = activePlants.filter(p => hasName(p, ['monstera'])).length;
-  const hasStrelitzie = activePlants.some(p => hasName(p, ['strelitzie', 'bird of paradise']));
+  const badgeMonsteraCount = badgeActivePlants.filter(p => hasName(p, ['monstera'])).length;
+  const badgeHasStrelitzie = badgeActivePlants.some(p => hasName(p, ['strelitzie', 'bird of paradise']));
 
-  const desertCount = activePlants.filter(p => hasName(p, ['kaktus', 'cactus', 'aloe', 'sukkulente', 'succulent']) || p.waterInterval >= 21).length;
-
-  const isValidOrigin = (o: string | null | undefined) => {
-    if (!o) return false;
-    const trimmed = o.trim();
-    return trimmed !== '' && trimmed.toLowerCase() !== 'unbekannt' && trimmed.toLowerCase() !== 'unknown';
-  };
+  const badgeDesertCount = badgeActivePlants.filter(p => hasName(p, ['kaktus', 'cactus', 'aloe', 'sukkulente', 'succulent']) || p.waterInterval >= 21).length;
 
   const validOriginsList = activePlants.map(p => p.origin).filter(isValidOrigin) as string[];
-  const uniqueOrigins = new Set(validOriginsList);
-
   const originCounts: Record<string, number> = {};
   validOriginsList.forEach(o => {
     originCounts[o] = (originCounts[o] || 0) + 1;
@@ -89,51 +107,48 @@ export default async function StatisticsPage() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
-  const hasLemon = activePlants.some(p => p.apiId === 'crop_lemon' || hasName(p, ['lemon', 'zitrone', 'citrus']));
-  const hasCucumber = activePlants.some(p => p.apiId === 'crop_cucumber' || hasName(p, ['cucumber', 'gurke']));
-  const hasDramaQueen = activePlants.some(p => hasName(p, ['spathiphyllum', 'peace lily', 'einblatt', 'fittonia', 'mosaikpflanze']));
+  const badgeValidOriginsList = badgeActivePlants.map(p => p.origin).filter(isValidOrigin) as string[];
+  const badgeUniqueOrigins = new Set(badgeValidOriginsList);
+
+  const badgeHasLemon = badgeActivePlants.some(p => p.apiId === 'crop_lemon' || hasName(p, ['lemon', 'zitrone', 'citrus']));
+  const badgeHasCucumber = badgeActivePlants.some(p => p.apiId === 'crop_cucumber' || hasName(p, ['cucumber', 'gurke']));
+  const badgeHasDramaQueen = badgeActivePlants.some(p => hasName(p, ['spathiphyllum', 'peace lily', 'einblatt', 'fittonia', 'mosaikpflanze']));
   
   const twoMonthsAgo = new Date();
   twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-  const recentArchivedCount = plants.filter(p => p.isArchived && p.archivedAt && new Date(p.archivedAt) >= twoMonthsAgo).length;
+  const badgeRecentArchivedCount = plants.filter(p => p.isArchived && p.archivedAt && new Date(p.archivedAt) >= badgesResetAt && new Date(p.archivedAt) >= twoMonthsAgo).length;
 
-  const isGothic = (p: any) => {
-    if (p.sunlightInfo && p.sunlightInfo.toLowerCase().includes('shade')) return true;
-    if (hasName(p, ['dark', 'black', 'raven', 'schwarz', 'dunkel'])) return true;
-    return false;
-  };
-  const gothicCount = activePlants.filter(isGothic).length;
-
-  const uniqueLocations = new Set(plants.map(p => p.locationId).filter(Boolean));
-  const uniqueSpecies = new Set(activePlants.map(p => p.apiId || p.scientificName || p.name).filter(Boolean)).size;
+  const badgeGothicCount = badgeActivePlants.filter(isGothic).length;
+  const badgeUniqueLocations = new Set(badgePlants.map(p => p.locationId).filter(Boolean));
+  const badgeUniqueSpecies = new Set(badgeActivePlants.map(p => p.apiId || p.scientificName || p.name).filter(Boolean)).size;
   
-  const hasThyme = activePlants.some(p => p.apiId === 'crop_thyme' || hasName(p, ['thymian', 'thyme']));
-  const hasOregano = activePlants.some(p => p.apiId === 'crop_oregano' || hasName(p, ['oregano']));
-  const hasMarjoram = activePlants.some(p => p.apiId === 'crop_marjoram' || hasName(p, ['majoran', 'marjoram']));
-  const mediterraneanCount = [hasThyme, hasRosemary, hasOregano, hasBasil, hasMarjoram].filter(Boolean).length;
+  const badgeHasThyme = badgeActivePlants.some(p => p.apiId === 'crop_thyme' || hasName(p, ['thymian', 'thyme']));
+  const badgeHasOregano = badgeActivePlants.some(p => p.apiId === 'crop_oregano' || hasName(p, ['oregano']));
+  const badgeHasMarjoram = badgeActivePlants.some(p => p.apiId === 'crop_marjoram' || hasName(p, ['majoran', 'marjoram']));
+  const badgeMediterraneanCount = [badgeHasThyme, badgeHasRosemary, badgeHasOregano, badgeHasBasil, badgeHasMarjoram].filter(Boolean).length;
 
   const badges = {
-    rainmaker: totalWatered >= 100,
-    botanyNerd: activeCount >= 10,
-    harvestTime: hasVegetableOrFruit,
-    petSematary: archivedCount >= 1,
-    itSupport: hasEasterEggActive,
-    pizzaMargherita: hasTomato && hasBasil,
-    wedges: hasPotato && hasRosemary,
-    jungle: monsteraCount >= 4,
-    rainforest: monsteraCount >= 1 && hasStrelitzie,
-    desert: desertCount >= 3,
-    worldTour: uniqueOrigins.size >= 3,
-    ginTonic: hasLemon && hasCucumber,
-    dramaQueen: hasDramaQueen,
-    serialKiller: recentArchivedCount >= 3,
-    gothicGarden: gothicCount >= 3,
-    castle: uniqueLocations.size >= 6,
-    hauntedCastle: archivedCount >= 10,
-    diversityBronze: uniqueSpecies >= 5,
-    diversitySilver: uniqueSpecies >= 10,
-    diversityGold: uniqueSpecies >= 20,
-    mediterraneanMix: mediterraneanCount >= 3
+    rainmaker: badgeWaterings >= 100,
+    botanyNerd: badgeActiveCount >= 10,
+    harvestTime: badgeHasVegetableOrFruit,
+    petSematary: badgeArchivedCount >= 1,
+    itSupport: badgeHasEasterEggActive,
+    pizzaMargherita: badgeHasTomato && badgeHasBasil,
+    wedges: badgeHasPotato && badgeHasRosemary,
+    jungle: badgeMonsteraCount >= 4,
+    rainforest: badgeMonsteraCount >= 1 && badgeHasStrelitzie,
+    desert: badgeDesertCount >= 3,
+    worldTour: badgeUniqueOrigins.size >= 3,
+    ginTonic: badgeHasLemon && badgeHasCucumber,
+    dramaQueen: badgeHasDramaQueen,
+    serialKiller: badgeRecentArchivedCount >= 3,
+    gothicGarden: badgeGothicCount >= 3,
+    castle: badgeUniqueLocations.size >= 6,
+    hauntedCastle: badgeArchivedCount >= 10,
+    diversityBronze: badgeUniqueSpecies >= 5,
+    diversitySilver: badgeUniqueSpecies >= 10,
+    diversityGold: badgeUniqueSpecies >= 20,
+    mediterraneanMix: badgeMediterraneanCount >= 3
   };
 
   const oldestPlantDate = plants.length > 0 

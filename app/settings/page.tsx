@@ -25,6 +25,9 @@ export default function SettingsPage() {
   const [savingKey, setSavingKey] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
 
+  const [resettingStats, setResettingStats] = useState(false);
+  const [resettingBadges, setResettingBadges] = useState(false);
+
   // Edit location state
   const [editLocId, setEditLocId] = useState<string | null>(null);
   const [editLocName, setEditLocName] = useState("");
@@ -143,6 +146,42 @@ export default function SettingsPage() {
       fetchData();
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleResetStats = async () => {
+    const msg = lang === 'de' 
+      ? "Möchtest du wirklich alle Aktivitäten und Gieß-Zähler löschen? Deine Pflanzen und Badges bleiben erhalten." 
+      : "Are you sure you want to delete all activity logs and water counts? Plants and badges will remain.";
+    if (!confirm(msg)) return;
+    
+    setResettingStats(true);
+    try {
+      await fetch("/api/statistics/reset-stats", { method: "POST" });
+      alert(lang === 'de' ? "Statistiken wurden zurückgesetzt!" : "Statistics have been reset!");
+      fetchData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setResettingStats(false);
+    }
+  };
+
+  const handleResetBadges = async () => {
+    const msg = lang === 'de' 
+      ? "Möchtest du wirklich alle freigeschalteten Badges sperren? Sie müssen danach neu erspielt werden." 
+      : "Are you sure you want to relock all badges? You will have to earn them again.";
+    if (!confirm(msg)) return;
+    
+    setResettingBadges(true);
+    try {
+      await fetch("/api/statistics/reset-badges", { method: "POST" });
+      alert(lang === 'de' ? "Neue Saison gestartet! Alle Badges wurden zurückgesetzt." : "New season started! All badges have been reset.");
+      fetchData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setResettingBadges(false);
     }
   };
 
@@ -323,6 +362,49 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Privacy & Data */}
+        <section className="bg-surface p-6 rounded-3xl shadow-sm border border-red-500/20">
+          <h2 className="text-xl font-bold mb-1 text-red-500">{lang === 'de' ? 'Datenschutz & Daten' : 'Privacy & Data'}</h2>
+          <p className="text-sm text-surface-foreground/70 mb-6">
+            {lang === 'de' ? 'Achtung: Diese Aktionen können nicht rückgängig gemacht werden.' : 'Warning: These actions cannot be undone.'}
+          </p>
+
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-red-500/10 bg-red-500/5 rounded-2xl gap-4">
+              <div>
+                <h3 className="font-bold text-red-500 mb-1">{lang === 'de' ? 'Statistiken & Historie zurücksetzen' : 'Reset Statistics & History'}</h3>
+                <p className="text-xs text-surface-foreground/70 max-w-md">
+                  {lang === 'de' ? 'Löscht alle Gieß-Zähler und Aktivitäten. Pflanzen und Badges bleiben erhalten.' : 'Deletes all water counts and activities. Plants and badges remain.'}
+                </p>
+              </div>
+              <button 
+                onClick={handleResetStats}
+                disabled={resettingStats}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0 flex items-center gap-2"
+              >
+                {resettingStats ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                {lang === 'de' ? 'Stats löschen' : 'Reset Stats'}
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-red-500/10 bg-red-500/5 rounded-2xl gap-4">
+              <div>
+                <h3 className="font-bold text-red-500 mb-1">{lang === 'de' ? 'Alle Badges zurücksetzen' : 'Reset All Badges'}</h3>
+                <p className="text-xs text-surface-foreground/70 max-w-md">
+                  {lang === 'de' ? 'Startet eine neue Saison: Nur Pflanzen und Aktionen, die nach dem Reset hinzugefügt werden, zählen für neue Badges.' : 'Starts a new season: Only plants and actions added after the reset will count towards new badges.'}
+                </p>
+              </div>
+              <button 
+                onClick={handleResetBadges}
+                disabled={resettingBadges}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0 flex items-center gap-2"
+              >
+                {resettingBadges ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                {lang === 'de' ? 'Saison neustarten' : 'Reset Badges'}
+              </button>
+            </div>
+          </div>
+        </section>
 
       </div>
     </div>
