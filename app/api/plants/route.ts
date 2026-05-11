@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     let plants = await prisma.plant.findMany({
+      where: { isArchived: false },
       orderBy: { createdAt: "desc" },
       include: { location: true }
     });

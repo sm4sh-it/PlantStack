@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.6.2] - 2026-05-11
+### Fixed
+- **Dashboard Visibility**: Fixed a bug where archived plants would still erroneously show up on the main Dashboard instead of being exclusively listed in the "The lost ones" archive.
+
 ## [2.6.1] - 2026-05-11
 ### Added
 - **OpenPlantbook Integration**: Improved support and mapping for the external API.
