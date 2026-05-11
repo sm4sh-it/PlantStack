@@ -138,7 +138,7 @@ export default async function StatisticsPage() {
     jungle: badgeMonsteraCount >= 4,
     rainforest: badgeMonsteraCount >= 1 && badgeHasStrelitzie,
     desert: badgeDesertCount >= 3,
-    worldTour: badgeUniqueOrigins.size >= 3,
+    worldTour: badgeUniqueOrigins.size >= 8,
     ginTonic: badgeHasLemon && badgeHasCucumber,
     dramaQueen: badgeHasDramaQueen,
     serialKiller: badgeRecentArchivedCount >= 3,

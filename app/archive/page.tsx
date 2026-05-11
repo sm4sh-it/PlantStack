@@ -60,7 +60,7 @@ export default function ArchivePage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-3">
           <Ghost className="text-brand" size={32} />
-          {lang === 'de' ? 'Friedhof der Kuscheltiere' : 'Pet Sematary'}
+          {lang === 'de' ? 'Die Verlorenen' : 'The lost ones'}
         </h1>
         <p className="text-surface-foreground/70">
           {lang === 'de' ? 'Hier ruhen deine verlorenen Pflanzen. Du kannst sie wiederbeleben oder endgültig kompostieren.' : 'Here rest your lost plants. You can revive them or compost them permanently.'}

@@ -85,12 +85,44 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
   const CustomScatterTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      
+      let lightLoc = data.originalSunlight || (lang === 'de' ? 'Unbekannt' : 'Unknown');
+      const s = lightLoc.toLowerCase();
+      if (s.includes('full_sun')) lightLoc = lang === 'de' ? 'Viel Sonne' : 'Full Sun';
+      else if (s.includes('partial_shade')) lightLoc = lang === 'de' ? 'Halbschatten' : 'Partial Shade';
+      else if (s.includes('shade')) lightLoc = lang === 'de' ? 'Schatten' : 'Shade';
+
       return (
         <div className="bg-surface border border-black/10 dark:border-white/10 p-3 rounded-xl shadow-lg">
           <p className="font-bold text-sm mb-1">{data.name}</p>
-          <p className="text-xs opacity-70">Interval: {data.originalInterval} days</p>
-          <p className="text-xs opacity-70">Light: {data.originalSunlight || 'Unknown'}</p>
+          <p className="text-xs opacity-70">{lang === 'de' ? 'Intervall:' : 'Interval:'} {data.originalInterval} {lang === 'de' ? 'Tage' : 'days'}</p>
+          <p className="text-xs opacity-70">{lang === 'de' ? 'Licht:' : 'Light:'} {lightLoc}</p>
         </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomYAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    if (payload.value === 0) {
+      return (
+        <g transform={`translate(${x - 15},${y})`}>
+          <text x={0} y={0} textAnchor="middle" fill="currentColor" transform="rotate(-90)" fontSize={12}>
+            <tspan x={0} dy="-0.6em">Kaktus</tspan>
+            <tspan x={0} dy="1.2em">Vibes</tspan>
+          </text>
+        </g>
+      );
+    }
+    if (payload.value === 30) {
+      return (
+        <g transform={`translate(${x - 15},${y})`}>
+          <text x={0} y={0} textAnchor="middle" fill="currentColor" transform="rotate(-90)" fontSize={12}>
+            <tspan x={0} dy="-0.6em">Wasser</tspan>
+            <tspan x={0} dy="1.2em">Junkie</tspan>
+          </text>
+        </g>
       );
     }
     return null;
@@ -139,7 +171,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
           />
           <BadgeCard 
             icon={<Ghost size={32} />}
-            title={lang === 'de' ? 'Friedhof der Kuscheltiere' : 'Pet Sematary'}
+            title={lang === 'de' ? 'Die Verlorenen' : 'The lost ones'}
             desc={lang === 'de' ? 'Eine Pflanze verloren' : 'Lost a plant'}
             unlocked={badges.petSematary}
             color="text-gray-400"
@@ -325,7 +357,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
 
       {/* Green Thumb Matrix */}
       <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm h-[500px] flex flex-col">
-        <h2 className="text-xl font-bold mb-4">Green Thumb Matrix</h2>
+        <h2 className="text-xl font-bold mb-4">survival coordinates</h2>
         <div className="flex-1 w-full min-h-0 relative">
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart margin={{ top: 30, right: 30, bottom: 50, left: 30 }}>
@@ -345,8 +377,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
                 name="Water" 
                 domain={[0, 30]} 
                 ticks={[0,30]} 
-                tick={{ angle: -90, textAnchor: 'middle', fill: 'currentColor', dx: -15 }} 
-                tickFormatter={(val) => val === 0 ? (lang === 'de' ? 'Kaktus-Vibes' : 'Cactus Vibes') : val === 30 ? (lang === 'de' ? 'Wasser-Junkie' : 'Water Junkie') : ''} 
+                tick={<CustomYAxisTick />}
               />
               <ZAxis range={[100, 100]} />
               <Tooltip content={<CustomScatterTooltip />} cursor={{strokeDasharray: '3 3'}} />

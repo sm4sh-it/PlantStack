@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.6.1] - 2026-05-11
+### Added
+- **OpenPlantbook Integration**: Improved support and mapping for the external API.
+### Changed
+- **UI & Formatting**: Renamed "Pet Sematary" to "The lost ones" and updated the "Green Thumb Matrix" to "survival coordinates". 
+- **Matrix Improvements**: The Y-Axis now features proper vertical, multi-line labels ("Wasser Junkie" & "Kaktus Vibes") and the scatter points translate raw sunlight data (like `Full_Sun`) into readable localized terms.
+
+### Shoutout / Special Thanks
+Huge shoutout to slaxor505 for adding the 'Origin' field to the OpenPlantbook API! (https://github.com/slaxor505/OpenPlantbook-client)
+
 ## [2.6.0] - 2026-05-10
 ### Added
 - **Gamification "New Season"**: You can now reset your Gamification Badges via the Settings menu without deleting your plants. This starts a "New Season", meaning only plants and watering activities added *after* the reset will count towards unlocking new badges!
