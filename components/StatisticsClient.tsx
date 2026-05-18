@@ -108,7 +108,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
     if (payload.value === 0) {
       return (
         <g transform={`translate(${x - 15},${y})`}>
-          <text x={0} y={0} textAnchor="middle" fill="currentColor" transform="rotate(-90)" fontSize={12}>
+          <text x={0} y={0} textAnchor="middle" transform="rotate(-90)" fontSize={12} className="fill-surface-foreground dark:fill-zinc-300 font-medium">
             <tspan x={0} dy="-0.6em">Kaktus</tspan>
             <tspan x={0} dy="1.2em">Vibes</tspan>
           </text>
@@ -118,7 +118,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
     if (payload.value === 30) {
       return (
         <g transform={`translate(${x - 15},${y})`}>
-          <text x={0} y={0} textAnchor="middle" fill="currentColor" transform="rotate(-90)" fontSize={12}>
+          <text x={0} y={0} textAnchor="middle" transform="rotate(-90)" fontSize={12} className="fill-surface-foreground dark:fill-zinc-300 font-medium">
             <tspan x={0} dy="-0.6em">Wasser</tspan>
             <tspan x={0} dy="1.2em">Junkie</tspan>
           </text>
@@ -325,14 +325,14 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
         <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 h-96 flex flex-col">
           <h3 className="text-lg font-bold mb-4">{lang === 'de' ? 'Die Durstigen (Top 5)' : 'The Thirsty Ones (Top 5)'}</h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={thirstyData} layout="vertical" margin={{ top: 0, right: 0, left: 40, bottom: 0 }}>
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} className="text-xs" width={100} />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'currentColor' }} className="text-xs text-surface-foreground dark:text-zinc-300 font-medium" width={100} />
                 <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={tooltipStyle} itemStyle={{color: 'var(--foreground)'}} />
                 <Bar dataKey="watered" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
@@ -346,7 +346,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.topOrigins} layout="vertical" margin={{ top: 0, right: 0, left: 80, bottom: 0 }}>
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} className="text-xs" width={80} />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'currentColor' }} className="text-xs text-surface-foreground dark:text-zinc-300 font-medium" width={80} />
                 <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={tooltipStyle} itemStyle={{color: 'var(--foreground)'}} />
                 <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
@@ -356,11 +356,11 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
       </div>
 
       {/* Green Thumb Matrix */}
-      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm h-[500px] flex flex-col">
+      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm h-[500px] flex flex-col [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
         <h2 className="text-xl font-bold mb-4">survival coordinates</h2>
         <div className="flex-1 w-full min-h-0 relative">
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 30, right: 30, bottom: 50, left: 30 }}>
+            <ScatterChart margin={{ top: 30, right: 15, bottom: 50, left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis 
                 type="number" 
@@ -369,6 +369,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
                 domain={[0, 4]} 
                 ticks={[1,2,3]} 
                 tick={{ fill: 'currentColor' }} 
+                className="text-surface-foreground dark:text-zinc-300 font-medium text-xs"
                 tickFormatter={(val) => val === 1 ? (lang === 'de' ? 'Schattenparker' : 'Shade Dweller') : val === 3 ? (lang === 'de' ? 'Sonnenanbeter' : 'Sun Worshipper') : ''} 
               />
               <YAxis 

@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.6.3] - 2026-05-18
+### Changed
+- **About Page Layout**: Slightly widened the content area on desktop for better readability while perfectly maintaining the mobile experience.
+- **Chart Contrast & Formatting**: Explicitly boosted text legibility for the chart axes in Dark Mode and removed unwanted focus/click outlines on interactive elements. Adjusted the "survival coordinates" layout to utilize more horizontal space on smaller screens.
+
 ## [2.6.2] - 2026-05-11
 ### Fixed
 - **Dashboard Visibility**: Fixed a bug where archived plants would still erroneously show up on the main Dashboard instead of being exclusively listed in the "The lost ones" archive.

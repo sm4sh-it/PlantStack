@@ -18,7 +18,7 @@ export default async function AboutPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto pb-24 px-4 pt-12">
+    <div className="max-w-4xl mx-auto pb-24 px-4 pt-12">
       <div className="flex flex-col items-center justify-center text-center mb-12">
         <div className="p-3 rounded-full bg-brand-light dark:bg-brand-dark/30 text-brand mb-3 shadow-lg">
           <Leaf size={32} />
@@ -30,8 +30,8 @@ export default async function AboutPage() {
         </div>
       </div>
 
-      <div className="bg-surface p-8 rounded-3xl shadow-sm border border-black/5 dark:border-white/5">
-        <div className="prose dark:prose-invert prose-brand max-w-none">
+      <div className="bg-surface p-6 md:p-8 rounded-3xl shadow-sm border border-black/5 dark:border-white/5">
+        <div className="prose dark:prose-invert prose-brand max-w-none prose-p:text-[15px] prose-li:text-[15px] md:prose-sm">
           <Markdown>{changelog}</Markdown>
         </div>
       </div>

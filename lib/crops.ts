@@ -830,5 +830,114 @@ export const cropsData: Crop[] = [
     good_neighbors: [],
     bad_neighbors: [],
     frost_hardy: false
-  }
+  },
+{
+    id: "crop_easteregg_mattr",
+    category: "herb",
+    name: { de: "mattr", en: "mattr" },
+    sunlight: "full_sun",
+    watering_interval_days: 2,
+    pruning: {
+      de: "Sieht so aus, als wolltest du Kaffee kochen. Soll ich dir dabei helfen? (Tipp: Einmal im Jahr zurückschneiden).",
+      en: "It looks like you're trying to brew coffee. Would you like some help with that? (Tip: Prune once a year)."
+    },
+    sowing_outdoors_month: 5,
+    harvest_months: [5],
+    nutrition_level: "heavy",
+    spacing_cm: "80x80",
+    good_neighbors: [],
+    bad_neighbors: [],
+    frost_hardy: false
+  },
+{
+    id: "crop_easteregg_hugo",
+    category: "vegetable",
+    name: { de: "HugoBugo", en: "HugoBugo" },
+    sunlight: "partial_shade",
+    watering_interval_days: 1,
+    pruning: {
+      de: "Sieht so aus, als wolltest du Kaffee kochen. Soll ich dir dabei helfen? (Tipp: Einmal im Jahr zurückschneiden).",
+      en: "It looks like you're trying to brew coffee. Would you like some help with that? (Tip: Prune once a year)."
+    },
+    sowing_outdoors_month: 6,
+    harvest_months: [6],
+    nutrition_level: "heavy",
+    spacing_cm: "200x200",
+    good_neighbors: [],
+    bad_neighbors: [],
+    frost_hardy: true
+  },
+{
+    id: "crop_easteregg_dispo",
+    category: "fruit",
+    name: { de: "DispoZwegat", en: "DispoZwegat" },
+    sunlight: "shade",
+    watering_interval_days: 4,
+    pruning: {
+      de: "Sieht so aus, als wolltest du Kaffee kochen. Soll ich dir dabei helfen? (Tipp: Einmal im Jahr zurückschneiden).",
+      en: "It looks like you're trying to brew coffee. Would you like some help with that? (Tip: Prune once a year)."
+    },
+    sowing_outdoors_month: 10,
+    harvest_months: [10],
+    nutrition_level: "medium",
+    spacing_cm: "50x50",
+    good_neighbors: [],
+    bad_neighbors: [],
+    frost_hardy: false
+  },
+{
+    id: "crop_easteregg_sm4sh",
+    category: "fruit",
+    name: { de: "sm4sh", en: "sm4sh" },
+    sunlight: "full_sun",
+    watering_interval_days: 3,
+    pruning: {
+      de: "Sieht so aus, als wolltest du Kaffee kochen. Soll ich dir dabei helfen? (Tipp: Einmal im Jahr zurückschneiden).",
+      en: "It looks like you're trying to brew coffee. Would you like some help with that? (Tip: Prune once a year)."
+    },
+    sowing_outdoors_month: 1,
+    harvest_months: [1],
+    nutrition_level: "medium",
+    spacing_cm: "100x100",
+    good_neighbors: [],
+    bad_neighbors: [],
+    frost_hardy: false
+  },
+{
+    id: "crop_easteregg_Lino",
+    category: "vegetable",
+    name: { de: "LinoZeros", en: "LinoZeros" },
+    sunlight: "shade",
+    watering_interval_days: 3,
+    pruning: {
+      de: "Sieht so aus, als wolltest du Kaffee kochen. Soll ich dir dabei helfen? (Tipp: Einmal im Jahr zurückschneiden).",
+      en: "It looks like you're trying to brew coffee. Would you like some help with that? (Tip: Prune once a year)."
+    },
+    sowing_outdoors_month: 5,
+    harvest_months: [5],
+    nutrition_level: "heavy",
+    spacing_cm: "100x100",
+    good_neighbors: [],
+    bad_neighbors: [],
+    frost_hardy: true
+  },
+{
+    id: "crop_easteregg_Coertez",
+    category: "berry",
+    name: { de: "Coertez", en: "Coertez" },
+    sunlight: "full_sun",
+    watering_interval_days: 2,
+    pruning: {
+      de: "Sieht so aus, als wolltest du Kaffee kochen. Soll ich dir dabei helfen? (Tipp: Einmal im Jahr zurückschneiden).",
+      en: "It looks like you're trying to brew coffee. Would you like some help with that? (Tip: Prune once a year)."
+    },
+    sowing_outdoors_month: 1,
+    harvest_months: [1],
+    nutrition_level: "heavy",
+    spacing_cm: "160x160",
+    good_neighbors: [],
+    bad_neighbors: [],
+    frost_hardy: true
+  },
+
 ];
