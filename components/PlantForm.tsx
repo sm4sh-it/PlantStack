@@ -234,20 +234,20 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                   {/* Left Column: Umgebung */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-1 group relative">
-                      <label className="text-sm font-medium">Umgebung *</label>
+                      <label className="text-sm font-medium">{t('environmentAndRoom', lang)} *</label>
                       <div className="relative flex items-center cursor-help">
                         <Info size={16} className="text-surface-foreground/40 hover:text-brand transition-colors" />
                         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-zinc-900 text-zinc-100 text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none z-50 text-center shadow-lg border border-white/10">
-                          Bestimmt das Wetter-Verhalten. &apos;Draußen (offen)&apos; reagiert auf Regen und Hitze. &apos;Draußen (überdacht)&apos; ignoriert Regen, trocknet bei Hitze aber extrem schnell aus.
+                          {t('environmentTooltip', lang)}
                         </div>
                       </div>
                     </div>
                     
                     <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg w-full h-[42px]">
                       {[
-                        { label: 'Drinnen', value: 'Drinnen' },
-                        { label: 'Draußen (offen)', value: 'Draußen' },
-                        { label: 'Draußen (überdacht)', value: 'Balkon' }
+                        { label: t('indoorPlacement', lang), value: 'Drinnen' },
+                        { label: t('outdoorOpen', lang), value: 'Draußen' },
+                        { label: t('outdoorCovered', lang), value: 'Balkon' }
                       ].map(p => (
                         <button 
                           key={p.value}
@@ -263,7 +263,7 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
 
                   {/* Right Column: Raum */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Raum *</label>
+                    <label className="text-sm font-medium">{t('rooms', lang)} *</label>
                     <select 
                       required 
                       className="w-full h-[42px] bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 outline-none focus:border-brand appearance-none" 
@@ -280,24 +280,24 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-1 group relative">
-                    <label className="text-sm font-medium">Klassifizierung *</label>
+                    <label className="text-sm font-medium">{t('classification', lang)} *</label>
                     <div className="relative flex items-center cursor-help">
                       <Info size={16} className="text-surface-foreground/40 hover:text-brand transition-colors" />
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-zinc-900 text-zinc-100 text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none z-50 text-center shadow-lg border border-white/10">
-                        Wird für die Statistik (Garden Vibe) genutzt, um den Anteil deiner essbaren Pflanzen zu berechnen.
+                        {t('classificationTooltip', lang)}
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg w-full md:w-1/2 h-[42px]">
-                    {['Zierpflanze', 'Nutzpflanze'].map(t => (
+                    {['Zierpflanze', 'Nutzpflanze'].map(tVal => (
                       <button 
-                        key={t}
+                        key={tVal}
                         type="button" 
-                        onClick={() => setFormData({...formData, plantType: t})} 
-                        className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${formData.plantType === t ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
+                        onClick={() => setFormData({...formData, plantType: tVal})} 
+                        className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${formData.plantType === tVal ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
                       >
-                        {t}
+                        {tVal === 'Zierpflanze' ? t('decorative', lang) : t('edibleHerbs', lang)}
                       </button>
                     ))}
                   </div>

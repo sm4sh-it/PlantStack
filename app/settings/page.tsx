@@ -98,9 +98,9 @@ export default function SettingsPage() {
         setLat(best.latitude.toString());
         setLon(best.longitude.toString());
         setLocName(`${best.name}, ${best.country || ""}`);
-      } else {
-        alert("Location not found / Ort nicht gefunden");
-      }
+        } else {
+          alert(t('locationNotFound', lang));
+        }
     } catch (err) {
       console.error(err);
     } finally {
@@ -140,7 +140,7 @@ export default function SettingsPage() {
   };
 
   const handleDeleteLocation = async (id: string) => {
-    if (!confirm("Are you sure? Plants in this location will be deleted due to constraints!")) return;
+    if (!confirm(t('deleteLocationWarning', lang))) return;
     try {
       await fetch(`/api/locations/${id}`, { method: "DELETE" });
       fetchData();
@@ -150,15 +150,12 @@ export default function SettingsPage() {
   };
 
   const handleResetStats = async () => {
-    const msg = lang === 'de' 
-      ? "Möchtest du wirklich alle Aktivitäten und Gieß-Zähler löschen? Deine Pflanzen und Badges bleiben erhalten." 
-      : "Are you sure you want to delete all activity logs and water counts? Plants and badges will remain.";
-    if (!confirm(msg)) return;
+    if (!confirm(t('resetStatsWarning', lang))) return;
     
     setResettingStats(true);
     try {
       await fetch("/api/statistics/reset-stats", { method: "POST" });
-      alert(lang === 'de' ? "Statistiken wurden zurückgesetzt!" : "Statistics have been reset!");
+      alert(t('statsResetSuccess', lang));
       fetchData();
     } catch (e) {
       console.error(e);
@@ -168,15 +165,12 @@ export default function SettingsPage() {
   };
 
   const handleResetBadges = async () => {
-    const msg = lang === 'de' 
-      ? "Möchtest du wirklich alle freigeschalteten Badges sperren? Sie müssen danach neu erspielt werden." 
-      : "Are you sure you want to relock all badges? You will have to earn them again.";
-    if (!confirm(msg)) return;
+    if (!confirm(t('resetBadgesWarning', lang))) return;
     
     setResettingBadges(true);
     try {
       await fetch("/api/statistics/reset-badges", { method: "POST" });
-      alert(lang === 'de' ? "Neue Saison gestartet! Alle Badges wurden zurückgesetzt." : "New season started! All badges have been reset.");
+      alert(t('badgesResetSuccess', lang));
       fetchData();
     } catch (e) {
       console.error(e);
@@ -198,7 +192,7 @@ export default function SettingsPage() {
         
         {/* Appearance & General */}
         <section className="bg-surface p-6 rounded-3xl shadow-sm border border-black/5 dark:border-white/5">
-          <h2 className="text-xl font-bold mb-4">General Settings</h2>
+          <h2 className="text-xl font-bold mb-4">{t('generalSettings', lang)}</h2>
           
           <form onSubmit={handleSaveConfig} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -212,7 +206,7 @@ export default function SettingsPage() {
                   <option value="en">English</option>
                   <option value="de">Deutsch</option>
                 </select>
-                <p className="text-xs text-surface-foreground/50 mt-1">To add more, edit <code className="bg-black/5 px-1 rounded">lib/i18n.ts</code>.</p>
+                <p className="text-xs text-surface-foreground/50 mt-1">{t('toAddMoreEdit', lang)} <code className="bg-black/5 px-1 rounded">lib/i18n.ts</code>.</p>
               </div>
 
               <div className="space-y-1">
@@ -222,9 +216,9 @@ export default function SettingsPage() {
                   value={gridCols}
                   onChange={(e) => setGridCols(parseInt(e.target.value))}
                 >
-                  <option value={4}>4 Columns (Default)</option>
-                  <option value={5}>5 Columns</option>
-                  <option value={6}>6 Columns</option>
+                  <option value={4}>4 {t('columnsDefault', lang)}</option>
+                  <option value={5}>5 {t('columns', lang)}</option>
+                  <option value={6}>6 {t('columns', lang)}</option>
                 </select>
               </div>
             </div>
@@ -293,7 +287,7 @@ export default function SettingsPage() {
 
             <div className="flex justify-between items-center pt-2">
               <button onClick={() => setWeatherExpert(!weatherExpert)} className="text-xs text-surface-foreground/50 hover:text-brand underline">
-                {weatherExpert ? "Use Simple Search" : "Expert Mode (Lat/Lon)"}
+                {weatherExpert ? t('useSimpleSearch', lang) : t('expertMode', lang)}
               </button>
               <button 
                 onClick={handleSaveConfig}
@@ -364,17 +358,17 @@ export default function SettingsPage() {
 
         {/* Privacy & Data */}
         <section className="bg-surface p-6 rounded-3xl shadow-sm border border-red-500/20">
-          <h2 className="text-xl font-bold mb-1 text-red-500">{lang === 'de' ? 'Datenschutz & Daten' : 'Privacy & Data'}</h2>
+          <h2 className="text-xl font-bold mb-1 text-red-500">{t('privacyData', lang)}</h2>
           <p className="text-sm text-surface-foreground/70 mb-6">
-            {lang === 'de' ? 'Achtung: Diese Aktionen können nicht rückgängig gemacht werden.' : 'Warning: These actions cannot be undone.'}
+            {t('warningCannotUndo', lang)}
           </p>
 
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-red-500/10 bg-red-500/5 rounded-2xl gap-4">
               <div>
-                <h3 className="font-bold text-red-500 mb-1">{lang === 'de' ? 'Statistiken & Historie zurücksetzen' : 'Reset Statistics & History'}</h3>
+                <h3 className="font-bold text-red-500 mb-1">{t('resetStatsHistory', lang)}</h3>
                 <p className="text-xs text-surface-foreground/70 max-w-md">
-                  {lang === 'de' ? 'Löscht alle Gieß-Zähler und Aktivitäten. Pflanzen und Badges bleiben erhalten.' : 'Deletes all water counts and activities. Plants and badges remain.'}
+                  {t('resetStatsHistoryDesc', lang)}
                 </p>
               </div>
               <button 
@@ -383,15 +377,15 @@ export default function SettingsPage() {
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0 flex items-center gap-2"
               >
                 {resettingStats ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                {lang === 'de' ? 'Stats löschen' : 'Reset Stats'}
+                {t('resetStatsBtn', lang)}
               </button>
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-red-500/10 bg-red-500/5 rounded-2xl gap-4">
               <div>
-                <h3 className="font-bold text-red-500 mb-1">{lang === 'de' ? 'Alle Badges zurücksetzen' : 'Reset All Badges'}</h3>
+                <h3 className="font-bold text-red-500 mb-1">{t('resetAllBadges', lang)}</h3>
                 <p className="text-xs text-surface-foreground/70 max-w-md">
-                  {lang === 'de' ? 'Startet eine neue Saison: Nur Pflanzen und Aktionen, die nach dem Reset hinzugefügt werden, zählen für neue Badges.' : 'Starts a new season: Only plants and actions added after the reset will count towards new badges.'}
+                  {t('resetAllBadgesDesc', lang)}
                 </p>
               </div>
               <button 
@@ -400,7 +394,7 @@ export default function SettingsPage() {
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0 flex items-center gap-2"
               >
                 {resettingBadges ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                {lang === 'de' ? 'Saison neustarten' : 'Reset Badges'}
+                {t('resetBadgesBtn', lang)}
               </button>
             </div>
           </div>

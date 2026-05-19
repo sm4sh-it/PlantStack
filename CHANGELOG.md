@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.7.2] - 2026-05-19
+### Changed
+- **i18n Translation Update**: Fully mapped all newly added features and UI elements into the central translation dictionary. This includes specific translations for the Plant Modal (Environment, Room, Classification) and accurate translations for the Statistics Radar Chart axes.
+- **i18n Settings Sweep**: Replaced all remaining hardcoded UI texts in the Settings panel with translation variables, ensuring 100% localization support for alerts and confirmation dialogs.
+
 ## [2.7.1] - 2026-05-19
 ### Changed
 - **Weather Logic Multipliers**: Drastically increased the heat reduction multipliers for "Draußen" and "Balkon" to 40% (Tier 1) and 70% (Tier 2).

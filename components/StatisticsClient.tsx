@@ -298,14 +298,14 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
         </div>
         <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
           <span className="text-2xl font-bold text-brand mb-2">{oldestDateString}</span>
-          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Älteste Pflanze' : 'Oldest plant'}</span>
+          <span className="text-sm text-surface-foreground/70">{t('oldestPlant', lang)}</span>
         </div>
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
         <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 h-96 flex flex-col">
-          <h3 className="text-lg font-bold mb-4">{lang === 'de' ? 'Die Durstigen (Top 5)' : 'The Thirsty Ones (Top 5)'}</h3>
+          <h3 className="text-lg font-bold mb-4">{t('theThirstyOnes', lang)}</h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={thirstyData} layout="vertical" margin={{ top: 0, right: 0, left: 40, bottom: 0 }}>
@@ -319,7 +319,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
         </div>
 
         <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 h-96 flex flex-col">
-          <h3 className="text-lg font-bold mb-4">{lang === 'de' ? 'Top 5 Herkünfte' : 'Top 5 Origins'}</h3>
+          <h3 className="text-lg font-bold mb-4">{t('topOrigins', lang)}</h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.topOrigins} layout="vertical" margin={{ top: 0, right: 0, left: 80, bottom: 0 }}>
@@ -338,7 +338,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
         
         {/* Fadenkreuz Scatter */}
         <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm aspect-square flex flex-col relative overflow-hidden">
-          <h2 className="text-xl font-bold mb-4 z-10 relative">survival coordinates</h2>
+          <h2 className="text-xl font-bold mb-4 z-10 relative">{t('survivalCoordinates', lang)}</h2>
           <div className="flex-1 w-full min-h-0 relative z-0">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -353,19 +353,30 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
             </ResponsiveContainer>
             
             {/* Edge Labels */}
-            <div className="absolute top-2 w-full text-center text-xs text-surface-foreground/40 font-bold uppercase tracking-wider pointer-events-none leading-tight">{lang === 'de' ? <>Wasser<br/>Junkie</> : <>Water<br/>Junkie</>}</div>
-            <div className="absolute bottom-2 w-full text-center text-xs text-surface-foreground/40 font-bold uppercase tracking-wider pointer-events-none leading-tight">{lang === 'de' ? <>Kaktus<br/>Vibes</> : <>Cactus<br/>Vibes</>}</div>
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-surface-foreground/40 font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">{lang === 'de' ? 'Schattenparker' : 'Shade Dweller'}</div>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-xs text-surface-foreground/40 font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">{lang === 'de' ? 'Sonnenanbeter' : 'Sun Worshipper'}</div>
+            <div className="absolute top-2 w-full text-center text-xs text-surface-foreground/40 font-bold uppercase tracking-wider pointer-events-none leading-tight whitespace-pre-line">{t('waterJunkie', lang)}</div>
+            <div className="absolute bottom-2 w-full text-center text-xs text-surface-foreground/40 font-bold uppercase tracking-wider pointer-events-none leading-tight whitespace-pre-line">{t('cactusVibes', lang)}</div>
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-surface-foreground/40 font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">{t('shadeDweller', lang)}</div>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-xs text-surface-foreground/40 font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">{t('sunWorshipper', lang)}</div>
           </div>
         </section>
 
         {/* Radar Chart */}
         <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm aspect-square flex flex-col relative overflow-hidden">
-          <h2 className="text-xl font-bold mb-4">{lang === 'de' ? 'The Garden Vibe' : 'The Garden Vibe'}</h2>
+          <h2 className="text-xl font-bold mb-4">{t('theGardenVibe', lang)}</h2>
           <div className="flex-1 w-full min-h-0 relative z-0">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart outerRadius="65%" data={stats.radarData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <RadarChart outerRadius="65%" data={stats.radarData.map((d: any) => ({
+                ...d, 
+                subject: t(
+                  d.subject === 'Durst' ? 'thirst' :
+                  d.subject === 'Lichthunger' ? 'lightNeed' :
+                  d.subject === 'Pflegeleichtigkeit' ? 'easeOfCare' :
+                  d.subject === 'Artenvielfalt' ? 'diversity' :
+                  d.subject === 'Nutzgarten-Anteil' ? 'edibleRatio' :
+                  d.subject === 'Freiluft-Faktor' ? 'outdoorFactor' : d.subject as any, 
+                  lang
+                )
+              }))} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <PolarGrid stroke="currentColor" className="opacity-10 dark:opacity-20" />
                 <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 11 }} className="text-surface-foreground dark:text-zinc-300 font-bold tracking-wide" />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
@@ -382,10 +393,10 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Activity className="text-brand" /> 
-            {lang === 'de' ? 'Aktivitäten' : 'Activities'}
+            {t('activities', lang)}
           </h2>
           <div className="flex gap-4 text-sm font-bold bg-black/5 dark:bg-white/5 px-4 py-2 rounded-xl">
-            <span className="opacity-70">{lang === 'de' ? 'Gesamt Jahr:' : 'Yearly Total:'}</span>
+            <span className="opacity-70">{t('yearlyTotal', lang)}</span>
             <span className="text-blue-500">{stats.eventSummary.yearWater} 💧</span>
             <span className="text-amber-500">{stats.eventSummary.yearFertilize} 🧪</span>
             <span className="text-green-500">{stats.eventSummary.yearCreate} 🌱</span>
@@ -394,19 +405,19 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-blue-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Gegossen (Monat)' : 'Watered (Month)'}</p>
+            <p className="text-sm opacity-70 mb-1">{t('wateredMonth', lang)}</p>
             <p className="text-2xl font-bold">{stats.eventSummary.monthWater}</p>
           </div>
           <div className="p-4 bg-amber-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Gedüngt (Monat)' : 'Fertilized (Month)'}</p>
+            <p className="text-sm opacity-70 mb-1">{t('fertilizedMonth', lang)}</p>
             <p className="text-2xl font-bold">{stats.eventSummary.monthFertilize}</p>
           </div>
           <div className="p-4 bg-green-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Neu gepflanzt (Monat)' : 'New (Month)'}</p>
+            <p className="text-sm opacity-70 mb-1">{t('newPlantedMonth', lang)}</p>
             <p className="text-2xl font-bold">{stats.eventSummary.monthCreate}</p>
           </div>
           <div className="p-4 bg-gray-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{lang === 'de' ? 'Archiviert (Monat)' : 'Archived (Month)'}</p>
+            <p className="text-sm opacity-70 mb-1">{t('archivedMonth', lang)}</p>
             <p className="text-2xl font-bold">{stats.eventSummary.monthArchive}</p>
           </div>
         </div>
