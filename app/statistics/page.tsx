@@ -190,13 +190,60 @@ export default async function StatisticsPage() {
     return 2; // Default to partial
   };
 
-  const matrixData = activePlants.map(p => ({
-    name: p.name,
-    x: getSunlightScore(p), // 1 = Shade, 2 = Partial, 3 = Sun
-    y: Math.max(1, 30 - p.waterInterval), // Inverted: low days -> high Y
-    originalInterval: p.waterInterval,
-    originalSunlight: p.sunlightInfo
-  }));
+  const matrixData = activePlants.map(p => {
+    const baseX = getSunlightScore(p);
+    const baseY = Math.max(1, 30 - p.waterInterval);
+    
+    // Random jitter to prevent overlapping dots (clusters)
+    const jitterX = (Math.random() - 0.5) * 0.3;
+    const jitterY = (Math.random() - 0.5) * 1.5;
+
+    return {
+      name: p.name,
+      x: baseX + jitterX,
+      y: baseY + jitterY,
+      originalInterval: p.waterInterval,
+      originalSunlight: p.sunlightInfo
+    };
+  });
+
+  // Calculate Radar Data (The Garden Vibe)
+  let totalWaterInterval = 0;
+  let totalLightScore = 0;
+  let diversitySet = new Set<string>();
+  let nutzCount = 0;
+  let freiluftCount = 0;
+
+  activePlants.forEach(p => {
+    totalWaterInterval += Math.min(30, p.waterInterval); // Cap at 30
+    totalLightScore += getSunlightScore(p);
+    if (p.apiId || p.scientificName || p.name) {
+      diversitySet.add(p.apiId || p.scientificName || p.name);
+    }
+    const pType = (p as any).plantType || "Zierpflanze";
+    const placement = (p as any).placement || "Drinnen";
+    if (pType === "Nutzpflanze") nutzCount++;
+    if (placement === "Draußen" || placement === "Balkon" || p.locationType === "OUTDOOR") freiluftCount++;
+  });
+
+  const avgWater = activePlants.length ? (totalWaterInterval / activePlants.length) : 15;
+  const avgLight = activePlants.length ? (totalLightScore / activePlants.length) : 2;
+  
+  const scoreWater = Math.max(0, 100 - (avgWater / 30) * 100); // 1 = 100%, 30 = 0%
+  const scoreLight = (avgLight / 3) * 100; // 3 = 100%, 1 = 33%
+  const scoreDiversity = Math.min(100, (diversitySet.size / 15) * 100); // 15 unique = 100%
+  const scoreCare = Math.min(100, (avgWater / 21) * 100); // 21+ days interval = 100% (easy care)
+  const scoreNutz = activePlants.length ? (nutzCount / activePlants.length) * 100 : 0;
+  const scoreFreiluft = activePlants.length ? (freiluftCount / activePlants.length) * 100 : 0;
+
+  const radarData = [
+    { subject: 'Durst', A: scoreWater, fullMark: 100 },
+    { subject: 'Lichthunger', A: scoreLight, fullMark: 100 },
+    { subject: 'Pflegeleichtigkeit', A: scoreCare, fullMark: 100 },
+    { subject: 'Artenvielfalt', A: scoreDiversity, fullMark: 100 },
+    { subject: 'Nutzgarten-Anteil', A: scoreNutz, fullMark: 100 },
+    { subject: 'Freiluft-Faktor', A: scoreFreiluft, fullMark: 100 },
+  ];
 
   const stats = {
     totalWatered,
@@ -206,7 +253,8 @@ export default async function StatisticsPage() {
     oldestPlantDate,
     eventSummary,
     topOrigins,
-    matrixData
+    matrixData,
+    radarData
   };
 
   return (

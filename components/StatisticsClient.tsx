@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { ScatterChart, Scatter, ZAxis, CartesianGrid, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { ScatterChart, Scatter, ZAxis, CartesianGrid, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ReferenceLine } from "recharts";
 import { Droplet, Trophy, Apple, Ghost, Monitor, BarChart2, Globe, Pizza, Utensils, CloudRain, Sun, TreePine, GlassWater, Crown, Skull, MoonStar, Activity, Castle, Sprout } from "lucide-react";
 import { t } from "@/lib/i18n";
 
@@ -39,6 +39,7 @@ type StatisticsClientProps = {
     eventSummary: any;
     topOrigins: any[];
     matrixData: any[];
+    radarData: any[];
   };
 };
 
@@ -103,30 +104,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
     return null;
   };
 
-  const CustomYAxisTick = (props: any) => {
-    const { x, y, payload } = props;
-    if (payload.value === 0) {
-      return (
-        <g transform={`translate(${x - 15},${y})`}>
-          <text x={0} y={0} textAnchor="middle" transform="rotate(-90)" fontSize={12} className="fill-surface-foreground dark:fill-zinc-300 font-medium">
-            <tspan x={0} dy="-0.6em">Kaktus</tspan>
-            <tspan x={0} dy="1.2em">Vibes</tspan>
-          </text>
-        </g>
-      );
-    }
-    if (payload.value === 30) {
-      return (
-        <g transform={`translate(${x - 15},${y})`}>
-          <text x={0} y={0} textAnchor="middle" transform="rotate(-90)" fontSize={12} className="fill-surface-foreground dark:fill-zinc-300 font-medium">
-            <tspan x={0} dy="-0.6em">Wasser</tspan>
-            <tspan x={0} dy="1.2em">Junkie</tspan>
-          </text>
-        </g>
-      );
-    }
-    return null;
-  };
+
 
   return (
     <div className="pb-24 space-y-8 animate-in fade-in duration-500">
@@ -355,38 +333,49 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
         </div>
       </div>
 
-      {/* Green Thumb Matrix */}
-      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm h-[500px] flex flex-col [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
-        <h2 className="text-xl font-bold mb-4">survival coordinates</h2>
-        <div className="flex-1 w-full min-h-0 relative">
-          <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 30, right: 15, bottom: 50, left: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis 
-                type="number" 
-                dataKey="x" 
-                name="Light" 
-                domain={[0, 4]} 
-                ticks={[1,2,3]} 
-                tick={{ fill: 'currentColor' }} 
-                className="text-surface-foreground dark:text-zinc-300 font-medium text-xs"
-                tickFormatter={(val) => val === 1 ? (lang === 'de' ? 'Schattenparker' : 'Shade Dweller') : val === 3 ? (lang === 'de' ? 'Sonnenanbeter' : 'Sun Worshipper') : ''} 
-              />
-              <YAxis 
-                type="number" 
-                dataKey="y" 
-                name="Water" 
-                domain={[0, 30]} 
-                ticks={[0,30]} 
-                tick={<CustomYAxisTick />}
-              />
-              <ZAxis range={[100, 100]} />
-              <Tooltip content={<CustomScatterTooltip />} cursor={{strokeDasharray: '3 3'}} />
-              <Scatter name="Plants" data={stats.matrixData} fill="#10b981" />
-            </ScatterChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
+      {/* Garden Vibe & Matrix */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
+        
+        {/* Fadenkreuz Scatter */}
+        <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm aspect-square flex flex-col relative overflow-hidden">
+          <h2 className="text-xl font-bold mb-4 z-10 relative">survival coordinates</h2>
+          <div className="flex-1 w-full min-h-0 relative z-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <XAxis type="number" dataKey="x" domain={[0, 4]} hide />
+                <YAxis type="number" dataKey="y" domain={[0, 30]} hide />
+                <ZAxis range={[60, 60]} />
+                <ReferenceLine x={2} stroke="currentColor" strokeDasharray="3 3" className="opacity-20 dark:opacity-30" />
+                <ReferenceLine y={15} stroke="currentColor" strokeDasharray="3 3" className="opacity-20 dark:opacity-30" />
+                <Tooltip content={<CustomScatterTooltip />} cursor={{strokeDasharray: '3 3'}} />
+                <Scatter name="Plants" data={stats.matrixData} fill="#10b981" />
+              </ScatterChart>
+            </ResponsiveContainer>
+            
+            {/* Edge Labels */}
+            <div className="absolute top-2 w-full text-center text-xs text-surface-foreground/40 font-bold uppercase tracking-wider pointer-events-none leading-tight">{lang === 'de' ? <>Wasser<br/>Junkie</> : <>Water<br/>Junkie</>}</div>
+            <div className="absolute bottom-2 w-full text-center text-xs text-surface-foreground/40 font-bold uppercase tracking-wider pointer-events-none leading-tight">{lang === 'de' ? <>Kaktus<br/>Vibes</> : <>Cactus<br/>Vibes</>}</div>
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-surface-foreground/40 font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">{lang === 'de' ? 'Schattenparker' : 'Shade Dweller'}</div>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-xs text-surface-foreground/40 font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">{lang === 'de' ? 'Sonnenanbeter' : 'Sun Worshipper'}</div>
+          </div>
+        </section>
+
+        {/* Radar Chart */}
+        <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm aspect-square flex flex-col relative overflow-hidden">
+          <h2 className="text-xl font-bold mb-4">{lang === 'de' ? 'The Garden Vibe' : 'The Garden Vibe'}</h2>
+          <div className="flex-1 w-full min-h-0 relative z-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart outerRadius="65%" data={stats.radarData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <PolarGrid stroke="currentColor" className="opacity-10 dark:opacity-20" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 11 }} className="text-surface-foreground dark:text-zinc-300 font-bold tracking-wide" />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar name="Vibe" dataKey="A" stroke="#10b981" strokeWidth={2} fill="#10b981" fillOpacity={0.5} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+        
+      </div>
 
       {/* Action Logs Summary */}
       <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm">

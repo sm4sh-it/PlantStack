@@ -219,7 +219,10 @@ export default function Dashboard() {
         )
       ) : (
         <div className="text-center py-20 bg-surface rounded-3xl border border-dashed border-black/10 dark:border-white/10">
-          <div className="w-20 h-20 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4">
+          <div 
+            onClick={() => { setEditingPlant(null); setShowForm(true); }}
+            className="w-20 h-20 bg-brand/10 text-brand rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer hover:scale-105 hover:bg-brand/20 transition-all"
+          >
             <Plus size={40} />
           </div>
           <h3 className="text-xl font-bold mb-2">{t('noPlantsYet', lang)}</h3>

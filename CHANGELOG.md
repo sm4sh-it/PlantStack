@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.7.1] - 2026-05-19
+### Changed
+- **Weather Logic Multipliers**: Drastically increased the heat reduction multipliers for "Draußen" and "Balkon" to 40% (Tier 1) and 70% (Tier 2).
+- **Garden Vibe Chart Polish**: Stripped numbers, axes ticks, and tooltips from the Radar Chart to create a purely abstract, visual representation of the garden.
+- **Plant Modal UI**: Refined the grid layout for the "Add Plant" modal, splitting "Umgebung" and "Raum" into side-by-side columns and adding custom tooltips.
+- **Empty State UX**: The dashboard's "empty state" placeholder icon is now fully interactive and launches the "Add Plant" modal.
+- **Footer**: Updated the global footer text and automatically linked it to the `package.json` version.
+
+## [2.7.0] - 2026-05-18
+### Added
+- **Advanced Statistics Revamp**: Implemented a major layout overhaul on the Statistics page. The "survival coordinates" section is now a dynamic dual-chart responsive grid featuring two stunning data visualizations.
+- **Garden Vibe Radar Chart**: Added an all-new 6-axis Radar Chart visualization summarizing the average profile of your entire garden based on Durst, Lichthunger, Pflegeleichtigkeit, Artenvielfalt, Nutzgarten-Anteil, and Freiluft-Faktor.
+- **Database Expansion**: Added new `plantType` (Zierpflanze vs Nutzpflanze) and `placement` (Drinnen, Draußen, Balkon) fields to the core database model to better classify your jungle.
+- **Smart Add Plant UI**: Added the new classification dropdowns to the Add Plant modal with smart default selections based on the data origin (OpenPlantbook vs Local Crops).
+
+### Changed
+- **Balcony Weather Logic**: Completely overhauled the weather-based watering logic. "Balkon" plants now ignore rain entirely but aggressively reduce their watering interval in high heat (>25°C & >30°C) using a new tiered, percentage-based approach. "Draußen" plants also utilize the new percentage tiers for heat and rain thresholds.
+- **Fadenkreuz Scatter Plot**: Redesigned the Matrix into a clean, borderless "Fadenkreuz" (crosshair) aesthetic with absolute edge labels.
+- **Jitter Engine**: Implemented an automated random coordinate offset (jitter) to the Scatter Plot data. Plants with identical needs no longer hide behind each other, forming organic data clusters instead.
+- **Focus Rings Removed**: Unwanted browser focus outlines on Recharts elements have been entirely suppressed.
+
 ## [2.6.3] - 2026-05-18
 ### Changed
 - **About Page Layout**: Slightly widened the content area on desktop for better readability while perfectly maintaining the mobile experience.

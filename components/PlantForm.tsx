@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plant, Location } from "@prisma/client";
-import { X, Upload, Search, Loader2, Check } from "lucide-react";
+import { X, Upload, Search, Loader2, Check, Info } from "lucide-react";
 import Image from "next/image";
 import { t } from "@/lib/i18n";
 
@@ -26,6 +26,8 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
     bugInterval: initialData?.bugInterval || "",
     fungusInterval: initialData?.fungusInterval || "",
     locationType: initialData?.locationType || "INDOOR",
+    plantType: (initialData as any)?.plantType || "Zierpflanze",
+    placement: (initialData as any)?.placement || "Drinnen",
     pruningInfo: initialData?.pruningInfo || "",
     apiId: (initialData as any)?.apiId || "",
     origin: (initialData as any)?.origin || "",
@@ -97,6 +99,7 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
         sunlightInfo: sunlightText,
         apiId: plantInfo.pid || prev.apiId,
         origin: details.origin || details.Origin || prev.origin,
+        plantType: (plantInfo.pid && plantInfo.pid.startsWith('crop_')) ? "Nutzpflanze" : "Zierpflanze",
         waterInterval: prev.waterInterval === 7 ? waterDays : prev.waterInterval,
         pruningInfo: details.pruning_month ? (Array.isArray(details.pruning_month) ? details.pruning_month.join(', ') : details.pruning_month) : prev.pruningInfo,
       }));
@@ -226,36 +229,78 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                 )}
               </div>
               
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Location *</label>
-                <div className="flex flex-col gap-2">
-                  <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg w-full">
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData({...formData, locationType: 'INDOOR'})} 
-                      className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${formData.locationType === 'INDOOR' ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
-                    >
-                      {t('indoor', lang)}
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData({...formData, locationType: 'OUTDOOR'})} 
-                      className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${formData.locationType === 'OUTDOOR' ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
-                    >
-                      {t('outdoor', lang)}
-                    </button>
+              <div className="col-span-1 md:col-span-2 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Column: Umgebung */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1 group relative">
+                      <label className="text-sm font-medium">Umgebung *</label>
+                      <div className="relative flex items-center cursor-help">
+                        <Info size={16} className="text-surface-foreground/40 hover:text-brand transition-colors" />
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-zinc-900 text-zinc-100 text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none z-50 text-center shadow-lg border border-white/10">
+                          Bestimmt das Wetter-Verhalten. &apos;Draußen (offen)&apos; reagiert auf Regen und Hitze. &apos;Draußen (überdacht)&apos; ignoriert Regen, trocknet bei Hitze aber extrem schnell aus.
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg w-full h-[42px]">
+                      {[
+                        { label: 'Drinnen', value: 'Drinnen' },
+                        { label: 'Draußen (offen)', value: 'Draußen' },
+                        { label: 'Draußen (überdacht)', value: 'Balkon' }
+                      ].map(p => (
+                        <button 
+                          key={p.value}
+                          type="button" 
+                          onClick={() => setFormData({...formData, placement: p.value})} 
+                          className={`flex-1 py-1 text-xs font-medium rounded-md transition-all ${formData.placement === p.value ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <select 
-                    required 
-                    className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand appearance-none" 
-                    value={formData.locationId} 
-                    onChange={e => setFormData({...formData, locationId: e.target.value})}
-                  >
-                    <option value="" disabled>Select Location...</option>
-                    {locations.map(loc => (
-                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+
+                  {/* Right Column: Raum */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Raum *</label>
+                    <select 
+                      required 
+                      className="w-full h-[42px] bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 outline-none focus:border-brand appearance-none" 
+                      value={formData.locationId} 
+                      onChange={e => setFormData({...formData, locationId: e.target.value})}
+                    >
+                      <option value="" disabled>Select Room...</option>
+                      {locations.map(loc => (
+                        <option key={loc.id} value={loc.id}>{loc.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1 group relative">
+                    <label className="text-sm font-medium">Klassifizierung *</label>
+                    <div className="relative flex items-center cursor-help">
+                      <Info size={16} className="text-surface-foreground/40 hover:text-brand transition-colors" />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-zinc-900 text-zinc-100 text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none z-50 text-center shadow-lg border border-white/10">
+                        Wird für die Statistik (Garden Vibe) genutzt, um den Anteil deiner essbaren Pflanzen zu berechnen.
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg w-full md:w-1/2 h-[42px]">
+                    {['Zierpflanze', 'Nutzpflanze'].map(t => (
+                      <button 
+                        key={t}
+                        type="button" 
+                        onClick={() => setFormData({...formData, plantType: t})} 
+                        className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${formData.plantType === t ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
+                      >
+                        {t}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               </div>
             </div>

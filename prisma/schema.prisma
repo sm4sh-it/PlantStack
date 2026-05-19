@@ -40,6 +40,8 @@ model Plant {
   location           Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
   
   locationType       String       @default("INDOOR")
+  plantType          String       @default("Zierpflanze")
+  placement          String       @default("Drinnen")
   pruningInfo        String?
   apiId              String?
   origin             String?
