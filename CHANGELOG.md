@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.2] - 2026-09-09
+### Fixed
+- **Docker Volume Self-Healing & Diagnostics**: Enhanced `docker-entrypoint.sh` with recursive write-permission granting (`chmod -R a+rwX /app/data`), safe error suppression for non-POSIX volume drivers, and startup diagnostic logging (`[plantstack-entrypoint]`) to verify privilege dropping and identify cached container layers.
+
 ## [3.5.1] - 2026-09-09
 ### Fixed
 - **Docker SQLite Data Volume Permissions (`attempt to write a readonly database`)**: Resolved permission conflicts on mounted persistent volumes (`/app/data`). Introduced a dedicated `docker-entrypoint.sh` with `su-exec` that automatically reconciles ownership (`chown -R node:node /app/data`) on container startup before dropping privileges to the unprivileged `node` user for Prisma migrations and server runtime.
