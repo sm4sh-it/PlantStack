@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# Ensure permissive umask for newly created files/directories
+umask 000
+
 # Ensure uploads directory exists
 mkdir -p /app/data/uploads 2>/dev/null || true
 

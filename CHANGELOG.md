@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.7] - 2026-09-09
+### Fixed
+- **Explicit Root Execution (`USER root`) & Permissive Umask**: Enforced explicit `USER root` in production Docker image to ensure container runtime executes entrypoint as root, enabling automatic self-healing of SQLite volume permissions (`chmod -R 777 /app/data`) and setting `umask 000` for newly created files.
+
 ## [3.5.6] - 2026-09-09
 ### Fixed
 - **Automated Volume Permission Healing & Crash-Loop Prevention**: Added dedicated `docker-entrypoint.sh` that automatically reconciles write permissions (`chmod -R 777 /app/data`), verifies write access before invoking Prisma, and provides a clear diagnostic banner with recovery instructions instead of entering a fast restart loop if host volume permissions are restricted.
