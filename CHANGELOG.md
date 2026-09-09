@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.5] - 2026-09-09
+### Fixed
+- **Complete Reversion to Proven v2.7.2 Docker Runtime**: Reverted `Dockerfile` entirely to the exact, clean, battle-tested structure of v2.7.2. Removed all experimental entrypoints, privilege drops, and diagnostic shell commands. Guarantees 100% stable container startup and database access without startup crashes.
+
 ## [3.5.4] - 2026-09-09
 ### Fixed
 - **Container Entrypoint Reset & Boot Diagnostics**: Explicitly reset base image entrypoint (`ENTRYPOINT []`) to eliminate inherited `docker-entrypoint.sh` wrapper, added recursive `chmod -R 777 /app/data` at boot, and integrated startup write verification with clear diagnostic logging to resolve and inspect volume permissions across all container management platforms.

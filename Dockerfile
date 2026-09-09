@@ -45,10 +45,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
-USER root
-
 EXPOSE 3000
 ENV PORT=3000
 
-ENTRYPOINT []
-CMD ["sh", "-c", "echo '=== PlantStack Boot Diagnostics ===' && id && ls -ld /app/data && ls -la /app/data && chmod -R 777 /app/data 2>/dev/null || true; if ! touch /app/data/.test_write 2>/dev/null; then echo 'CRITICAL: /app/data is NOT writable by current user! Check host volume permissions.'; else rm -f /app/data/.test_write && echo 'Write check OK: /app/data is writable.'; fi; npx prisma db push --accept-data-loss && node server.js"]
+# Wrapper script to run migrations and start
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]
