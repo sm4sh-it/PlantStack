@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.3] - 2026-09-09
+### Fixed
+- **Seamless Docker Volume & SQLite Compatibility**: Restored container root execution (`USER root`) across production runner stages, exactly matching the proven behavior from v2.7.2. Completely resolves SQLite permission issues (`attempt to write a readonly database`) and prevents EACCES upload/restore failures for all existing and new deployments without requiring manual host interventions.
+
 ## [3.5.2] - 2026-09-09
 ### Fixed
 - **Docker Volume Self-Healing & Diagnostics**: Enhanced `docker-entrypoint.sh` with recursive write-permission granting (`chmod -R a+rwX /app/data`), safe error suppression for non-POSIX volume drivers, and startup diagnostic logging (`[plantstack-entrypoint]`) to verify privilege dropping and identify cached container layers.

@@ -1,7 +1,7 @@
 FROM node:22-alpine AS base
 
-# Install OpenSSL for Prisma and su-exec for runtime privilege dropping
-RUN apk add --no-cache openssl su-exec
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -34,25 +34,21 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="file:/app/data/database.db"
 ENV DATA_DIR="/app/data/uploads"
 
-# Create application and data directories with node user ownership
-RUN mkdir -p /app/data/uploads /app/public && \
-    chown -R node:node /app
+RUN mkdir -p /app/data/uploads /app/public
 
-# Copy built application and required production dependencies with node ownership
-COPY --chown=node:node --from=builder /app/public ./public
-COPY --chown=node:node --from=builder /app/.next/standalone ./
-COPY --chown=node:node --from=builder /app/.next/static ./.next/static
+# Copy built application and required production dependencies
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-COPY --chown=node:node --from=builder /app/prisma ./prisma
-COPY --chown=node:node --from=builder /app/node_modules ./node_modules
-COPY --chown=node:node --from=builder /app/package.json ./package.json
-# Copy entrypoint script to fix volume permissions on boot and drop to node user
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+USER root
 
 EXPOSE 3000
 ENV PORT=3000
 
-ENTRYPOINT ["docker-entrypoint.sh"]
 # Wrapper script to run migrations and start
 CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]
