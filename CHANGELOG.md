@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.4] - 2026-09-09
+### Fixed
+- **Container Entrypoint Reset & Boot Diagnostics**: Explicitly reset base image entrypoint (`ENTRYPOINT []`) to eliminate inherited `docker-entrypoint.sh` wrapper, added recursive `chmod -R 777 /app/data` at boot, and integrated startup write verification with clear diagnostic logging to resolve and inspect volume permissions across all container management platforms.
+
 ## [3.5.3] - 2026-09-09
 ### Fixed
 - **Seamless Docker Volume & SQLite Compatibility**: Restored container root execution (`USER root`) across production runner stages, exactly matching the proven behavior from v2.7.2. Completely resolves SQLite permission issues (`attempt to write a readonly database`) and prevents EACCES upload/restore failures for all existing and new deployments without requiring manual host interventions.
