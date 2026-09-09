@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.6] - 2026-09-09
+### Fixed
+- **Automated Volume Permission Healing & Crash-Loop Prevention**: Added dedicated `docker-entrypoint.sh` that automatically reconciles write permissions (`chmod -R 777 /app/data`), verifies write access before invoking Prisma, and provides a clear diagnostic banner with recovery instructions instead of entering a fast restart loop if host volume permissions are restricted.
+
 ## [3.5.5] - 2026-09-09
 ### Fixed
 - **Complete Reversion to Proven v2.7.2 Docker Runtime**: Reverted `Dockerfile` entirely to the exact, clean, battle-tested structure of v2.7.2. Removed all experimental entrypoints, privilege drops, and diagnostic shell commands. Guarantees 100% stable container startup and database access without startup crashes.

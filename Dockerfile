@@ -45,8 +45,11 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 3000
 ENV PORT=3000
 
-# Wrapper script to run migrations and start
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["node", "server.js"]
