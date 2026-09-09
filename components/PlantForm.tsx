@@ -1,8 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plant, Location } from "@prisma/client";
-import { X, Upload, Search, Loader2, Check, Info } from "lucide-react";
+import {
+  X,
+  Upload,
+  Search,
+  Loader2,
+  Check,
+  Info,
+  Plus,
+  AlertTriangle,
+  Camera,
+  Droplet,
+  FlaskConical,
+  BugOff,
+  SprayCan,
+  Trash2,
+} from "lucide-react";
 import Image from "next/image";
 import { t } from "@/lib/i18n";
 
@@ -38,18 +53,54 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(initialData?.imagePath ? `/api/images/${initialData.imagePath}` : null);
-  
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    initialData?.imagePath ? `/api/images/${initialData.imagePath}` : null
+  );
+  const [isDragging, setIsDragging] = useState(false);
+
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetch("/api/locations").then(res => res.json()).then(data => {
-      setLocations(data);
-      if (!formData.locationId && data.length > 0) {
-        setFormData(prev => ({ ...prev, locationId: data[0].id }));
+  const [addingLocation, setAddingLocation] = useState(false);
+  const [newLocationName, setNewLocationName] = useState("");
+  const [savingLocation, setSavingLocation] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCreateLocationInline = async () => {
+    if (!newLocationName.trim()) return;
+    setSavingLocation(true);
+    try {
+      const res = await fetch("/api/locations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newLocationName.trim() }),
+      });
+      const newLoc = await res.json();
+      if (newLoc && newLoc.id) {
+        setLocations((prev) => [...prev, newLoc]);
+        setFormData((prev) => ({ ...prev, locationId: newLoc.id }));
+        setNewLocationName("");
+        setAddingLocation(false);
       }
-    }).catch(console.error);
+    } catch (e) {
+      console.error("Failed to add location", e);
+    } finally {
+      setSavingLocation(false);
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/locations")
+      .then((res) => res.json())
+      .then((data) => {
+        setLocations(data);
+        if (!formData.locationId && data.length > 0) {
+          setFormData((prev) => ({ ...prev, locationId: data[0].id }));
+        }
+      })
+      .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -57,17 +108,26 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
     if (!formData.searchAlias) return;
     setSearching(true);
     setSearchResults([]);
+    setErrorMessage(null);
     try {
       const res = await fetch(`/api/openplantbook/search?q=${encodeURIComponent(formData.searchAlias)}`);
       const { results } = await res.json();
       if (results && results.length > 0) {
         setSearchResults(results.slice(0, 5)); // show top 5
       } else {
-        alert("No match found in Open Plantbook.");
+        setErrorMessage(
+          lang === "de"
+            ? "Kein Treffer in Open Plantbook gefunden."
+            : "No match found in Open Plantbook."
+        );
       }
     } catch (e) {
       console.error(e);
-      alert("Error searching Open Plantbook. Are the credentials configured in .env?");
+      setErrorMessage(
+        lang === "de"
+          ? "Fehler bei der Plantbook-Suche. Zugangsdaten in .env vorhanden?"
+          : "Error searching Open Plantbook. Are credentials configured in .env?"
+      );
     } finally {
       setSearching(false);
     }
@@ -76,10 +136,11 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
   const handleSelectResult = async (plantInfo: any) => {
     setSearching(true);
     setSearchResults([]);
+    setErrorMessage(null);
     try {
       const res = await fetch(`/api/openplantbook/detail?pid=${encodeURIComponent(plantInfo.pid)}`);
       const details = await res.json();
-      
+
       let waterDays = 7;
       if (details.watering_interval_days) {
         waterDays = details.watering_interval_days;
@@ -88,10 +149,14 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
         else if (details.min_soil_moist < 15) waterDays = 14;
       }
 
-      const sunlightText = details.sunlight_text ? details.sunlight_text : `${details.min_light_lux || 0} - ${details.max_light_lux || 0} Lux | ${t('temperature', lang)}: ${details.min_temp || 0} - ${details.max_temp || 0} °C`;
-      const wateringText = details.watering_interval_days ? `${t('watering', lang)}: ~${details.watering_interval_days} ${t('days', lang)}` : `${t('soilMoisture', lang)}: ${details.min_soil_moist || 0} - ${details.max_soil_moist || 0}% | ${t('humidity', lang)}: ${details.min_env_humid || 0} - ${details.max_env_humid || 0}%`;
+      const sunlightText = details.sunlight_text
+        ? details.sunlight_text
+        : `${details.min_light_lux || 0} - ${details.max_light_lux || 0} Lux | ${t("temperature", lang)}: ${details.min_temp || 0} - ${details.max_temp || 0} °C`;
+      const wateringText = details.watering_interval_days
+        ? `${t("watering", lang)}: ~${details.watering_interval_days} ${t("days", lang)}`
+        : `${t("soilMoisture", lang)}: ${details.min_soil_moist || 0} - ${details.max_soil_moist || 0}% | ${t("humidity", lang)}: ${details.min_env_humid || 0} - ${details.max_env_humid || 0}%`;
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         searchAlias: details.alias || plantInfo.alias || prev.searchAlias,
         scientificName: details.display_pid || plantInfo.display_pid || prev.scientificName,
@@ -99,13 +164,19 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
         sunlightInfo: sunlightText,
         apiId: plantInfo.pid || prev.apiId,
         origin: details.origin || details.Origin || prev.origin,
-        plantType: (plantInfo.pid && plantInfo.pid.startsWith('crop_')) ? "Nutzpflanze" : "Zierpflanze",
+        plantType: plantInfo.pid && plantInfo.pid.startsWith("crop_") ? "Nutzpflanze" : "Zierpflanze",
         waterInterval: prev.waterInterval === 7 ? waterDays : prev.waterInterval,
-        pruningInfo: details.pruning_month ? (Array.isArray(details.pruning_month) ? details.pruning_month.join(', ') : details.pruning_month) : prev.pruningInfo,
+        pruningInfo: details.pruning_month
+          ? Array.isArray(details.pruning_month)
+            ? details.pruning_month.join(", ")
+            : details.pruning_month
+          : prev.pruningInfo,
       }));
     } catch (e) {
       console.error(e);
-      alert("Failed to fetch plant details");
+      setErrorMessage(
+        lang === "de" ? "Pflanzendetails konnten nicht geladen werden." : "Failed to fetch plant details"
+      );
     } finally {
       setSearching(false);
     }
@@ -113,46 +184,75 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-       const file = e.target.files[0];
-       setImageFile(file);
-       setPreviewUrl(URL.createObjectURL(file));
+      const file = e.target.files[0];
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setPreviewUrl(null);
+    setFormData((prev) => ({ ...prev, imagePath: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.locationId) {
-      alert("Please select a location first! Go to Settings if you haven't created any.");
+      setErrorMessage(
+        lang === "de" ? "Bitte wähle zuerst einen Raum/Standort aus!" : "Please select a location first!"
+      );
       return;
     }
-    
+
     setLoading(true);
+    setErrorMessage(null);
 
     let uploadedImagePath = formData.imagePath;
     if (imageFile) {
-       const uploadData = new FormData();
-       uploadData.append("file", imageFile);
-       try {
-         const upRes = await fetch("/api/upload", { method: "POST", body: uploadData });
-         const upData = await upRes.json();
-         if (upData.filename) {
-           uploadedImagePath = upData.filename;
-         }
-       } catch (err) {
-         console.error("Upload failed", err);
-       }
+      const uploadData = new FormData();
+      uploadData.append("file", imageFile);
+      try {
+        const upRes = await fetch("/api/upload", { method: "POST", body: uploadData });
+        const upData = await upRes.json();
+        if (upData.filename) {
+          uploadedImagePath = upData.filename;
+        }
+      } catch (err) {
+        console.error("Upload failed", err);
+      }
     }
 
-    const payload = { 
-      ...formData, 
-      alias: formData.searchAlias, // save the search alias
-      imagePath: uploadedImagePath 
+    const payload = {
+      ...formData,
+      alias: formData.searchAlias,
+      imagePath: uploadedImagePath,
     };
 
     try {
       const url = initialData ? `/api/plants/${initialData.id}` : "/api/plants";
       const method = initialData ? "PUT" : "POST";
-      
+
       await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -161,181 +261,504 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
       onSave();
     } catch (error) {
       console.error(error);
-      alert("Failed to save plant");
+      setErrorMessage(lang === "de" ? "Fehler beim Speichern der Pflanze." : "Failed to save plant");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-background w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
-        <div className="p-4 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-surface">
-          <h2 className="text-xl font-bold">{initialData ? t('edit', lang) + " Plant" : t('addPlant', lang)}</h2>
-          <button onClick={onCancel} className="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><X size={20} /></button>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+      <div className="bg-surface w-full max-w-2xl rounded-2xl md:rounded-3xl shadow-2xl border border-border-hairline overflow-hidden flex flex-col max-h-[92vh] my-auto animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-border-hairline flex justify-between items-center bg-surface">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-foreground">
+              {initialData
+                ? lang === "de"
+                  ? "Pflanze bearbeiten"
+                  : "Edit Plant"
+                : t("addPlant", lang)}
+            </h2>
+            <p className="text-xs text-text-muted mt-0.5">
+              {lang === "de"
+                ? "Pflanzendaten, Standort und individuelle Pflegeregler"
+                : "Plant parameters, location and custom care schedules"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-9 h-9 rounded-lg hover:bg-surface-subtle text-text-muted hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+            aria-label={t("close", lang)}
+          >
+            <X size={18} />
+          </button>
         </div>
-        
-        <div className="p-6 overflow-y-auto flex-1">
-          <form id="plant-form" onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex flex-col items-center justify-center mb-6">
-              <label className="cursor-pointer group relative w-32 h-32 rounded-full overflow-hidden border-2 border-dashed border-brand hover:border-solid transition-all bg-surface flex items-center justify-center">
-                {previewUrl ? (
-                  <Image src={previewUrl} alt="Preview" fill className="object-cover" />
-                ) : (
-                  <div className="flex flex-col items-center text-brand/50 group-hover:text-brand">
-                    <Upload size={24} />
-                    <span className="text-xs font-medium mt-1">Upload</span>
-                  </div>
-                )}
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+
+        {/* Scrollable Form Body */}
+        <div className="p-5 sm:p-6 md:p-8 overflow-y-auto flex-1 space-y-6">
+          {/* Error Banner */}
+          {errorMessage && (
+            <div className="p-3.5 bg-urgency-overdue/10 border border-urgency-overdue/25 rounded-xl flex items-center justify-between text-xs text-urgency-overdue animate-in fade-in">
+              <div className="flex items-center gap-2.5 font-semibold">
+                <AlertTriangle size={16} className="shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMessage(null)}
+                className="p-1 hover:opacity-75 rounded-lg cursor-pointer"
+                aria-label="Close error"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          <form id="plant-form" onSubmit={handleSubmit} className="space-y-6">
+            {/* 1. Dropzone Upload Preview (Kapitel 3.3 Design Guide) */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-text-secondary">
+                {lang === "de" ? "Pflanzenfoto (Dropzone)" : "Plant Photo (Dropzone)"}
               </label>
+
+              {previewUrl ? (
+                <div className="p-3 bg-surface-subtle rounded-xl border border-border-hairline flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-surface shrink-0 shadow-xs">
+                      <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-foreground truncate">
+                        {imageFile ? imageFile.name : formData.name || "Foto gespeichert"}
+                      </p>
+                      <p className="text-[11px] text-text-muted mt-0.5">
+                        {imageFile
+                          ? `${(imageFile.size / 1024 / 1024).toFixed(2)} MB • Bereit zum Speichern`
+                          : lang === "de"
+                          ? "Aktuelles Hauptfoto aktiv"
+                          : "Current primary photo active"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-elevated text-text-secondary hover:text-foreground text-xs font-semibold border border-border-hairline transition-colors cursor-pointer"
+                    >
+                      {lang === "de" ? "Ändern" : "Change"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="p-1.5 rounded-lg hover:bg-status-danger/10 text-text-muted hover:text-status-danger transition-colors cursor-pointer"
+                      title={lang === "de" ? "Foto entfernen" : "Remove photo"}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`p-5 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-colors group ${
+                    isDragging
+                      ? "border-brand bg-brand-subtle/40"
+                      : "border-border-strong hover:border-brand bg-surface-subtle/50 hover:bg-surface-subtle"
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-surface border border-border-hairline flex items-center justify-center mx-auto mb-2 text-text-muted group-hover:text-brand transition-colors">
+                    <Camera size={20} />
+                  </div>
+                  <p className="text-xs font-bold text-text-primary">
+                    {lang === "de" ? "Foto hier hineinziehen oder klicken" : "Drag photo here or click to upload"}
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-0.5">
+                    {lang === "de"
+                      ? "JPG, PNG, WebP bis 10 MB • Automatische WebP-Kompression"
+                      : "JPG, PNG, WebP up to 10 MB • Automatic WebP compression"}
+                  </p>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
             </div>
 
+            {/* 2. Basisdaten (Pflanzenname & OpenPlantbook Autocomplete) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Name *</label>
-                <input required type="text" className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Monstera Deliciosa" />
+              {/* Name Input (44px) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-text-primary">
+                  {lang === "de" ? "Pflanzenname *" : "Plant Name *"}
+                </label>
+                <input
+                  required
+                  type="text"
+                  className="w-full h-11 bg-surface border border-border-strong rounded-lg px-3.5 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all placeholder:text-text-muted"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Monstera Deliciosa"
+                />
               </div>
-              
-              <div className="space-y-1 relative">
-                <label className="text-sm font-medium">{t('searchAlias', lang)}</label>
-                <div className="flex gap-2">
-                  <input type="text" className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand" value={formData.searchAlias} onChange={e => setFormData({...formData, searchAlias: e.target.value})} placeholder="e.g. Monstera" />
-                  <button type="button" onClick={handleSearchOpenPlantbook} disabled={searching} className="bg-surface-foreground/10 p-2 rounded-lg hover:bg-brand hover:text-white transition-colors shrink-0" title="Autofill from Database">
-                    {searching ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
+
+              {/* Open Plantbook Search (44px, Floating Dropdown without CLS) */}
+              <div className="space-y-1.5 relative">
+                <label className="text-xs font-bold text-text-primary">
+                  {t("searchAlias", lang)}
+                </label>
+                <div className="flex gap-2 relative">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      className="w-full h-11 bg-surface border border-border-strong rounded-lg pl-3.5 pr-8 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all placeholder:text-text-muted"
+                      value={formData.searchAlias}
+                      onChange={(e) => setFormData({ ...formData, searchAlias: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSearchOpenPlantbook();
+                        }
+                      }}
+                      placeholder={lang === "de" ? "z. B. Monstera, Ficus..." : "e.g. Monstera, Ficus..."}
+                    />
+                    {formData.searchAlias && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, searchAlias: "" });
+                          setSearchResults([]);
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground cursor-pointer p-1"
+                        aria-label="Clear search"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSearchOpenPlantbook}
+                    disabled={searching || !formData.searchAlias.trim()}
+                    className="h-11 px-3.5 rounded-lg bg-surface-subtle hover:bg-brand hover:text-white border border-border-strong text-text-secondary hover:border-brand transition-colors shrink-0 flex items-center justify-center cursor-pointer disabled:opacity-50"
+                    title={lang === "de" ? "In Datenbank suchen" : "Search in Database"}
+                  >
+                    {searching ? <Loader2 size={17} className="animate-spin" /> : <Search size={17} />}
                   </button>
                 </div>
-                
-                {/* Search Results Dropdown */}
+
+                {/* Floating Suggestions Dropdown (ABSOLUTE POSITIONED - ZERO CLS!) */}
                 {searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-12 mt-1 bg-surface border border-black/10 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-surface border border-border-strong rounded-xl shadow-2xl overflow-hidden divide-y divide-border-hairline animate-in fade-in slide-in-from-top-1">
                     {searchResults.map((res: any) => (
-                      <button 
-                        key={res.pid} 
-                        type="button"
+                      <div
+                        key={res.pid}
                         onClick={() => handleSelectResult(res)}
-                        className="w-full text-left px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 border-b border-black/5 dark:border-white/5 last:border-0 flex flex-col gap-1 transition-colors"
+                        className="p-3 hover:bg-surface-subtle cursor-pointer flex items-center justify-between transition-colors group"
                       >
-                        <span className="font-bold text-sm">{res.alias || res.display_pid}</span>
-                        <span className="text-xs text-surface-foreground/60 italic">{res.display_pid}</span>
-                      </button>
-                    ))}
-                    <button type="button" onClick={() => setSearchResults([])} className="w-full text-center p-2 text-xs text-surface-foreground/50 hover:bg-black/5 dark:hover:bg-white/5">Close</button>
-                  </div>
-                )}
-
-                {formData.scientificName && (
-                  <p className="text-xs text-brand italic mt-1 px-1 flex items-center gap-1"><Check size={12}/> {formData.scientificName}</p>
-                )}
-              </div>
-              
-              <div className="col-span-1 md:col-span-2 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Left Column: Umgebung */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-1 group relative">
-                      <label className="text-sm font-medium">{t('environmentAndRoom', lang)} *</label>
-                      <div className="relative flex items-center cursor-help">
-                        <Info size={16} className="text-surface-foreground/40 hover:text-brand transition-colors" />
-                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-zinc-900 text-zinc-100 text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none z-50 text-center shadow-lg border border-white/10">
-                          {t('environmentTooltip', lang)}
+                        <div className="min-w-0 pr-3">
+                          <div className="text-xs font-bold text-text-primary truncate">
+                            {res.alias || res.display_pid}
+                          </div>
+                          <div className="text-[11px] text-text-muted italic truncate">
+                            {res.display_pid}
+                          </div>
                         </div>
+                        <span className="text-[11px] text-brand font-semibold px-2 py-0.5 rounded-md bg-brand-subtle shrink-0 group-hover:bg-brand group-hover:text-white transition-colors">
+                          {lang === "de" ? "Auswählen" : "Select"}
+                        </span>
                       </div>
-                    </div>
-                    
-                    <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg w-full h-[42px]">
-                      {[
-                        { label: t('indoorPlacement', lang), value: 'Drinnen' },
-                        { label: t('outdoorOpen', lang), value: 'Draußen' },
-                        { label: t('outdoorCovered', lang), value: 'Balkon' }
-                      ].map(p => (
-                        <button 
-                          key={p.value}
-                          type="button" 
-                          onClick={() => setFormData({...formData, placement: p.value})} 
-                          className={`flex-1 py-1 text-xs font-medium rounded-md transition-all ${formData.placement === p.value ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
-                        >
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Right Column: Raum */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">{t('rooms', lang)} *</label>
-                    <select 
-                      required 
-                      className="w-full h-[42px] bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 outline-none focus:border-brand appearance-none" 
-                      value={formData.locationId} 
-                      onChange={e => setFormData({...formData, locationId: e.target.value})}
-                    >
-                      <option value="" disabled>Select Room...</option>
-                      {locations.map(loc => (
-                        <option key={loc.id} value={loc.id}>{loc.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1 group relative">
-                    <label className="text-sm font-medium">{t('classification', lang)} *</label>
-                    <div className="relative flex items-center cursor-help">
-                      <Info size={16} className="text-surface-foreground/40 hover:text-brand transition-colors" />
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-zinc-900 text-zinc-100 text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none z-50 text-center shadow-lg border border-white/10">
-                        {t('classificationTooltip', lang)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg w-full md:w-1/2 h-[42px]">
-                    {['Zierpflanze', 'Nutzpflanze'].map(tVal => (
-                      <button 
-                        key={tVal}
-                        type="button" 
-                        onClick={() => setFormData({...formData, plantType: tVal})} 
-                        className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${formData.plantType === tVal ? 'bg-surface shadow text-brand' : 'text-surface-foreground/60 hover:text-surface-foreground'}`}
+                    ))}
+                    <div className="p-1.5 bg-surface-subtle text-right">
+                      <button
+                        type="button"
+                        onClick={() => setSearchResults([])}
+                        className="text-xs text-text-muted hover:text-foreground px-2 py-1 cursor-pointer"
                       >
-                        {tVal === 'Zierpflanze' ? t('decorative', lang) : t('edibleHerbs', lang)}
+                        {t("close", lang)}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Scientific Name Confirmation Badge */}
+                {formData.scientificName && (
+                  <p className="text-xs text-brand font-medium italic mt-1 px-1 flex items-center gap-1">
+                    <Check size={13} className="text-emerald-500" /> {formData.scientificName}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* 3. Standort & Umgebung Grid */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left: Umgebung (Placement) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1 group relative">
+                    <label className="text-xs font-bold text-text-primary">
+                      {t("environmentAndRoom", lang)} *
+                    </label>
+                    <div className="relative flex items-center cursor-help">
+                      <Info size={14} className="text-text-muted hover:text-brand transition-colors" />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-neutral-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none z-50 text-center shadow-lg border border-neutral-800">
+                        {t("environmentTooltip", lang)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex bg-surface-subtle p-1 rounded-lg w-full h-11 border border-border-strong">
+                    {[
+                      { label: t("indoorPlacement", lang), value: "Drinnen" },
+                      { label: t("outdoorOpen", lang), value: "Draußen" },
+                      { label: t("outdoorCovered", lang), value: "Balkon" },
+                    ].map((p) => (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, placement: p.value })}
+                        className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                          formData.placement === p.value
+                            ? "bg-surface shadow-xs text-brand font-bold"
+                            : "text-text-secondary hover:text-foreground"
+                        }`}
+                      >
+                        {p.label}
                       </button>
                     ))}
                   </div>
                 </div>
+
+                {/* Right: Raum (Location) */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-text-primary">
+                    {t("rooms", lang)} *
+                  </label>
+                  {addingLocation ? (
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        value={newLocationName}
+                        onChange={(e) => setNewLocationName(e.target.value)}
+                        placeholder={lang === "de" ? "Neuer Raum..." : "New Room..."}
+                        className="flex-1 h-11 bg-surface border border-border-strong rounded-lg px-3.5 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all placeholder:text-text-muted"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateLocationInline();
+                          } else if (e.key === "Escape") {
+                            setAddingLocation(false);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCreateLocationInline}
+                        disabled={savingLocation || !newLocationName.trim()}
+                        className="h-11 px-3.5 rounded-lg bg-brand text-white hover:bg-brand-hover transition-colors shrink-0 flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-xs"
+                        title={t("add", lang)}
+                      >
+                        {savingLocation ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAddingLocation(false)}
+                        className="h-11 px-3 rounded-lg bg-surface-subtle border border-border-strong hover:bg-surface text-text-secondary transition-colors shrink-0 flex items-center justify-center cursor-pointer"
+                        title={t("close", lang)}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <select
+                        required
+                        className="flex-1 h-11 bg-surface border border-border-strong rounded-lg px-3.5 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all cursor-pointer"
+                        value={formData.locationId}
+                        onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+                      >
+                        <option value="" disabled>
+                          {lang === "de" ? "Raum wählen..." : "Select Room..."}
+                        </option>
+                        {locations.map((loc) => (
+                          <option key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setAddingLocation(true)}
+                        className="w-11 h-11 rounded-lg bg-surface-subtle border border-border-strong hover:border-brand hover:text-brand flex items-center justify-center text-text-secondary transition-all shrink-0 cursor-pointer"
+                        title={lang === "de" ? "Neuen Raum anlegen" : "Add new room"}
+                      >
+                        <Plus size={18} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Klassifizierung */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1 group relative">
+                  <label className="text-xs font-bold text-text-primary">
+                    {t("classification", lang)} *
+                  </label>
+                  <div className="relative flex items-center cursor-help">
+                    <Info size={14} className="text-text-muted hover:text-brand transition-colors" />
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-2 bg-neutral-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none z-50 text-center shadow-lg border border-neutral-800">
+                      {t("classificationTooltip", lang)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex bg-surface-subtle p-1 rounded-lg w-full md:w-1/2 h-11 border border-border-strong">
+                  {["Zierpflanze", "Nutzpflanze"].map((tVal) => (
+                    <button
+                      key={tVal}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, plantType: tVal })}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                        formData.plantType === tVal
+                          ? "bg-surface shadow-xs text-brand font-bold"
+                          : "text-text-secondary hover:text-foreground"
+                      }`}
+                    >
+                      {tVal === "Zierpflanze" ? t("decorative", lang) : t("edibleHerbs", lang)}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 bg-surface p-4 rounded-xl border border-black/5 dark:border-white/5">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-blue-600 dark:text-blue-400">Water (Days) *</label>
-                <input required type="number" min="1" className="w-full bg-background border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand" value={formData.waterInterval} onChange={e => setFormData({...formData, waterInterval: parseInt(e.target.value)})} />
+            {/* 4. Care Intervals Box (Care Colors & Einheitliche Terminologie: Bekämpfen statt Prüfen) */}
+            <div className="space-y-2 bg-surface-subtle/60 p-4 rounded-xl border border-border-hairline">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-text-primary">
+                  {lang === "de" ? "Pflegeroutinen & Intervalle (in Tagen)" : "Care Routines & Intervals (in days)"}
+                </span>
+                <span className="text-[10px] text-text-muted">
+                  {lang === "de" ? "Individuell anpassbar" : "Customizable"}
+                </span>
               </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-amber-600 dark:text-amber-400">Fertilize (Days)</label>
-                <input type="number" min="1" className="w-full bg-background border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand" value={formData.fertilizerInterval} onChange={e => setFormData({...formData, fertilizerInterval: e.target.value})} placeholder="Opt." />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-purple-600 dark:text-purple-400">Anti-Bug (Days)</label>
-                <input type="number" min="1" className="w-full bg-background border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand" value={formData.bugInterval} onChange={e => setFormData({...formData, bugInterval: e.target.value})} placeholder="Opt." />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-teal-600 dark:text-teal-400">Anti-Fungus</label>
-                <input type="number" min="1" className="w-full bg-background border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand" value={formData.fungusInterval} onChange={e => setFormData({...formData, fungusInterval: e.target.value})} placeholder="Opt." />
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {/* Water (Blue) */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-care-water flex items-center gap-1">
+                    <Droplet size={13} />
+                    <span>{t("water", lang)} *</span>
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    className="w-full h-11 bg-surface border border-border-strong rounded-lg px-3 text-sm text-foreground outline-none focus:border-care-water focus:ring-2 focus:ring-care-water/20 tabular transition-all"
+                    value={formData.waterInterval}
+                    onChange={(e) => setFormData({ ...formData, waterInterval: parseInt(e.target.value) || 1 })}
+                  />
+                </div>
+
+                {/* Fertilize (Amber) */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-care-fertilizer flex items-center gap-1">
+                    <FlaskConical size={13} />
+                    <span>{t("fertilize", lang)}</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-full h-11 bg-surface border border-border-strong rounded-lg px-3 text-sm text-foreground outline-none focus:border-care-fertilizer focus:ring-2 focus:ring-care-fertilizer/20 tabular transition-all placeholder:text-text-muted"
+                    value={formData.fertilizerInterval}
+                    onChange={(e) => setFormData({ ...formData, fertilizerInterval: e.target.value })}
+                    placeholder={lang === "de" ? "z. B. 14" : "Opt."}
+                  />
+                </div>
+
+                {/* Bug / Pest: Bekämpfen (Purple) */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-care-bug flex items-center gap-1">
+                    <BugOff size={13} />
+                    <span>{lang === "de" ? "Bekämpfen" : "Pest"}</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-full h-11 bg-surface border border-border-strong rounded-lg px-3 text-sm text-foreground outline-none focus:border-care-bug focus:ring-2 focus:ring-care-bug/20 tabular transition-all placeholder:text-text-muted"
+                    value={formData.bugInterval}
+                    onChange={(e) => setFormData({ ...formData, bugInterval: e.target.value })}
+                    placeholder={lang === "de" ? "z. B. 30" : "Opt."}
+                  />
+                </div>
+
+                {/* Fungus (Teal) */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-care-fungus flex items-center gap-1">
+                    <SprayCan size={13} />
+                    <span>{lang === "de" ? "Pilzschutz" : "Fungus"}</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-full h-11 bg-surface border border-border-strong rounded-lg px-3 text-sm text-foreground outline-none focus:border-care-fungus focus:ring-2 focus:ring-care-fungus/20 tabular transition-all placeholder:text-text-muted"
+                    value={formData.fungusInterval}
+                    onChange={(e) => setFormData({ ...formData, fungusInterval: e.target.value })}
+                    placeholder={lang === "de" ? "z. B. 30" : "Opt."}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-1 mt-4">
-              <label className="text-sm font-medium">{t('notes', lang)}</label>
-              <textarea className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-brand min-h-[80px]" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Likes bright indirect light..." />
+            {/* 5. Persönliche Notizen & Schnitt */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-text-primary">
+                {t("notes", lang)}
+              </label>
+              <textarea
+                className="w-full bg-surface border border-border-strong rounded-lg px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all min-h-[90px] placeholder:text-text-muted"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder={
+                  lang === "de"
+                    ? "Mag helles indirektes Licht, im Frühjahr kappen..."
+                    : "Likes bright indirect light, prune in spring..."
+                }
+              />
             </div>
-
           </form>
         </div>
-        
-        <div className="p-4 border-t border-black/5 dark:border-white/5 bg-surface flex justify-end gap-3">
-          <button onClick={onCancel} disabled={loading} className="px-5 py-2 rounded-lg font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-colors">{t('close', lang)}</button>
-          <button form="plant-form" type="submit" disabled={loading} className="px-5 py-2 rounded-lg font-medium bg-brand text-white hover:bg-brand-dark transition-colors flex items-center gap-2">
-            {loading ? <Loader2 size={18} className="animate-spin" /> : t('save', lang)}
+
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-border-hairline bg-surface flex justify-end items-center gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="h-11 px-5 rounded-lg font-semibold text-xs text-text-secondary hover:text-foreground hover:bg-surface-subtle transition-colors cursor-pointer"
+          >
+            {t("close", lang)}
+          </button>
+          <button
+            form="plant-form"
+            type="submit"
+            disabled={loading}
+            className="h-11 px-6 rounded-lg font-bold text-xs bg-brand text-white hover:bg-brand-hover shadow-xs active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : t("save", lang)}
           </button>
         </div>
       </div>

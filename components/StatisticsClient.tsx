@@ -1,8 +1,51 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { ScatterChart, Scatter, ZAxis, CartesianGrid, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ReferenceLine } from "recharts";
-import { Droplet, Trophy, Apple, Ghost, Monitor, BarChart2, Globe, Pizza, Utensils, CloudRain, Sun, TreePine, GlassWater, Crown, Skull, MoonStar, Activity, Castle, Sprout } from "lucide-react";
+import {
+  ScatterChart,
+  Scatter,
+  ZAxis,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ReferenceLine,
+} from "recharts";
+import {
+  Droplet,
+  FlaskConical,
+  Trophy,
+  Apple,
+  Ghost,
+  Monitor,
+  BarChart2,
+  Globe,
+  Pizza,
+  Utensils,
+  CloudRain,
+  Sun,
+  TreePine,
+  GlassWater,
+  Crown,
+  Skull,
+  MoonStar,
+  Activity,
+  Castle,
+  Sprout,
+  Lock,
+  Sparkles,
+  Check,
+  BugOff,
+  SprayCan,
+  Leaf,
+} from "lucide-react";
 import { t } from "@/lib/i18n";
 
 type StatisticsClientProps = {
@@ -47,401 +90,662 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
   const [lang, setLang] = useState("en");
 
   useEffect(() => {
-    fetch("/api/settings").then(res => res.json()).then(data => {
-      if (data && data.language) setLang(data.language);
-    }).catch(console.error);
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.language) setLang(data.language);
+      })
+      .catch(console.error);
   }, []);
-
-  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6b7280'];
 
   const thirstyData = useMemo(() => {
     return [...plants]
       .sort((a, b) => b.wateredCount - a.wateredCount)
       .slice(0, 5)
-      .map(p => ({
+      .map((p) => ({
         name: p.name,
-        watered: p.wateredCount
+        watered: p.wateredCount,
       }));
   }, [plants]);
 
-  const categoryData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    plants.filter(p => !p.isArchived).forEach(p => {
-      counts[p.chartCategory] = (counts[p.chartCategory] || 0) + 1;
-    });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [plants]);
-
   const litersWatered = (stats.totalWatered * 0.15).toFixed(1);
-  const oldestDateString = stats.oldestPlantDate ? new Date(stats.oldestPlantDate).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US') : '-';
+  const oldestDateString = stats.oldestPlantDate
+    ? new Date(stats.oldestPlantDate).toLocaleDateString(lang === "de" ? "de-DE" : "en-US")
+    : "-";
 
-  const tooltipStyle = {
-    backgroundColor: 'var(--surface)',
-    color: 'var(--foreground)',
-    borderColor: 'var(--border)',
-    borderRadius: '12px',
-    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-  };
-
-  const CustomScatterTooltip = ({ active, payload }: any) => {
+  // Recharts Custom Tooltip (Floating, borderless, zero thick wireframe)
+  const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      
-      let lightLoc = data.originalSunlight || (lang === 'de' ? 'Unbekannt' : 'Unknown');
-      const s = lightLoc.toLowerCase();
-      if (s.includes('full_sun')) lightLoc = lang === 'de' ? 'Viel Sonne' : 'Full Sun';
-      else if (s.includes('partial_shade')) lightLoc = lang === 'de' ? 'Halbschatten' : 'Partial Shade';
-      else if (s.includes('shade')) lightLoc = lang === 'de' ? 'Schatten' : 'Shade';
-
       return (
-        <div className="bg-surface border border-black/10 dark:border-white/10 p-3 rounded-xl shadow-lg">
-          <p className="font-bold text-sm mb-1">{data.name}</p>
-          <p className="text-xs opacity-70">{lang === 'de' ? 'Intervall:' : 'Interval:'} {data.originalInterval} {lang === 'de' ? 'Tage' : 'days'}</p>
-          <p className="text-xs opacity-70">{lang === 'de' ? 'Licht:' : 'Light:'} {lightLoc}</p>
+        <div className="bg-surface/95 backdrop-blur-md border border-border-hairline px-3 py-2 rounded-xl shadow-xl text-xs">
+          <p className="font-bold text-foreground">{payload[0].payload.name || label}</p>
+          <p className="text-brand font-semibold mt-0.5">
+            {payload[0].value} {lang === "de" ? "mal gegossen" : "times watered"}
+          </p>
         </div>
       );
     }
     return null;
   };
 
+  const CustomOriginTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-surface/95 backdrop-blur-md border border-border-hairline px-3 py-2 rounded-xl shadow-xl text-xs">
+          <p className="font-bold text-foreground">{payload[0].payload.name}</p>
+          <p className="text-brand font-semibold mt-0.5">
+            {payload[0].value} {lang === "de" ? "Pflanzen" : "plants"}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
+  const CustomScatterTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+
+      let lightLoc = data.originalSunlight || (lang === "de" ? "Unbekannt" : "Unknown");
+      const s = lightLoc.toLowerCase();
+      if (s.includes("full_sun")) lightLoc = lang === "de" ? "Viel Sonne" : "Full Sun";
+      else if (s.includes("partial_shade")) lightLoc = lang === "de" ? "Halbschatten" : "Partial Shade";
+      else if (s.includes("shade")) lightLoc = lang === "de" ? "Schatten" : "Shade";
+
+      return (
+        <div className="bg-surface/95 backdrop-blur-md border border-border-hairline p-3 rounded-xl shadow-xl text-xs">
+          <p className="font-bold text-foreground mb-0.5">{data.name}</p>
+          <p className="text-text-muted">
+            {lang === "de" ? "Intervall:" : "Interval:"} {data.originalInterval} {lang === "de" ? "Tage" : "days"}
+          </p>
+          <p className="text-text-muted">
+            {lang === "de" ? "Licht:" : "Light:"} {lightLoc}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const unlockedCount = Object.values(badges).filter(Boolean).length;
 
   return (
-    <div className="pb-24 space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-3">
-          <BarChart2 className="text-brand" size={32} />
-          {t('statistics', lang)}
-        </h1>
-        <p className="text-surface-foreground/70">
-          {lang === 'de' ? 'Deine Gamification und Einblicke.' : 'Your gamification and insights.'}
-        </p>
+    <div className="pb-24 space-y-8 animate-in fade-in duration-300">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight mb-1 flex items-center gap-3 text-foreground">
+            <BarChart2 className="text-brand" size={32} />
+            {t("statistics", lang)}
+          </h1>
+          <p className="text-sm text-text-muted">
+            {lang === "de"
+              ? "Deine Gamification, Abzeichen und botanischen Einblicke."
+              : "Your gamification, achievements and botanical insights."}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 bg-surface border border-border-hairline px-4 py-2 rounded-xl card-elevation text-xs font-semibold text-text-primary self-start sm:self-auto">
+          <Trophy size={16} className="text-amber-500 shrink-0" />
+          <span>
+            {unlockedCount} / {Object.keys(badges).length}{" "}
+            {lang === "de" ? "Freigeschaltet" : "Unlocked"}
+          </span>
+        </div>
       </div>
 
-      {/* Badges Section */}
-      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Trophy className="text-yellow-500" /> 
-          {lang === 'de' ? 'Abzeichen' : 'Badges'}
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          
-          <BadgeCard 
-            icon={<Droplet size={32} />}
-            title={lang === 'de' ? 'Regenmacher' : 'Rainmaker'}
-            desc={lang === 'de' ? '100x gegossen' : 'Watered 100x'}
+      {/* 1. Vier KPI-Metrik-Kacheln (100% ohne Card-in-Card Konturen) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-surface p-5 sm:p-6 rounded-xl md:rounded-2xl border border-border-hairline card-elevation flex flex-col items-center justify-center text-center">
+          <span className="text-3xl sm:text-4xl font-extrabold text-brand mb-1 tabular">
+            {stats.activeCount}
+          </span>
+          <span className="text-xs text-text-secondary font-semibold">
+            {lang === "de" ? "Aktive Pflanzen" : "Active plants"}
+          </span>
+        </div>
+
+        <div className="bg-surface p-5 sm:p-6 rounded-xl md:rounded-2xl border border-border-hairline card-elevation flex flex-col items-center justify-center text-center">
+          <span className="text-3xl sm:text-4xl font-extrabold text-care-water mb-1 tabular">
+            {litersWatered} L
+          </span>
+          <span className="text-xs text-text-secondary font-semibold">
+            {lang === "de" ? "Wasser (ca.)" : "Water (est.)"}
+          </span>
+        </div>
+
+        <div className="bg-surface p-5 sm:p-6 rounded-xl md:rounded-2xl border border-border-hairline card-elevation flex flex-col items-center justify-center text-center">
+          <span className="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 mb-1 tabular">
+            {stats.survivalRate}
+          </span>
+          <span className="text-xs text-text-secondary font-semibold">
+            {lang === "de" ? "Überlebensrate" : "Survival Rate"}
+          </span>
+        </div>
+
+        <div className="bg-surface p-5 sm:p-6 rounded-xl md:rounded-2xl border border-border-hairline card-elevation flex flex-col items-center justify-center text-center">
+          <span className="text-2xl sm:text-3xl font-bold text-text-primary mb-1 tabular">
+            {oldestDateString}
+          </span>
+          <span className="text-xs text-text-secondary font-semibold">
+            {t("oldestPlant", lang)}
+          </span>
+        </div>
+      </div>
+
+      {/* 2. Badge & Gamification Sektion */}
+      <section className="bg-surface rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 border border-border-hairline card-elevation space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-text-primary">
+              <Trophy className="text-amber-500" size={20} />
+              {lang === "de" ? "Abzeichen & Entdeckungen" : "Badges & Achievements"}
+            </h2>
+            <p className="text-xs text-text-muted mt-0.5">
+              {lang === "de"
+                ? "Erfülle Ziele oder entdecke geheime botanische Kombinationen!"
+                : "Complete goals or discover secret botanical combinations!"}
+            </p>
+          </div>
+        </div>
+
+        {/* 6 Teaser/Mystery Slots & Unlocked Badges */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {/* Teaser 1: Regenmacher */}
+          <BadgeCard
+            icon={<Droplet size={24} />}
+            title={lang === "de" ? "Regenmacher" : "Rainmaker"}
+            desc={lang === "de" ? "100x gegossen" : "Watered 100x"}
             unlocked={badges.rainmaker}
-            color="text-blue-500"
+            color="text-care-water"
+            isTeaser
           />
-          <BadgeCard 
-            icon={<Leaf size={32} />}
-            title={lang === 'de' ? 'Botanik-Nerd' : 'Botany Nerd'}
-            desc={lang === 'de' ? '10 aktive Pflanzen' : '10 active plants'}
+
+          {/* Teaser 2: Botanik-Nerd */}
+          <BadgeCard
+            icon={<Leaf size={24} />}
+            title={lang === "de" ? "Botanik-Nerd" : "Botany Nerd"}
+            desc={lang === "de" ? "10 aktive Pflanzen" : "10 active plants"}
             unlocked={badges.botanyNerd}
-            color="text-green-500"
+            color="text-brand"
+            isTeaser
           />
-          <BadgeCard 
-            icon={<Apple size={32} />}
-            title={lang === 'de' ? 'Erntezeit' : 'Harvest Time'}
-            desc={lang === 'de' ? 'Hat Obst/Gemüse' : 'Has fruit/veg'}
+
+          {/* Teaser 3: Erntezeit */}
+          <BadgeCard
+            icon={<Apple size={24} />}
+            title={lang === "de" ? "Erntezeit" : "Harvest Time"}
+            desc={lang === "de" ? "Obst/Gemüse/Kräuter" : "Fruit/veg/herbs"}
             unlocked={badges.harvestTime}
-            color="text-red-500"
+            color="text-rose-500"
+            isTeaser
           />
-          <BadgeCard 
-            icon={<Ghost size={32} />}
-            title={lang === 'de' ? 'Die Verlorenen' : 'The lost ones'}
-            desc={lang === 'de' ? 'Eine Pflanze verloren' : 'Lost a plant'}
+
+          {/* Teaser 4: Weltreise (Aspirativ) */}
+          <BadgeCard
+            icon={<Globe size={24} />}
+            title={lang === "de" ? "Weltreise" : "World Tour"}
+            desc={lang === "de" ? "Mind. 8 Herkünfte" : "8+ different origins"}
+            unlocked={badges.worldTour}
+            color="text-amber-500"
+            isTeaser
+            isAspirational
+          />
+
+          {/* Dynamische Unlocked Badges */}
+          <BadgeCard
+            icon={<Ghost size={24} />}
+            title={lang === "de" ? "Die Verlorenen" : "The Lost Ones"}
+            desc={lang === "de" ? "Eine Pflanze verloren" : "Lost a plant"}
             unlocked={badges.petSematary}
-            color="text-gray-400"
+            color="text-neutral-400"
           />
-          <BadgeCard 
-            icon={<Monitor size={32} />}
+          <BadgeCard
+            icon={<Monitor size={24} />}
             title="IT-Support"
-            desc={lang === 'de' ? 'Easter Egg gefunden!' : 'Found an Easter Egg!'}
+            desc={lang === "de" ? "Easter Egg gefunden!" : "Found an Easter Egg!"}
             unlocked={badges.itSupport}
             color="text-purple-500"
             pulse
           />
-
-          <BadgeCard 
-            icon={<Pizza size={32} />}
+          <BadgeCard
+            icon={<Pizza size={24} />}
             title="Pizza Margherita"
-            desc={lang === 'de' ? 'Tomate & Basilikum' : 'Tomato & Basil'}
+            desc={lang === "de" ? "Tomate & Basilikum" : "Tomato & Basil"}
             unlocked={badges.pizzaMargherita}
             color="text-orange-500"
           />
-          <BadgeCard 
-            icon={<Utensils size={32} />}
+          <BadgeCard
+            icon={<Utensils size={24} />}
             title="Wedges"
-            desc={lang === 'de' ? 'Kartoffel & Rosmarin' : 'Potato & Rosemary'}
+            desc={lang === "de" ? "Kartoffel & Rosmarin" : "Potato & Rosemary"}
             unlocked={badges.wedges}
-            color="text-yellow-600"
+            color="text-amber-600"
           />
-          <BadgeCard 
-            icon={<TreePine size={32} />}
+          <BadgeCard
+            icon={<TreePine size={24} />}
             title="Jungle"
-            desc={lang === 'de' ? '4x Monstera' : '4x Monstera'}
+            desc={lang === "de" ? "4x Monstera" : "4x Monstera"}
             unlocked={badges.jungle}
-            color="text-green-600"
+            color="text-emerald-600"
           />
-          <BadgeCard 
-            icon={<CloudRain size={32} />}
+          <BadgeCard
+            icon={<CloudRain size={24} />}
             title="Rainforest"
-            desc={lang === 'de' ? 'Monstera & Strelitzie' : 'Monstera & Strelitzie'}
+            desc={lang === "de" ? "Monstera & Strelitzie" : "Monstera & Strelitzia"}
             unlocked={badges.rainforest}
-            color="text-teal-500"
+            color="text-care-fungus"
           />
-          <BadgeCard 
-            icon={<Sun size={32} />}
+          <BadgeCard
+            icon={<Sun size={24} />}
             title="Desert"
-            desc={lang === 'de' ? '3x Kakteen/Sukkulenten' : '3x Cacti/Succulents'}
+            desc={lang === "de" ? "3x Kakteen/Sukkulenten" : "3x Cacti/Succulents"}
             unlocked={badges.desert}
             color="text-amber-500"
           />
-          <BadgeCard 
-            icon={<Globe size={32} />}
-            title={lang === 'de' ? 'Weltreise' : 'World Tour'}
-            desc={lang === 'de' ? '3 verschiedene Herkünfte' : '3 different origins'}
-            unlocked={badges.worldTour}
-            color="text-blue-400"
-          />
-
-          <BadgeCard 
-            icon={<GlassWater size={32} />}
+          <BadgeCard
+            icon={<GlassWater size={24} />}
             title="Gin-Tonic"
-            desc={lang === 'de' ? 'Zitrone & Gurke' : 'Lemon & Cucumber'}
+            desc={lang === "de" ? "Zitrone & Gurke" : "Lemon & Cucumber"}
             unlocked={badges.ginTonic}
             color="text-emerald-400"
           />
-          <BadgeCard 
-            icon={<Crown size={32} />}
+          <BadgeCard
+            icon={<Crown size={24} />}
             title="Drama Queen"
-            desc={lang === 'de' ? 'Spathiphyllum/Fittonia' : 'Peace Lily/Fittonia'}
+            desc={lang === "de" ? "Spathiphyllum/Fittonia" : "Peace Lily/Fittonia"}
             unlocked={badges.dramaQueen}
             color="text-pink-500"
           />
-          <BadgeCard 
-            icon={<Skull size={32} />}
+          <BadgeCard
+            icon={<Skull size={24} />}
             title="Serial Killer"
-            desc={lang === 'de' ? '3 archiviert in 2 Mon.' : '3 archived in 2 mo'}
+            desc={lang === "de" ? "3 archiviert in 2 Mon." : "3 archived in 2 mo"}
             unlocked={badges.serialKiller}
-            color="text-red-600"
+            color="text-red-500"
           />
-          <BadgeCard 
-            icon={<MoonStar size={32} />}
+          <BadgeCard
+            icon={<MoonStar size={24} />}
             title="Gothic Garden"
-            desc={lang === 'de' ? '3x Schatten/Dark' : '3x Shade/Dark'}
+            desc={lang === "de" ? "3x Schatten/Dark" : "3x Shade/Dark"}
             unlocked={badges.gothicGarden}
-            color="text-indigo-500"
+            color="text-indigo-400"
           />
-          <BadgeCard 
-            icon={<Castle size={32} />}
-            title={lang === 'de' ? 'Schloss' : 'Castle'}
-            desc={lang === 'de' ? '>6 Räume/Bereiche' : '>6 rooms/areas'}
+          <BadgeCard
+            icon={<Castle size={24} />}
+            title={lang === "de" ? "Schloss" : "Castle"}
+            desc={lang === "de" ? ">6 Räume/Bereiche" : ">6 rooms/areas"}
             unlocked={badges.castle}
-            color="text-yellow-600"
+            color="text-amber-600"
           />
-          <BadgeCard 
-            icon={<Ghost size={32} />}
-            title={lang === 'de' ? 'Geisterschloss' : 'Haunted Castle'}
-            desc={lang === 'de' ? '10+ archiviert' : '10+ archived'}
+          <BadgeCard
+            icon={<Ghost size={24} />}
+            title={lang === "de" ? "Geisterschloss" : "Haunted Castle"}
+            desc={lang === "de" ? "10+ archiviert" : "10+ archived"}
             unlocked={badges.hauntedCastle}
-            color="text-gray-500"
+            color="text-neutral-400"
           />
-          <BadgeCard 
-            icon={<Sprout size={32} />}
-            title={lang === 'de' ? 'Diversität (Bronze)' : 'Diversity (Bronze)'}
-            desc={lang === 'de' ? '5+ Arten' : '5+ species'}
+          <BadgeCard
+            icon={<Sprout size={24} />}
+            title={lang === "de" ? "Diversität (Bronze)" : "Diversity (Bronze)"}
+            desc={lang === "de" ? "5+ Arten" : "5+ species"}
             unlocked={badges.diversityBronze && !badges.diversitySilver && !badges.diversityGold}
             color="text-amber-700"
           />
-          <BadgeCard 
-            icon={<Leaf size={32} />}
-            title={lang === 'de' ? 'Diversität (Silber)' : 'Diversity (Silver)'}
-            desc={lang === 'de' ? '10+ Arten' : '10+ species'}
+          <BadgeCard
+            icon={<Leaf size={24} />}
+            title={lang === "de" ? "Diversität (Silber)" : "Diversity (Silver)"}
+            desc={lang === "de" ? "10+ Arten" : "10+ species"}
             unlocked={badges.diversitySilver && !badges.diversityGold}
-            color="text-gray-400"
+            color="text-neutral-400"
           />
-          <BadgeCard 
-            icon={<TreePine size={32} />}
-            title={lang === 'de' ? 'Diversität (Gold)' : 'Diversity (Gold)'}
-            desc={lang === 'de' ? '20+ Arten' : '20+ species'}
+          <BadgeCard
+            icon={<TreePine size={24} />}
+            title={lang === "de" ? "Diversität (Gold)" : "Diversity (Gold)"}
+            desc={lang === "de" ? "20+ Arten" : "20+ species"}
             unlocked={badges.diversityGold}
             color="text-yellow-500"
           />
-          <BadgeCard 
-            icon={<Utensils size={32} />}
-            title={lang === 'de' ? 'Mittelmeer Mix' : 'Mediterranean Mix'}
-            desc={lang === 'de' ? '3+ Kräuter' : '3+ herbs'}
+          <BadgeCard
+            icon={<Utensils size={24} />}
+            title={lang === "de" ? "Mittelmeer Mix" : "Mediterranean Mix"}
+            desc={lang === "de" ? "3+ Kräuter" : "3+ herbs"}
             unlocked={badges.mediterraneanMix}
             color="text-emerald-500"
           />
 
+          {/* Mystery Teaser Slots (5 & 6) */}
+          <BadgeCard
+            isMystery
+            desc={lang === "de" ? "Finde die Kombination!" : "Find the secret combo!"}
+          />
+          <BadgeCard
+            isMystery
+            desc={lang === "de" ? "Geheime Pflanzenerfolge" : "Secret botanical combos"}
+          />
         </div>
       </section>
 
-
-
-      {/* Fun Facts */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-black text-brand mb-2">{stats.activeCount}</span>
-          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Aktive Pflanzen' : 'Active plants'}</span>
-        </div>
-        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-black text-brand mb-2">{litersWatered} L</span>
-          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Wasser (ca.)' : 'Water (est.)'}</span>
-        </div>
-        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-black text-brand mb-2">{stats.survivalRate}</span>
-          <span className="text-sm text-surface-foreground/70">{lang === 'de' ? 'Überlebensrate' : 'Survival Rate'}</span>
-        </div>
-        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center">
-          <span className="text-2xl font-bold text-brand mb-2">{oldestDateString}</span>
-          <span className="text-sm text-surface-foreground/70">{t('oldestPlant', lang)}</span>
-        </div>
-      </div>
-
-      {/* Charts */}
+      {/* 3. Recharts-Diagramme: Horizontale Balken mit abgerundeten Enden & schwebenden Tooltips */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
-        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 h-96 flex flex-col">
-          <h3 className="text-lg font-bold mb-4">{t('theThirstyOnes', lang)}</h3>
+        {/* Most Thirsty Plants Bar Chart */}
+        <div className="bg-surface p-5 sm:p-6 rounded-2xl md:rounded-3xl border border-border-hairline card-elevation h-96 flex flex-col">
+          <h3 className="text-sm sm:text-base font-bold text-text-primary mb-4">
+            {t("theThirstyOnes", lang)}
+          </h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={thirstyData} layout="vertical" margin={{ top: 0, right: 0, left: 40, bottom: 0 }}>
+              <BarChart
+                data={thirstyData}
+                layout="vertical"
+                margin={{ top: 0, right: 15, left: 40, bottom: 0 }}
+              >
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'currentColor' }} className="text-xs text-surface-foreground dark:text-zinc-300 font-medium" width={100} />
-                <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={tooltipStyle} itemStyle={{color: 'var(--foreground)'}} />
-                <Bar dataKey="watered" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "currentColor" }}
+                  className="text-xs text-text-secondary font-medium"
+                  width={110}
+                />
+                <Tooltip cursor={{ fill: "var(--border-hairline)" }} content={<CustomBarTooltip />} />
+                <Bar dataKey="watered" fill="var(--care-water)" radius={[0, 6, 6, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 h-96 flex flex-col">
-          <h3 className="text-lg font-bold mb-4">{t('topOrigins', lang)}</h3>
+        {/* Top Origins Bar Chart */}
+        <div className="bg-surface p-5 sm:p-6 rounded-2xl md:rounded-3xl border border-border-hairline card-elevation h-96 flex flex-col">
+          <h3 className="text-sm sm:text-base font-bold text-text-primary mb-4">
+            {t("topOrigins", lang)}
+          </h3>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.topOrigins} layout="vertical" margin={{ top: 0, right: 0, left: 80, bottom: 0 }}>
+              <BarChart
+                data={stats.topOrigins}
+                layout="vertical"
+                margin={{ top: 0, right: 15, left: 70, bottom: 0 }}
+              >
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'currentColor' }} className="text-xs text-surface-foreground dark:text-zinc-300 font-medium" width={80} />
-                <Tooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={tooltipStyle} itemStyle={{color: 'var(--foreground)'}} />
-                <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24} />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "currentColor" }}
+                  className="text-xs text-text-secondary font-medium"
+                  width={90}
+                />
+                <Tooltip cursor={{ fill: "var(--border-hairline)" }} content={<CustomOriginTooltip />} />
+                <Bar dataKey="value" fill="var(--brand)" radius={[0, 6, 6, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Garden Vibe & Matrix */}
+      {/* 4. Garden Vibe & Matrix */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
-        
-        {/* Fadenkreuz Scatter */}
-        <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm aspect-square flex flex-col relative overflow-hidden">
-          <h2 className="text-xl font-bold mb-4 z-10 relative">{t('survivalCoordinates', lang)}</h2>
+        {/* Scatter Matrix */}
+        <section className="bg-surface rounded-2xl md:rounded-3xl p-5 sm:p-6 border border-border-hairline card-elevation aspect-square flex flex-col relative overflow-hidden">
+          <h2 className="text-sm sm:text-base font-bold text-text-primary mb-4 z-10 relative">
+            {t("survivalCoordinates", lang)}
+          </h2>
           <div className="flex-1 w-full min-h-0 relative z-0">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <XAxis type="number" dataKey="x" domain={[0, 4]} hide />
                 <YAxis type="number" dataKey="y" domain={[0, 30]} hide />
                 <ZAxis range={[60, 60]} />
-                <ReferenceLine x={2} stroke="currentColor" strokeDasharray="3 3" className="opacity-20 dark:opacity-30" />
-                <ReferenceLine y={15} stroke="currentColor" strokeDasharray="3 3" className="opacity-20 dark:opacity-30" />
-                <Tooltip content={<CustomScatterTooltip />} cursor={{strokeDasharray: '3 3'}} />
-                <Scatter name="Plants" data={stats.matrixData} fill="#10b981" />
+                <ReferenceLine x={2} stroke="currentColor" strokeDasharray="3 3" className="opacity-15" />
+                <ReferenceLine y={15} stroke="currentColor" strokeDasharray="3 3" className="opacity-15" />
+                <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: "3 3" }} />
+                <Scatter name="Plants" data={stats.matrixData} fill="var(--brand)" />
               </ScatterChart>
             </ResponsiveContainer>
-            
+
             {/* Edge Labels */}
-            <div className="absolute top-2 w-full text-center text-xs text-surface-foreground/40 font-bold uppercase tracking-wider pointer-events-none leading-tight whitespace-pre-line">{t('waterJunkie', lang)}</div>
-            <div className="absolute bottom-2 w-full text-center text-xs text-surface-foreground/40 font-bold uppercase tracking-wider pointer-events-none leading-tight whitespace-pre-line">{t('cactusVibes', lang)}</div>
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-surface-foreground/40 font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">{t('shadeDweller', lang)}</div>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-xs text-surface-foreground/40 font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">{t('sunWorshipper', lang)}</div>
+            <div className="absolute top-2 w-full text-center text-[10px] text-text-muted font-bold uppercase tracking-wider pointer-events-none leading-tight">
+              {t("waterJunkie", lang)}
+            </div>
+            <div className="absolute bottom-2 w-full text-center text-[10px] text-text-muted font-bold uppercase tracking-wider pointer-events-none leading-tight">
+              {t("cactusVibes", lang)}
+            </div>
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-text-muted font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">
+              {t("shadeDweller", lang)}
+            </div>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-[10px] text-text-muted font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">
+              {t("sunWorshipper", lang)}
+            </div>
           </div>
         </section>
 
         {/* Radar Chart */}
-        <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm aspect-square flex flex-col relative overflow-hidden">
-          <h2 className="text-xl font-bold mb-4">{t('theGardenVibe', lang)}</h2>
+        <section className="bg-surface rounded-2xl md:rounded-3xl p-5 sm:p-6 border border-border-hairline card-elevation aspect-square flex flex-col relative overflow-hidden">
+          <h2 className="text-sm sm:text-base font-bold text-text-primary mb-4">
+            {t("theGardenVibe", lang)}
+          </h2>
           <div className="flex-1 w-full min-h-0 relative z-0">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart outerRadius="65%" data={stats.radarData.map((d: any) => ({
-                ...d, 
-                subject: t(
-                  d.subject === 'Durst' ? 'thirst' :
-                  d.subject === 'Lichthunger' ? 'lightNeed' :
-                  d.subject === 'Pflegeleichtigkeit' ? 'easeOfCare' :
-                  d.subject === 'Artenvielfalt' ? 'diversity' :
-                  d.subject === 'Nutzgarten-Anteil' ? 'edibleRatio' :
-                  d.subject === 'Freiluft-Faktor' ? 'outdoorFactor' : d.subject as any, 
-                  lang
-                )
-              }))} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <PolarGrid stroke="currentColor" className="opacity-10 dark:opacity-20" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 11 }} className="text-surface-foreground dark:text-zinc-300 font-bold tracking-wide" />
+              <RadarChart
+                outerRadius="65%"
+                data={stats.radarData.map((d: any) => ({
+                  ...d,
+                  subject: t(
+                    d.subject === "Durst"
+                      ? "thirst"
+                      : d.subject === "Lichthunger"
+                      ? "lightNeed"
+                      : d.subject === "Pflegeleichtigkeit"
+                      ? "easeOfCare"
+                      : d.subject === "Artenvielfalt"
+                      ? "diversity"
+                      : d.subject === "Nutzgarten-Anteil"
+                      ? "edibleRatio"
+                      : d.subject === "Freiluft-Faktor"
+                      ? "outdoorFactor"
+                      : (d.subject as any),
+                    lang
+                  ),
+                }))}
+                margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+              >
+                <PolarGrid stroke="currentColor" className="opacity-10" />
+                <PolarAngleAxis
+                  dataKey="subject"
+                  tick={{ fill: "currentColor", fontSize: 11 }}
+                  className="text-text-secondary font-semibold tracking-wide"
+                />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar name="Vibe" dataKey="A" stroke="#10b981" strokeWidth={2} fill="#10b981" fillOpacity={0.5} />
+                <Radar name="Vibe" dataKey="A" stroke="var(--brand)" strokeWidth={2} fill="var(--brand)" fillOpacity={0.3} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
         </section>
-        
       </div>
 
-      {/* Action Logs Summary */}
-      <section className="bg-surface rounded-3xl p-6 border border-black/5 dark:border-white/5 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Activity className="text-brand" /> 
-            {t('activities', lang)}
-          </h2>
-          <div className="flex gap-4 text-sm font-bold bg-black/5 dark:bg-white/5 px-4 py-2 rounded-xl">
-            <span className="opacity-70">{t('yearlyTotal', lang)}</span>
-            <span className="text-blue-500">{stats.eventSummary.yearWater} 💧</span>
-            <span className="text-amber-500">{stats.eventSummary.yearFertilize} 🧪</span>
-            <span className="text-green-500">{stats.eventSummary.yearCreate} 🌱</span>
-            <span className="text-gray-500">{stats.eventSummary.yearArchive} 💀</span>
+      {/* 5. Activities & Monatsübersicht (Strikte Pflege-Farbkontinuität & Soft-Fills) */}
+      <section className="bg-surface rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 border border-border-hairline card-elevation space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold flex items-center gap-2 text-text-primary">
+              <Activity className="text-brand" size={20} />
+              {t("activities", lang)}
+            </h2>
+            <p className="text-xs text-text-muted mt-0.5">
+              {lang === "de"
+                ? "Pflegeaktivitäten im Monats- und Jahresverlauf"
+                : "Care actions over the current month and year"}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2 text-xs font-semibold bg-surface-subtle px-3.5 py-2 rounded-xl border border-border-hairline tabular">
+            <span className="text-text-muted">{t("yearlyTotal", lang)}</span>
+            <span className="text-care-water font-bold">{stats.eventSummary.yearWater} 💧</span>
+            <span className="text-care-fertilizer font-bold">{stats.eventSummary.yearFertilize} 🧪</span>
+            <span className="text-care-bug font-bold">{stats.eventSummary.yearBug || 0} 🌿</span>
+            <span className="text-care-fungus font-bold">{stats.eventSummary.yearFungus || 0} ✨</span>
+            <span className="text-brand font-bold">{stats.eventSummary.yearCreate} 🌱</span>
+            <span className="text-text-muted">{stats.eventSummary.yearArchive} 💀</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-blue-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{t('wateredMonth', lang)}</p>
-            <p className="text-2xl font-bold">{stats.eventSummary.monthWater}</p>
+
+        {/* Monatskacheln mit 100% borderless Soft-Fills */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* Wasser */}
+          <div className="p-4 bg-care-water-bg rounded-xl">
+            <p className="text-xs text-care-water font-semibold mb-1 flex items-center gap-1">
+              <Droplet size={13} /> {t("wateredMonth", lang)}
+            </p>
+            <p className="text-2xl font-extrabold tabular text-care-water">
+              {stats.eventSummary.monthWater}
+            </p>
           </div>
-          <div className="p-4 bg-amber-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{t('fertilizedMonth', lang)}</p>
-            <p className="text-2xl font-bold">{stats.eventSummary.monthFertilize}</p>
+
+          {/* Dünger */}
+          <div className="p-4 bg-care-fertilizer-bg rounded-xl">
+            <p className="text-xs text-care-fertilizer font-semibold mb-1 flex items-center gap-1">
+              <FlaskConical size={13} /> {t("fertilizedMonth", lang)}
+            </p>
+            <p className="text-2xl font-extrabold tabular text-care-fertilizer">
+              {stats.eventSummary.monthFertilize}
+            </p>
           </div>
-          <div className="p-4 bg-green-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{t('newPlantedMonth', lang)}</p>
-            <p className="text-2xl font-bold">{stats.eventSummary.monthCreate}</p>
+
+          {/* Bekämpfen */}
+          <div className="p-4 bg-care-bug-bg rounded-xl">
+            <p className="text-xs text-care-bug font-semibold mb-1 flex items-center gap-1">
+              <BugOff size={13} /> {lang === "de" ? "Bekämpft (Monat)" : "Pest (Month)"}
+            </p>
+            <p className="text-2xl font-extrabold tabular text-care-bug">
+              {stats.eventSummary.monthBug || 0}
+            </p>
           </div>
-          <div className="p-4 bg-gray-500/10 rounded-2xl">
-            <p className="text-sm opacity-70 mb-1">{t('archivedMonth', lang)}</p>
-            <p className="text-2xl font-bold">{stats.eventSummary.monthArchive}</p>
+
+          {/* Pilzschutz */}
+          <div className="p-4 bg-care-fungus-bg rounded-xl">
+            <p className="text-xs text-care-fungus font-semibold mb-1 flex items-center gap-1">
+              <SprayCan size={13} /> {lang === "de" ? "Pilzschutz (Monat)" : "Fungus (Month)"}
+            </p>
+            <p className="text-2xl font-extrabold tabular text-care-fungus">
+              {stats.eventSummary.monthFungus || 0}
+            </p>
+          </div>
+
+          {/* Neu eingepflanzt */}
+          <div className="p-4 bg-brand-subtle rounded-xl">
+            <p className="text-xs text-brand font-semibold mb-1 flex items-center gap-1">
+              <Leaf size={13} /> {t("newPlantedMonth", lang)}
+            </p>
+            <p className="text-2xl font-extrabold tabular text-brand">
+              {stats.eventSummary.monthCreate}
+            </p>
+          </div>
+
+          {/* Archiviert */}
+          <div className="p-4 bg-surface-subtle rounded-xl">
+            <p className="text-xs text-text-muted font-semibold mb-1 flex items-center gap-1">
+              <Ghost size={13} /> {t("archivedMonth", lang)}
+            </p>
+            <p className="text-2xl font-extrabold tabular text-text-secondary">
+              {stats.eventSummary.monthArchive}
+            </p>
           </div>
         </div>
       </section>
-
     </div>
   );
 }
 
-function BadgeCard({ icon, title, desc, unlocked, color, pulse = false }: any) {
-  if (!unlocked) return null;
+function BadgeCard({
+  icon,
+  title,
+  desc,
+  unlocked,
+  color,
+  pulse = false,
+  isTeaser = false,
+  isAspirational = false,
+  isMystery = false,
+}: any) {
+  if (!unlocked && !isTeaser && !isMystery) return null;
+
+  if (isMystery) {
+    return (
+      <div className="p-3.5 rounded-xl flex flex-col items-center text-center bg-surface-subtle/50 border border-border-hairline opacity-60 hover:opacity-90 transition-opacity">
+        <div className="w-11 h-11 rounded-xl bg-surface-subtle text-text-muted/60 flex items-center justify-center mb-2">
+          <Lock size={18} />
+        </div>
+        <h4 className="font-bold text-xs text-text-secondary mb-0.5 leading-tight">
+          {title || "Geheimes Abzeichen"}
+        </h4>
+        <p className="text-[11px] text-text-muted leading-tight">
+          {desc || "Freischalten durch Entdecken!"}
+        </p>
+        <span className="mt-2 text-[10px] font-bold text-text-muted px-2 py-0.5 rounded-full bg-surface-subtle">
+          ???
+        </span>
+      </div>
+    );
+  }
+
+  if (isTeaser && !unlocked) {
+    return (
+      <div
+        className={`p-3.5 rounded-xl flex flex-col items-center text-center relative border-2 border-dashed ${
+          isAspirational
+            ? "border-amber-500/30 bg-amber-500/5"
+            : "border-brand/30 bg-brand-subtle/20"
+        } transition-all hover-lift`}
+      >
+        <span
+          className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.2 rounded-md ${
+            isAspirational
+              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              : "bg-brand-subtle text-brand"
+          }`}
+        >
+          {isAspirational ? "Aspirativ ★" : "Teaser"}
+        </span>
+        <div
+          className={`w-11 h-11 rounded-xl bg-surface ${
+            isAspirational ? "text-amber-500/80" : "text-brand/80"
+          } flex items-center justify-center mb-2 shadow-xs`}
+        >
+          {icon}
+        </div>
+        <h4 className="font-bold text-xs text-text-primary mb-0.5 leading-tight">{title}</h4>
+        <p className="text-[11px] text-text-muted leading-tight">{desc}</p>
+        <span
+          className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            isAspirational
+              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              : "bg-brand-subtle text-brand"
+          }`}
+        >
+          Ziel
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <div className={`p-4 rounded-2xl flex flex-col items-center text-center transition-all duration-300 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10`}>
-      <div className={`mb-3 ${color} ${pulse ? 'animate-pulse' : ''}`}>
+    <div className="p-3.5 rounded-xl flex flex-col items-center text-center transition-all bg-surface border border-border-hairline card-elevation hover-lift">
+      <div
+        className={`w-11 h-11 rounded-xl bg-surface-subtle flex items-center justify-center mb-2 shadow-xs ${color} ${
+          pulse ? "animate-pulse" : ""
+        }`}
+      >
         {icon}
       </div>
-      <h4 className="font-bold text-sm mb-1 leading-tight">{title}</h4>
-      <p className="text-xs text-surface-foreground/60">{desc}</p>
+      <h4 className="font-bold text-xs text-text-primary mb-0.5 leading-tight">{title}</h4>
+      <p className="text-[11px] text-text-muted leading-tight">{desc}</p>
+      <span className="mt-2 text-[10px] font-bold text-brand px-2 py-0.5 rounded-full bg-brand-subtle flex items-center gap-1">
+        <Check size={10} /> Freigeschaltet
+      </span>
     </div>
   );
-}
-
-// simple Leaf icon for fallback since it's not imported directly in the generic imports
-function Leaf({size}: {size: number}) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>;
 }

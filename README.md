@@ -41,7 +41,9 @@ This is the recommended way for users on NAS systems (Synology, Unraid, etc.) or
          - plantstack_data:/app/data
        environment:
          - NODE_ENV=production
-         # Optional: Add Open Plantbook credentials here if you have them
+         # Optional: Protect access with an API secret/password (see Security section below)
+         # - PLANTSTACK_API_SECRET=your_secret_password_here
+         # Optional: Open Plantbook credentials
          # - OPENPLANTBOOK_CLIENT_ID=your_client_id_here
          # - OPENPLANTBOOK_CLIENT_SECRET=your_client_secret_here
 
@@ -53,7 +55,20 @@ This is the recommended way for users on NAS systems (Synology, Unraid, etc.) or
    ```bash
    docker-compose up -d
    ```
-3. The app will be accessible at http://localhost:9666. Your database and images will persist locally within the `plantstack_data` volume.
+3. The app will be accessible at `http://localhost:9666` (or your server's LAN IP). Your database and images will persist locally within the `plantstack_data` volume.
+
+### 🔒 Security & Access Protection
+
+PlantStack is designed for local self-hosting and works out-of-the-box on your private home network without configuration.
+
+- **Default LAN Mode (Open)**: If `PLANTSTACK_API_SECRET` is unset or empty, PlantStack requires no login and is freely accessible within your local network.
+- **Protected Mode (Enabled)**: Set `PLANTSTACK_API_SECRET="your_strong_password"` in your `.env` or `docker-compose.yml`.
+  - **Web UI**: Visiting the dashboard presents a clean lock screen. Entering your secret unlocks the jungle and issues a 30-day session cookie. You can log out anytime from the Settings page.
+  - **HTTP & HTTPS Compatibility**: The session cookie works seamlessly over local plain HTTP (`http://192.168.x.x:9666`) as well as over HTTPS behind reverse proxies (Nginx, Traefik, Caddy, Cloudflare Tunnels).
+  - **External Automation & Displays**: When protected mode is active, append your token to the status endpoint or provide headers:
+    - Query Parameter: `GET /api/plants/status?token=your_secret_password_here`
+    - Bearer Header: `Authorization: Bearer your_secret_password_here`
+    - API Key Header: `X-API-Key: your_secret_password_here`
 
 ### 🛠️ Building from Source
 
@@ -72,5 +87,7 @@ You will need Node.js (>= 18) installed.
 3. Generate client: `npx prisma generate`
 4. Run dev mode: `npm run dev`
 
-### API Endpoint for External Displays
-Send a GET request to `/api/plants/status` anywhere on your LAN to get a JSON output containing all overdue plants in your collection.
+### 📡 API Endpoint for External Displays (Smart Home)
+
+Send a GET request to `/api/plants/status` anywhere on your LAN to get a JSON output containing all overdue plants in your collection. Perfect for MagicMirror widgets, ESPHome e-ink displays, or Home Assistant REST sensors.
+

@@ -169,14 +169,16 @@ export default async function StatisticsPage() {
   });
 
   const eventSummary = {
-    monthWater: 0, monthFertilize: 0, monthCreate: 0, monthArchive: 0,
-    yearWater: 0, yearFertilize: 0, yearCreate: 0, yearArchive: 0,
+    monthWater: 0, monthFertilize: 0, monthBug: 0, monthFungus: 0, monthCreate: 0, monthArchive: 0,
+    yearWater: 0, yearFertilize: 0, yearBug: 0, yearFungus: 0, yearCreate: 0, yearArchive: 0,
   };
 
   events.forEach(e => {
     const isCurrentMonth = e.createdAt.getMonth() === currentMonth;
     if (e.type === "WATER") { eventSummary.yearWater++; if (isCurrentMonth) eventSummary.monthWater++; }
     if (e.type === "FERTILIZE") { eventSummary.yearFertilize++; if (isCurrentMonth) eventSummary.monthFertilize++; }
+    if (e.type === "BUG") { eventSummary.yearBug++; if (isCurrentMonth) eventSummary.monthBug++; }
+    if (e.type === "FUNGUS") { eventSummary.yearFungus++; if (isCurrentMonth) eventSummary.monthFungus++; }
     if (e.type === "CREATE") { eventSummary.yearCreate++; if (isCurrentMonth) eventSummary.monthCreate++; }
     if (e.type === "ARCHIVE") { eventSummary.yearArchive++; if (isCurrentMonth) eventSummary.monthArchive++; }
   });

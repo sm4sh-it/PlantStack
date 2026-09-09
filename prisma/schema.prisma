@@ -14,20 +14,25 @@ model Location {
   createdAt DateTime @default(now())
 }
 
- model AppConfig {
-  id               Int      @id @default(1)
-  onboardingSeen   Boolean  @default(false)
-  language         String   @default("en")
-  gridColumns      Int       @default(4)
-  dashboardTitle   String    @default("My Jungle")
+model AppConfig {
+  id                  Int       @id @default(1)
+  onboardingSeen      Boolean   @default(false)
+  language            String    @default("en")
+  gridColumns         Int       @default(4)
+  dashboardTitle      String    @default("My Jungle")
   
-  latitude         Float?
-  longitude        Float?
-  locationName     String?
-  lastWeatherSync  DateTime?
-  badgesResetAt    DateTime?
+  latitude            Float?
+  longitude           Float?
+  locationName        String?
 
-  updatedAt        DateTime  @updatedAt
+  weatherRainTier     Int       @default(0)
+  weatherHeatTier     Int       @default(0)
+  weatherFrostWarning Boolean   @default(false)
+  lastWeatherSync     DateTime?
+  badgesResetAt       DateTime?
+  winterDormancyEnabled Boolean @default(false)
+
+  updatedAt           DateTime  @updatedAt
 }
 
 model Plant {
@@ -70,12 +75,22 @@ model Plant {
   updatedAt          DateTime @updatedAt
 
   events             PlantEvent[]
+  photos             PlantPhoto[]
+}
+
+model PlantPhoto {
+  id        String   @id @default(uuid())
+  plantId   String
+  plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  imagePath String
+  note      String?
+  createdAt DateTime @default(now())
 }
 
 model PlantEvent {
   id        String   @id @default(uuid())
   plantId   String
   plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  type      String   // "WATER", "FERTILIZE", "CREATE", "ARCHIVE"
+  type      String   // "WATER", "FERTILIZE", "BUG", "FUNGUS", "CREATE", "ARCHIVE"
   createdAt DateTime @default(now())
 }

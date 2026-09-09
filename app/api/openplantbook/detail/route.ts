@@ -2,8 +2,23 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getPlantDetails } from "@/lib/openplantbook";
 import { cropsData } from "@/lib/crops";
+import { getClientIp, checkRateLimit } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
+  const clientIp = getClientIp(req);
+  const rateLimit = checkRateLimit(`opb-detail:${clientIp}`, 60, 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests to plant details. Please wait a moment." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": rateLimit.resetSeconds.toString(),
+        },
+      }
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const pid = searchParams.get("pid");
   const lang = (searchParams.get("lang") as "en" | "de") || "en";

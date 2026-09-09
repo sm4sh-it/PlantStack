@@ -1,5 +1,106 @@
 # Changelog
 
+## [3.5.0] - 2026-09-09
+### Added
+- **Optional Access Protection & Authentication Gate**: Added configurable password/API secret protection (`PLANTSTACK_API_SECRET`). Supports a clean Botanical lock screen for web browsers with a persistent session, while keeping open LAN mode as zero-friction default for local setups.
+- **Seamless Local HTTP & HTTPS Support**: Session handling and routing automatically detect protocol context, operating reliably across local unencrypted LAN environments (`http://192.168.x.x:9666`) and HTTPS reverse-proxy deployments.
+- **Smart Home & Automation Token Integration**: Machine-to-machine integrations (Home Assistant, ESP32, MagicMirror) can authenticate to `/api/plants/status` via `?token=` parameter, Bearer tokens, or API keys.
+- **Settings Session Management**: Active sessions can now be viewed and ended directly from the Settings page.
+
+### Changed
+- **Media Upload Pipeline Hardening**: Added strict binary signature (magic bytes) verification, MIME validation, and file size boundaries across all image upload handlers.
+- **Backup Archive Safety & Integrity**: Enhanced backup import with strict pre-validation, extraction boundaries, and path traversal defenses prior to database operations.
+- **Container Privilege & Runtime Hardening**: Multi-stage Docker production image now runs under an unprivileged `node` user with explicit SQLite data volume ownership.
+- **HTTP Security & Rate Limiting**: Enforced standard HTTP security headers, proxy-compatible request validation, and in-memory rate limiting for third-party catalog lookups.
+
+## [3.4.0] - 2026-09-09
+### Added
+- **Dark Mode SVG Color Adaptability**: Recharts SVG graph elements in `StatisticsClient` now bind directly to CSS color tokens (`var(--care-water)`, `var(--brand)`, and `var(--border-hairline)`). Chart bars and scatter points dynamically transition from deep moss green to vibrant emerald and sky blue in dark mode.
+- **Optimistic Touch Feedback for All Routines**: Instant visual feedback (`Behandelt ✓`, `Gegossen ✓`, `Gedüngt ✓`) is now rendered directly inside mobile action buttons upon touch for all four care disciplines.
+- **Secondary Pages Design Alignment**: Modernized `Archive` ("The lost ones" with subtle hover-lift), `Settings` (5 clean `card-elevation` sections with hairline dividers), and `About` (dynamic Markdown release parsing).
+
+### Changed
+- **Accessible FAB Focus & Dark-Mode Scrims**: Mobile Floating Action Button (`+`) now uses `focus:ring-offset-surface` to eliminate harsh white focus rings in dark mode.
+- **Seamless Modal Transitions**: `ConfirmModal` and `OnboardingModal` now feature high-contrast, backdrop-blurred (`backdrop-blur-md`) layers with zero harsh border strokes.
+- **Zero-Refresh Internal Navigation**: Converted footer links and modal buttons to native Next.js `<Link>` instances for instant client-side routing.
+
+## [3.3.0] - 2026-09-08
+### Added
+- **Zero-CLS Floating Autocomplete**: OpenPlantbook search suggestions in `PlantForm` now float in an absolute z-index dropdown (`absolute top-full z-30 mt-1 shadow-2xl`), entirely eliminating Cumulative Layout Shifts during plant creation.
+- **Interactive Drag & Drop Dropzone**: Replaced standard file pickers with an accessible drag-and-drop dropzone featuring dashed hairline boundaries, drag-over highlights, and an integrated thumbnail preview with replace and delete actions.
+- **Gamification & Insights Revamp**: Added 4 prominent KPI metric cards on `card-elevation` surfaces (Active Plants, Estimated Water, Survival Rate, Oldest Plant), 6 mystery/teaser badge slots, rounded horizontal Recharts bars (`radius: [0, 6, 6, 0]`), and floating borderless tooltips.
+- **Comprehensive Routine Tracking in Stats**: Monthly and annual activity counters now fully aggregate pest treatments (`BUG`) and fungus applications (`FUNGUS`) alongside water and fertilizer.
+
+### Changed
+- **44px Form Field Standards**: All inputs, selects, and action buttons in `PlantForm` now strictly adhere to 44px touch targets (`h-11`) and 8px border radii (`rounded-lg`).
+- **Semantic Care Inputs**: Routine interval inputs now illuminate in their specific care color rings on focus (Blue for Water, Amber for Fertilizer, Purple for Pest, Teal for Fungus).
+
+## [3.2.0] - 2026-09-08
+### Added
+- **Mobile 5-Slot Thumb-Zone Navigation**: Introduced an ergonomic bottom navigation bar on mobile viewports (<768px) with 5 dedicated slots: *Dschungel* (`/`), *Statistiken* (`/statistics`), a prominent central Floating Action Button `+` for instant plant creation, *Archiv* (`/archive`), and *Settings* (`/settings`).
+- **Zero-Layout-Shift Desktop Topbar**: Applied `scrollbar-gutter: stable` to the desktop header, preventing subtle horizontal shifts when switching between scrollable and static pages.
+- **Dual-Ergonomics Plant Cards (`PlantCard.tsx`)**:
+  - *Desktop*: 60% hero photo, dark-scrim photo badges (`bg-neutral-900/80 text-white`), and a flat single-row 4-pill quick-action strip.
+  - *Mobile*: 44px prominent primary urgency touch-button directly in the thumb zone, with secondary care intervals neatly displayed beneath.
+- **Botanical Studio Modal (`PlantDetailsModal.tsx`)**:
+  - *Desktop (md+)*: 2-column studio layout featuring 42% visual hero and photo timeline on the left, and 58% care profiles, environmental parameters, and history on the right.
+  - *Mobile (<md)*: 2-tab bottom sheet separating "Pflege & Details" from "Tagebuch & Historie" with 100% WCAG AAA readability (plant titles and botanical names sit cleanly on surface background below photo).
+
+### Changed
+- **Streamlined Modal Footers**: Eliminated the redundant, ambiguous "Pflegen" bulk button from the modal footer in favor of precise 1-click routine triggers.
+- **Actionable Pest Terminology**: Standardized pest routine naming to "Bekämpfen" (Treat / Combat) to reflect active treatments (e.g., neem oil, soap spray) rather than passive inspection.
+
+## [3.1.0] - 2026-09-07
+### Added
+- **Botanical Modernism Design System 2.0**: Completely transitioned the design architecture to semantic CSS tokens (`--bg-canvas`, `--bg-surface`, `--bg-surface-subtle`, `--text-primary`, `--border-hairline`) documented in `DESIGN_GUIDE.md` and interactive showcase `public/design-guide.html`.
+- **Strict Care Color Continuity**: Established permanent, immutable color families across all components:
+  - *Water*: Deep Blue (`--care-water` / `#0D638F` in light, `#38BDF8` in dark)
+  - *Fertilizer*: Amber (`--care-fertilizer` / `#995B00` in light, `#FBBF24` in dark)
+  - *Pest Protection*: Purple (`--care-bug` / `#7E22CE` in light, `#C084FC` in dark)
+  - *Fungus Protection*: Teal (`--care-fungus` / `#0F766E` in light, `#2DD4BF` in dark)
+- **Harmonized Radius Hierarchy**: Replaced arbitrary pill shapes with strict semantic radii: 6px (`rounded-md`) for badges/tags, 8px (`rounded-lg`) for buttons/inputs, 12px (`rounded-xl`) for cards, and 16px/24px (`rounded-2xl`/`3xl`) for modals.
+
+### Changed
+- **Zero-Wireframe / Anti-Outline Standard**: Completely removed all harsh white and neon border strokes (`border-white`, `border-white/20`) and nested card-in-card boxes, establishing visual hierarchy through whitespace, subtle hairline dividers, and soft tint fills.
+
+## [3.0.0] - 2026-09-06
+### Added
+- **Full Backup & Restore (ZIP / JSON)**: Self-hosters can now create complete 1-click backups containing all database records (`data.json`) and uploaded plant photos directly from the Settings page. Backups can be restored transactionally with automatic volume file synchronization.
+- **Growth Photo Diary (Photo History)**: Added a multi-photo growth timeline for each plant. Users can document repotting, new leaves, or seasonal progress with timestamped photos, notes, and an integrated high-resolution lightbox.
+- **Care History Timeline (Pflege-Protokoll)**: Plant details now showcase a chronological, visual timeline of all recent care activities (watering, fertilizing, pest, fungus, and planting events) with relative and exact timestamps.
+- **Intelligent Winter Dormancy (Dormancy Mode)**: Added seasonal dormancy logic for winter months (November to February). When enabled, watering intervals are automatically lengthened by 50% and fertilizing is safely paused to prevent root rot and overwatering.
+
+## [2.10.0] - 2026-09-03
+### Added
+- **PWA (Progressive Web App) Support**: Added complete `public/manifest.json`, Web App icons, theme color definitions for dark and light modes, and iOS standalone full-screen web app capabilities.
+- **Botanical Modernism Confirm Dialog (`ConfirmModal`)**: Replaced all native, blocking `window.confirm()` dialogs across the app (archive, deletion, batch actions, settings resets) with an accessible, high-contrast, backdrop-blurred modal component.
+- **Subtle Feedback Banners & Toasts**: Replaced all native `window.alert()` calls across `PlantForm`, `Settings`, and `Archive` with fluid inline error banners and floating feedback toasts.
+
+### Changed
+- **Accessible 44×44px Touch Targets**: Enlarged all action buttons on `PlantCard` (`Droplet`, `Sparkles`, `Bug`, `ShieldAlert`) to guarantee comfortable one-handed operation directly at the flowerpot.
+- **4-Tier Gentle Urgency**: Replaced binary overdue styling with a 4-tier visual hierarchy (*Overdue* terracotta badge, *Due Today* amber badge, *Due Soon* soft amber, and *In Schedule* subtle neutral).
+- **Dynamic Care Layout in `PlantCard`**: Replaced rigid empty slots (`<div />`) with a fluid flex layout rendering only active care intervals.
+- **Harmonized Localization**: Eliminated mixed-language string outputs (`2 d late` is now cleanly localized as `2 Tage überfällig` in German and `2 days overdue` in English).
+
+## [2.9.0] - 2026-08-31
+### Added
+- **Inline Location Creation**: Rooms can now be created on-the-fly directly inside the `PlantForm` modal via a dedicated `+` button without interrupting the creation flow.
+- **Automatic Default Room Initialization**: Clean installations now automatically seed a default location ("Wohnzimmer" / "Living Room") on initial setup, preventing onboarding errors.
+- **Dashboard Search & Filter Controls**: Added a real-time search field (filtering by name, botanical name, alias, and room) alongside fast filter chips (`Alle`, `Fällig`, `Drinnen`, `Draußen/Balkon`).
+- **Batch Watering Action**: Header action button to water all currently due plants simultaneously with one click.
+- **Care Action Undo Toast**: Non-intrusive floating toast notifications with an instant "Undo" button to safely revert accidental taps.
+- **Snooze Functionality**: Added a "Postpone 2 days" option in the plant card menu to delay watering without distorting history when soil is still moist.
+
+## [2.8.0] - 2026-08-28
+### Fixed
+- **Weather Interval Stability (4h-Jitter Fix)**: Weather tiers (`weatherRainTier`, `weatherHeatTier`, `weatherFrostWarning`) are now permanently cached in `AppConfig`. Outdoor and balcony plant intervals remain stable across all requests instead of resetting on non-sync requests.
+- **Plant Edit Data Loss**: Fixed a bug in `PUT /api/plants/[id]` where `placement` (Drinnen/Draußen/Balkon) and `plantType` (Zierpflanze/Nutzpflanze) were omitted during update, ensuring edits are properly persisted.
+- **Botanical Detail Matching**: `PlantDetailsModal` now prioritizes the plant's stored `apiId` directly instead of executing ambiguous free-text searches on custom plant nicknames.
+
+### Changed
+- **Comprehensive Care Event Logging**: `PlantEvent` records now capture `BUG` and `FUNGUS` treatments in addition to watering and fertilizing for complete care history tracking.
+- **Dependency & Type Harmonization**: Upgraded `lucide-react` to official React 19 peer support and aligned `@types/react` and `@types/react-dom` to `^19.0.0`.
+
 ## [2.7.2] - 2026-05-19
 ### Changed
 - **i18n Translation Update**: Fully mapped all newly added features and UI elements into the central translation dictionary. This includes specific translations for the Plant Modal (Environment, Room, Classification) and accurate translations for the Statistics Radar Chart axes.

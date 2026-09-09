@@ -1,25 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --surface: #f8fafc;
-  --surface-foreground: #334155;
-  --ring-color: #22c55e;
+  /* Botanical Modernism Tokens v2.0 - Light Mode */
+  --bg-canvas: #F8F9F6;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F1F3EE;
+  --bg-surface-hover: #E9ECE4;
+
+  --border-hairline: rgba(25, 36, 28, 0.08);
+  --border-strong: rgba(25, 36, 28, 0.18);
+  --border-subtle: rgba(25, 36, 28, 0.08);
+
+  /* Typography Hierarchy */
+  --text-primary: #19241C;
+  --text-secondary: #4D5E52;
+  --text-muted: #738478;
+  --text-on-brand: #FFFFFF;
+
+  /* Backward-compatibility aliases */
+  --background: var(--bg-canvas);
+  --foreground: var(--text-primary);
+  --surface: var(--bg-surface);
+  --surface-foreground: var(--text-secondary);
+  --surface-elevated: var(--bg-surface-subtle);
+
+  /* Brand Primary (Deep Forest Moss) */
+  --brand: #1E5135;
+  --brand-primary: #1E5135;
+  --brand-hover: #163D27;
+  --brand-light: #E8F0EA;
+  --brand-dark: #163D27;
+  --brand-subtle: #E8F0EA;
+  --brand-border: #C8D9CD;
+  --ring-color: #1E5135;
+
+  /* Functional Semantic Roles */
+  --status-success: #1E6B3F;
+  --status-success-bg: #EDF7F1;
+  --status-warning: #995B00;
+  --status-warning-bg: #FEF7EC;
+  --status-danger: #B3261E;
+  --status-danger-bg: #FDF2F2;
+  --status-info: #0D638F;
+  --status-info-bg: #EEF7FC;
+
+  /* Semantic Care & Functional Tokens (Strict Color Continuity) */
+  --care-water: #0D638F;
+  --care-water-bg: #EEF7FC;
+  --care-fertilizer: #995B00;
+  --care-fertilizer-bg: #FEF7EC;
+  --care-bug: #7E22CE;
+  --care-bug-bg: #FAF5FF;
+  --care-fungus: #0F766E;
+  --care-fungus-bg: #F0FDFA;
+  --care-frost: #0284C7;
+  --care-frost-bg: #F0F9FF;
+  --care-sun: #A16207;
+  --care-sun-bg: #FEF9C3;
+
+  --urgency-due: #995B00;
+  --urgency-overdue: #B3261E;
+  --urgency-overdue-bg: #FDF2F2;
 }
 
-:root.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --surface: #171717;
-  --surface-foreground: #a3a3a3;
-  --ring-color: #22c55e;
+:root.dark,
+.dark {
+  /* Botanical Modernism Tokens v2.0 - Dark Mode */
+  --bg-canvas: #0E1310;
+  --bg-surface: #151C17;
+  --bg-surface-subtle: #1C2620;
+  --bg-surface-hover: #243029;
+
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+
+  /* Typography Hierarchy */
+  --text-primary: #EEF3EF;
+  --text-secondary: #A3B5A7;
+  --text-muted: #6E8073;
+  --text-on-brand: #0E1310;
+
+  /* Backward-compatibility aliases */
+  --background: var(--bg-canvas);
+  --foreground: var(--text-primary);
+  --surface: var(--bg-surface);
+  --surface-foreground: var(--text-secondary);
+  --surface-elevated: var(--bg-surface-subtle);
+
+  /* Brand Primary (Vibrant Fresh Green) */
+  --brand: #34D37A;
+  --brand-primary: #34D37A;
+  --brand-hover: #2EC470;
+  --brand-light: rgba(52, 211, 122, 0.15);
+  --brand-dark: #1E5135;
+  --brand-subtle: rgba(52, 211, 122, 0.14);
+  --brand-border: rgba(52, 211, 122, 0.25);
+  --ring-color: #34D37A;
+
+  /* Functional Semantic Roles in Dark */
+  --status-success: #4ADE80;
+  --status-success-bg: rgba(74, 222, 128, 0.12);
+  --status-warning: #FBBF24;
+  --status-warning-bg: rgba(251, 191, 36, 0.12);
+  --status-danger: #F87171;
+  --status-danger-bg: rgba(248, 113, 113, 0.12);
+  --status-info: #38BDF8;
+  --status-info-bg: rgba(56, 189, 248, 0.12);
+
+  /* Semantic Care Tokens in Dark */
+  --care-water: #38BDF8;
+  --care-water-bg: rgba(56, 189, 248, 0.14);
+  --care-fertilizer: #FBBF24;
+  --care-fertilizer-bg: rgba(251, 191, 36, 0.14);
+  --care-bug: #C084FC;
+  --care-bug-bg: rgba(192, 132, 252, 0.14);
+  --care-fungus: #2DD4BF;
+  --care-fungus-bg: rgba(45, 212, 191, 0.14);
+  --care-frost: #22D3EE;
+  --care-frost-bg: rgba(34, 211, 238, 0.14);
+  --care-sun: #FACC15;
+  --care-sun-bg: rgba(250, 204, 21, 0.14);
+
+  --urgency-due: #FBBF24;
+  --urgency-overdue: #F87171;
+  --urgency-overdue-bg: rgba(248, 113, 113, 0.14);
 }
 
 html {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 body {
@@ -27,9 +142,44 @@ body {
   color: var(--foreground);
 }
 
+/* Subtle, organic card elevation without muddy shadows */
+.card-elevation {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+:root.dark .card-elevation,
+.dark .card-elevation {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+:root.dark .hover-lift:hover,
+.dark .hover-lift:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
 .surface-card {
   background-color: var(--surface);
   color: var(--surface-foreground);
-  border: 1px solid rgba(150, 150, 150, 0.1);
-  border-radius: 1rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+:root.dark .surface-card,
+.dark .surface-card {
+  border: 1px solid var(--border-hairline);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }

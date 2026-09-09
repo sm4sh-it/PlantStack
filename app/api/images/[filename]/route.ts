@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createReadStream, existsSync } from "fs";
-import { join, basename } from "path";
+import { join, basename, resolve } from "path";
 import { stat } from "fs/promises";
+import { getUploadsDir } from "@/lib/storage";
 
 export async function GET(
   request: NextRequest,
   props: { params: Promise<{ filename: string }> }
 ) {
   const params = await props.params;
-  // Read from the data directory which will be mounted in Docker
-  // Default to ../data/uploads for local dev without Docker, or /app/data/uploads inside Docker
-  const dataDir = process.env.DATA_DIR || join(process.cwd(), "..", "data", "uploads");
+  const dataDir = getUploadsDir();
   const secureFilename = basename(params.filename);
   const filePath = join(dataDir, secureFilename);
+
+  // Canonical path containment check
+  const resolvedPath = resolve(filePath);
+  const resolvedDataDir = resolve(dataDir);
+  if (
+    !resolvedPath.startsWith(resolvedDataDir + "/") &&
+    !resolvedPath.startsWith(resolvedDataDir + "\\")
+  ) {
+    return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+  }
 
   if (!existsSync(filePath)) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
@@ -33,6 +42,7 @@ export async function GET(
     headers: {
       "Content-Type": contentType,
       "Content-Length": fileStat.size.toString(),
+      "X-Content-Type-Options": "nosniff",
       // Cache images heavily
       "Cache-Control": "public, max-age=31536000, immutable",
     },

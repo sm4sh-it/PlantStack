@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  try {
+    const params = await props.params;
+    const plant = await prisma.plant.findUnique({
+      where: { id: params.id },
+      include: {
+        location: true,
+        events: {
+          orderBy: { createdAt: "desc" },
+          take: 20,
+        },
+        photos: {
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
+
+    if (!plant) {
+      return NextResponse.json({ error: "Plant not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(plant);
+  } catch (error) {
+    console.error("Fetch plant error:", error);
+    return NextResponse.json({ error: "Failed to fetch plant" }, { status: 500 });
+  }
+}
+
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params;
@@ -20,7 +48,9 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         alias: data.alias !== undefined ? data.alias : undefined,
         wateringInfo: data.wateringInfo !== undefined ? data.wateringInfo : undefined,
         sunlightInfo: data.sunlightInfo !== undefined ? data.sunlightInfo : undefined,
-        locationType: data.locationType !== undefined ? data.locationType : undefined,
+        locationType: data.locationType !== undefined ? data.locationType : (data.placement ? (data.placement === "Drinnen" ? "INDOOR" : "OUTDOOR") : undefined),
+        placement: data.placement !== undefined ? data.placement : undefined,
+        plantType: data.plantType !== undefined ? data.plantType : undefined,
         pruningInfo: data.pruningInfo !== undefined ? data.pruningInfo : undefined,
         apiId: data.apiId !== undefined ? data.apiId : undefined,
         origin: data.origin !== undefined ? data.origin : undefined,

@@ -36,57 +36,63 @@ export default function OnboardingModal() {
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-background rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+      <div className="bg-surface rounded-2xl md:rounded-3xl max-w-md w-full shadow-2xl border border-border-hairline card-elevation overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="bg-brand text-white p-8 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-20 transform translate-x-4 -translate-y-4">
+          <div className="absolute top-0 right-0 p-4 opacity-15 transform translate-x-4 -translate-y-4 pointer-events-none">
             <Leaf size={100} />
           </div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
-              <Leaf size={32} />
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-xs rounded-xl flex items-center justify-center mb-3 shadow-xs">
+              <Leaf size={28} />
             </div>
-            <h2 className="text-3xl font-bold mb-2">Welcome to PlantStack</h2>
-            <p className="text-white/80">Manage your indoor jungle.</p>
+            <h2 className="text-2xl font-extrabold mb-1">Welcome to PlantStack</h2>
+            <p className="text-white/80 text-sm">Manage your indoor jungle with ease.</p>
           </div>
         </div>
         
-        <div className="p-6 space-y-6">
+        <div className="p-6 md:p-8 space-y-6">
           <div className="space-y-4">
-            <h3 className="font-bold text-lg">Getting Started:</h3>
+            <h3 className="font-bold text-base text-foreground">Getting Started:</h3>
             <div className="flex gap-3 items-start">
-              <div className="bg-brand/10 text-brand p-2 rounded-full mt-1"><Check size={16} /></div>
+              <div className="bg-brand-subtle text-brand p-1.5 rounded-lg mt-0.5 shrink-0">
+                <Check size={14} />
+              </div>
               <div>
-                <p className="font-semibold">1. Create Locations</p>
-                <p className="text-sm text-surface-foreground/70">Go to Settings and add your rooms (e.g. Living Room, Bedroom) to organize your plants properly.</p>
+                <p className="font-semibold text-xs text-foreground">1. Create Locations</p>
+                <p className="text-xs text-text-muted leading-relaxed mt-0.5">Go to Settings and add your rooms (e.g. Living Room, Bedroom) to organize your plants properly.</p>
               </div>
             </div>
             <div className="flex gap-3 items-start">
-              <div className="bg-brand/10 text-brand p-2 rounded-full mt-1"><Check size={16} /></div>
+              <div className="bg-brand-subtle text-brand p-1.5 rounded-lg mt-0.5 shrink-0">
+                <Check size={14} />
+              </div>
               <div className="flex-1">
-                <h4 className="font-bold mb-1">Open Plantbook Integration</h4>
-                <p className="text-sm text-surface-foreground/70">Add your Open Plantbook API credentials in the .env file to get care instructions automatically when adding a plant.</p>
+                <h4 className="font-semibold text-xs text-foreground">2. Open Plantbook Integration</h4>
+                <p className="text-xs text-text-muted leading-relaxed mt-0.5">Add your Open Plantbook API credentials in the .env file to get care instructions automatically when adding a plant.</p>
               </div>
             </div>
             <div className="flex gap-3 items-start">
-              <div className="bg-brand/10 text-brand p-2 rounded-full mt-1"><Check size={16} /></div>
+              <div className="bg-brand-subtle text-brand p-1.5 rounded-lg mt-0.5 shrink-0">
+                <Check size={14} />
+              </div>
               <div>
-                <p className="font-semibold">3. Add Plants</p>
-                <p className="text-sm text-surface-foreground/70">Click &quot;Add Plant&quot; on the Dashboard and assign them to your new rooms!</p>
+                <p className="font-semibold text-xs text-foreground">3. Add Plants</p>
+                <p className="text-xs text-text-muted leading-relaxed mt-0.5">Click &quot;Add Plant&quot; on the Dashboard and assign them to your new rooms!</p>
               </div>
             </div>
           </div>
           
-          <div className="pt-4 border-t border-black/5 dark:border-white/5 flex flex-col gap-2">
+          <div className="pt-4 border-t border-border-hairline flex flex-col gap-2">
             <Link 
               href="/settings" 
               onClick={handleDismiss}
-              className="bg-brand text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-dark transition-colors w-full"
+              className="bg-brand hover:bg-brand-hover text-white font-bold h-11 rounded-lg flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all w-full text-xs"
             >
-               Go to Settings <ArrowRight size={18} />
+               Go to Settings <ArrowRight size={16} />
             </Link>
             <button 
               onClick={handleDismiss} 
-              className="py-3 font-medium text-surface-foreground/60 hover:text-foreground transition-colors w-full"
+              className="py-2 font-medium text-xs text-text-muted hover:text-foreground transition-colors w-full cursor-pointer"
             >
               Don&apos;t show this again
             </button>

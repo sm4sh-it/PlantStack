@@ -7,8 +7,7 @@ WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json ./
-# Since there is no package-lock.json initially, just install everything
+COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
 # Build the app
@@ -35,19 +34,24 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="file:/app/data/database.db"
 ENV DATA_DIR="/app/data/uploads"
 
-# Set correct permissions
-RUN mkdir -p /app/data/uploads
+# Create application and data directories with node user ownership
+RUN mkdir -p /app/data/uploads /app/public && \
+    chown -R node:node /app
 
-# Copy built application and required production dependencies
-RUN mkdir -p /app/public
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy built application and required production dependencies with node ownership
+COPY --chown=node:node --from=builder /app/public ./public
+COPY --chown=node:node --from=builder /app/.next/standalone ./
+COPY --chown=node:node --from=builder /app/.next/static ./.next/static
 
 # Copy prisma stuff for migrations run at startup
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+COPY --chown=node:node --from=builder /app/prisma ./prisma
+COPY --chown=node:node --from=builder /app/node_modules ./node_modules
+COPY --chown=node:node --from=builder /app/package.json ./package.json
+
+# Ensure data directory permissions
+RUN chown -R node:node /app/data
+
+USER node
 
 EXPOSE 3000
 ENV PORT=3000

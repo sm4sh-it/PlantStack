@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { join } from "path";
-import { existsSync } from "fs";
+import { getUploadsDir } from "@/lib/storage";
+import {
+  validateUploadedImage,
+  generateSafeImageFilename,
+} from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,14 +19,24 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Save to Data Directory
-    const dataDir = process.env.DATA_DIR || join(process.cwd(), "..", "data", "uploads");
-    if (!existsSync(dataDir)) {
-      await mkdir(dataDir, { recursive: true });
+    const validation = validateUploadedImage(file, buffer);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error || "Invalid file" },
+        { status: 400 }
+      );
     }
-    
-    // Standardize filename
-    const uniqueName = `${Date.now()}-${(file as any).name?.replace(/[^a-zA-Z0-9.\-]/g, '') || 'image.jpg'}`;
+
+    // Resolve uploads directory
+    const dataDir = getUploadsDir();
+
+    // Standardize and sanitize filename
+    const originalName = (file as any).name as string | undefined;
+    const uniqueName = generateSafeImageFilename(
+      originalName,
+      "plant",
+      validation.ext || "jpg"
+    );
     const filePath = join(dataDir, uniqueName);
 
     await writeFile(filePath, buffer);

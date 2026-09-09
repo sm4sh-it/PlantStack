@@ -4,7 +4,20 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const locations = await prisma.location.findMany({ orderBy: { name: 'asc' } });
+  let locations = await prisma.location.findMany({ orderBy: { name: 'asc' } });
+  
+  if (locations.length === 0) {
+    try {
+      const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+      const defaultName = config?.language === "de" ? "Wohnzimmer" : "Living Room";
+      const created = await prisma.location.create({ data: { name: defaultName } });
+      locations = [created];
+    } catch (e) {
+      // Handle potential race condition if multiple requests hit concurrently
+      locations = await prisma.location.findMany({ orderBy: { name: 'asc' } });
+    }
+  }
+
   return NextResponse.json(locations);
 }
 

@@ -12,10 +12,10 @@ export async function GET() {
 
     const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
     
-    let frostWarning = false;
-    let heatTier1 = false;
-    let heatTier2 = false;
-    let rainTier = 0; // 1: <5mm, 2: 5-10mm, 3: >10mm
+    // Initialize with cached weather values from AppConfig
+    let rainTier = config?.weatherRainTier ?? 0;
+    let heatTier = config?.weatherHeatTier ?? 0; // 0: normal, 1: heatTier1 (>25°C), 2: heatTier2 (>30°C)
+    let frostWarning = config?.weatherFrostWarning ?? false;
     let isNewDay = false;
 
     if (config?.latitude && config?.longitude) {
@@ -42,10 +42,11 @@ export async function GET() {
                 if (daily.temperature_2m_min[i] < minTemp) minTemp = daily.temperature_2m_min[i];
               }
 
-              if (maxTemp > 30) heatTier2 = true;
-              else if (maxTemp > 25) heatTier1 = true;
+              if (maxTemp > 30) heatTier = 2;
+              else if (maxTemp > 25) heatTier = 1;
+              else heatTier = 0;
               
-              if (minTemp < 2) frostWarning = true;
+              frostWarning = minTemp < 2;
 
               if (isNewDay && rainTier === 3) {
                 // Tier 3: Full Reset for Draußen (save to DB)
@@ -63,7 +64,12 @@ export async function GET() {
 
               await prisma.appConfig.update({
                 where: { id: 1 },
-                data: { lastWeatherSync: now }
+                data: { 
+                  lastWeatherSync: now,
+                  weatherRainTier: rainTier,
+                  weatherHeatTier: heatTier,
+                  weatherFrostWarning: frostWarning
+                }
               });
             }
           }
@@ -73,11 +79,19 @@ export async function GET() {
       }
     }
 
+    const currentMonth = new Date().getMonth(); // 0 = Jan, 1 = Feb, ..., 10 = Nov, 11 = Dec
+    const isWinterSeason = currentMonth >= 10 || currentMonth <= 1;
+    const isWinterDormancyActive = Boolean(config?.winterDormancyEnabled && isWinterSeason);
+
     const mappedPlants = plants.map(p => {
       let mappedInterval = p.waterInterval;
+      let mappedFertilizer = p.fertilizerInterval;
       
       // Fallback for legacy plants that still have INDOOR/OUTDOOR
       const effectivePlacement = p.placement === "Drinnen" && p.locationType === "OUTDOOR" ? "Draußen" : p.placement;
+
+      const heatTier2 = heatTier === 2;
+      const heatTier1 = heatTier === 1;
 
       if (effectivePlacement === "Draußen") {
         if (rainTier === 2) {
@@ -88,7 +102,6 @@ export async function GET() {
         } else if (heatTier1) {
            mappedInterval = Math.max(1, Math.floor(p.waterInterval * 0.6)); // Reduce by 40%
         }
-        return { ...p, frostWarning, waterInterval: mappedInterval };
       } 
       else if (effectivePlacement === "Balkon") {
         // Ignore rain completely
@@ -97,10 +110,26 @@ export async function GET() {
         } else if (heatTier1) {
            mappedInterval = Math.max(1, Math.floor(p.waterInterval * 0.6)); // Reduce by 40%
         }
-        return { ...p, frostWarning, waterInterval: mappedInterval };
       }
 
-      return p; // Drinnen unaffected
+      // Winter dormancy adjustment
+      let winterDormancy = false;
+      if (isWinterDormancyActive) {
+        winterDormancy = true;
+        // Extend water interval by 50%
+        mappedInterval = Math.round(mappedInterval * 1.5);
+        // Pause fertilizing during dormancy
+        mappedFertilizer = null;
+      }
+
+      return {
+        ...p,
+        frostWarning: (effectivePlacement === "Draußen" || effectivePlacement === "Balkon") ? frostWarning : false,
+        waterInterval: mappedInterval,
+        fertilizerInterval: mappedFertilizer,
+        originalFertilizerInterval: p.fertilizerInterval,
+        winterDormancy,
+      };
     });
 
     return NextResponse.json(mappedPlants);
