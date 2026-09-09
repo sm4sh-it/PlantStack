@@ -1,7 +1,7 @@
 FROM node:22-alpine AS base
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL for Prisma and su-exec for runtime privilege dropping
+RUN apk add --no-cache openssl su-exec
 
 WORKDIR /app
 
@@ -43,18 +43,16 @@ COPY --chown=node:node --from=builder /app/public ./public
 COPY --chown=node:node --from=builder /app/.next/standalone ./
 COPY --chown=node:node --from=builder /app/.next/static ./.next/static
 
-# Copy prisma stuff for migrations run at startup
 COPY --chown=node:node --from=builder /app/prisma ./prisma
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 COPY --chown=node:node --from=builder /app/package.json ./package.json
-
-# Ensure data directory permissions
-RUN chown -R node:node /app/data
-
-USER node
+# Copy entrypoint script to fix volume permissions on boot and drop to node user
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 3000
 ENV PORT=3000
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 # Wrapper script to run migrations and start
 CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]

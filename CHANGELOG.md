@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.1] - 2026-09-09
+### Fixed
+- **Docker SQLite Data Volume Permissions (`attempt to write a readonly database`)**: Resolved permission conflicts on mounted persistent volumes (`/app/data`). Introduced a dedicated `docker-entrypoint.sh` with `su-exec` that automatically reconciles ownership (`chown -R node:node /app/data`) on container startup before dropping privileges to the unprivileged `node` user for Prisma migrations and server runtime.
+
 ## [3.5.0] - 2026-09-09
 ### Added
 - **Optional Access Protection & Authentication Gate**: Added configurable password/API secret protection (`PLANTSTACK_API_SECRET`). Supports a clean Botanical lock screen for web browsers with a persistent session, while keeping open LAN mode as zero-friction default for local setups.
