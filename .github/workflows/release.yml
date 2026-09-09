@@ -1,26 +1,67 @@
-name: Create GitHub Release
+name: Release
 
 on:
   push:
     tags:
-      - 'v*' # Trigger the workflow when a tag starting with 'v' is pushed (e.g. v2.6.0)
+      - 'v*'
+  workflow_dispatch:
 
-permissions:
-  contents: write
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   release:
-    name: Create Release
+    name: Create GitHub Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required to fetch all tags and history for proper release notes
+          fetch-depth: 0
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          name: Release ${{ github.ref_name }}
           generate_release_notes: true
           draft: false
           prerelease: false
+
+  docker:
+    name: Publish Docker Image
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
