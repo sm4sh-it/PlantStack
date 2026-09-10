@@ -4,13 +4,28 @@ set -e
 # Ensure permissive umask for newly created files/directories
 umask 000
 
-# Ensure uploads directory exists
-mkdir -p /app/data/uploads 2>/dev/null || true
+# Helper to run commands as root (handles root, sudo, and unprivileged fallback)
+run_root() {
+    if [ "$(id -u)" = "0" ]; then
+        "$@"
+    elif command -v sudo >/dev/null 2>&1; then
+        sudo -n "$@" 2>/dev/null || "$@"
+    else
+        "$@"
+    fi
+}
 
-# Attempt to grant full read/write access for all users/UIDs on data volume
-chmod -R 777 /app/data 2>/dev/null || true
+# Ensure uploads directory exists
+run_root mkdir -p /app/data/uploads 2>/dev/null || mkdir -p /app/data/uploads 2>/dev/null || true
+
+# Reconcile volume permissions on /app/data for all UIDs
+run_root chmod -R 777 /app/data 2>/dev/null || true
 
 # Verify write capability on data directory
+if ! touch /app/data/.perm_check 2>/dev/null; then
+    run_root touch /app/data/.perm_check 2>/dev/null || true
+    run_root chmod 666 /app/data/.perm_check 2>/dev/null || true
+fi
 if ! touch /app/data/.perm_check 2>/dev/null; then
     echo "=========================================================================="
     echo "❌ PlantStack Storage Error: /app/data is not writable (UID=$(id -u), GID=$(id -g))"

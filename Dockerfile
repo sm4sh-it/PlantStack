@@ -1,7 +1,12 @@
 FROM node:22-alpine AS base
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL for Prisma and sudo for automatic volume permission healing
+RUN apk add --no-cache openssl sudo && \
+    adduser node wheel 2>/dev/null || true && \
+    echo "node ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    mkdir -p /etc/sudoers.d && \
+    echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node && \
+    chmod 0440 /etc/sudoers.d/node
 
 WORKDIR /app
 

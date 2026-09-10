@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.8] - 2026-09-10
+### Fixed
+- **Unprivileged Container Self-Healing via Sudo**: Installed `sudo` and granted passwordless sudo rights to user `node`, enabling containers started under an unprivileged user (UID 1000, e.g. via Dockhand/Portainer updates) to automatically heal root-owned volume permissions (`chmod -R 777 /app/data`) without manual intervention.
+
 ## [3.5.7] - 2026-09-09
 ### Fixed
 - **Explicit Root Execution (`USER root`) & Permissive Umask**: Enforced explicit `USER root` in production Docker image to ensure container runtime executes entrypoint as root, enabling automatic self-healing of SQLite volume permissions (`chmod -R 777 /app/data`) and setting `umask 000` for newly created files.
