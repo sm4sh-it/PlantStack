@@ -1,6 +1,14 @@
 FROM node:22-alpine AS base
 
-# Install OpenSSL for Prisma and sudo for automatic volume permission healing
+# -----------------------------------------------------------------------------
+# CRITICAL RUNTIME ARCHITECTURE: SQLite Volume Permissions & Self-Healing
+# PlantStack stores its SQLite database and user uploads in /app/data (mounted volume).
+# Depending on host deployment (Dockhand, Portainer, Synology, Docker Compose),
+# containers may boot as UID 0 (root) or UID 1000 (node).
+# OpenSSL is required by Prisma on Alpine (musl).
+# Sudo with NOPASSWD allows entrypoint self-healing (chmod -R 777 /app/data)
+# even when container managers force unprivileged UID 1000 execution. DO NOT REMOVE.
+# -----------------------------------------------------------------------------
 RUN apk add --no-cache openssl sudo && \
     adduser node wheel 2>/dev/null || true && \
     echo "node ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
