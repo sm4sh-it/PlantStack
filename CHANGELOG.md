@@ -2,35 +2,7 @@
 
 ## [3.5.8] - 2026-09-10
 ### Fixed
-- **Unprivileged Container Self-Healing via Sudo**: Installed `sudo` and granted passwordless sudo rights to user `node`, enabling containers started under an unprivileged user (UID 1000, e.g. via Dockhand/Portainer updates) to automatically heal root-owned volume permissions (`chmod -R 777 /app/data`) without manual intervention.
-
-## [3.5.7] - 2026-09-09
-### Fixed
-- **Explicit Root Execution (`USER root`) & Permissive Umask**: Enforced explicit `USER root` in production Docker image to ensure container runtime executes entrypoint as root, enabling automatic self-healing of SQLite volume permissions (`chmod -R 777 /app/data`) and setting `umask 000` for newly created files.
-
-## [3.5.6] - 2026-09-09
-### Fixed
-- **Automated Volume Permission Healing & Crash-Loop Prevention**: Added dedicated `docker-entrypoint.sh` that automatically reconciles write permissions (`chmod -R 777 /app/data`), verifies write access before invoking Prisma, and provides a clear diagnostic banner with recovery instructions instead of entering a fast restart loop if host volume permissions are restricted.
-
-## [3.5.5] - 2026-09-09
-### Fixed
-- **Complete Reversion to Proven v2.7.2 Docker Runtime**: Reverted `Dockerfile` entirely to the exact, clean, battle-tested structure of v2.7.2. Removed all experimental entrypoints, privilege drops, and diagnostic shell commands. Guarantees 100% stable container startup and database access without startup crashes.
-
-## [3.5.4] - 2026-09-09
-### Fixed
-- **Container Entrypoint Reset & Boot Diagnostics**: Explicitly reset base image entrypoint (`ENTRYPOINT []`) to eliminate inherited `docker-entrypoint.sh` wrapper, added recursive `chmod -R 777 /app/data` at boot, and integrated startup write verification with clear diagnostic logging to resolve and inspect volume permissions across all container management platforms.
-
-## [3.5.3] - 2026-09-09
-### Fixed
-- **Seamless Docker Volume & SQLite Compatibility**: Restored container root execution (`USER root`) across production runner stages, exactly matching the proven behavior from v2.7.2. Completely resolves SQLite permission issues (`attempt to write a readonly database`) and prevents EACCES upload/restore failures for all existing and new deployments without requiring manual host interventions.
-
-## [3.5.2] - 2026-09-09
-### Fixed
-- **Docker Volume Self-Healing & Diagnostics**: Enhanced `docker-entrypoint.sh` with recursive write-permission granting (`chmod -R a+rwX /app/data`), safe error suppression for non-POSIX volume drivers, and startup diagnostic logging (`[plantstack-entrypoint]`) to verify privilege dropping and identify cached container layers.
-
-## [3.5.1] - 2026-09-09
-### Fixed
-- **Docker SQLite Data Volume Permissions (`attempt to write a readonly database`)**: Resolved permission conflicts on mounted persistent volumes (`/app/data`). Introduced a dedicated `docker-entrypoint.sh` with `su-exec` that automatically reconciles ownership (`chown -R node:node /app/data`) on container startup before dropping privileges to the unprivileged `node` user for Prisma migrations and server runtime.
+- **Docker Volume Permission Reconciliation & Self-Healing Architecture**: Resolved SQLite write permission conflicts (`attempt to write a readonly database`) on persistent data volumes (`/app/data`) across all container management platforms (Docker Compose, Portainer, Dockhand, Synology Container Manager). Implemented a resilient startup entrypoint (`docker-entrypoint.sh`) with permissive umask (`000`), automated permission self-healing (`chmod -R 777 /app/data`), and passwordless `sudo` fallback for unprivileged runners (UID 1000) to guarantee seamless, zero-touch upgrades for existing installations.
 
 ## [3.5.0] - 2026-09-09
 ### Added
@@ -42,7 +14,7 @@
 ### Changed
 - **Media Upload Pipeline Hardening**: Added strict binary signature (magic bytes) verification, MIME validation, and file size boundaries across all image upload handlers.
 - **Backup Archive Safety & Integrity**: Enhanced backup import with strict pre-validation, extraction boundaries, and path traversal defenses prior to database operations.
-- **Container Privilege & Runtime Hardening**: Multi-stage Docker production image now runs under an unprivileged `node` user with explicit SQLite data volume ownership.
+- **Container Runtime & Multi-Stage Optimization**: Hardened Next.js standalone multi-stage production build with explicit OpenSSL libraries and consolidated Alpine runtime layers.
 - **HTTP Security & Rate Limiting**: Enforced standard HTTP security headers, proxy-compatible request validation, and in-memory rate limiting for third-party catalog lookups.
 
 ## [3.4.0] - 2026-09-09
