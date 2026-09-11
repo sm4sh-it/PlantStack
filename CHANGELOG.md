@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.6.0] - 2026-09-11
+### Added
+- **Unified 5-Point Icon-Only Dock (Desktop & Mobile)**: Aligned desktop and mobile navigation into an identical, highly ergonomic 5-point dock architecture:
+  - 🌱 `Sprout` for Dashboard & Plant Collection
+  - 📈 `TrendingUp` for Statistics, Vitality curves & Badges
+  - ➕ Central `Plus` Quick-Action to add plants
+  - 👻 `Ghost` for Archived & Composted plants
+  - ⚙️ `Settings` for system preferences, weather & security
+- **Collapsible Care Log Accordion (`PlantDetailsModal.tsx`)**: The care log history is now collapsed by default (`careLogOpen: false`) with a clear item counter badge (`X Einträge`), subtle animated chevron indicator, and single-click toggle to keep the modal compact and focused.
+- **Deep Botanical Parameters & Environmental Separation**: Cleanly disentangled the quick environmental indicators (light type, temperature, ambient humidity, prune interval) from rich botanical profile insights (exact lux ranges, soil moisture %, outdoor sowing calendars, and companion planting recommendations).
+
+### Changed
+- **2x2 Routine Grid in Botanical Studio Modal**: Care routines (water, fertilizer, pest, fungus) on desktop are now laid out in a spacious, balanced 2x2 grid (~270px width) mirroring mobile ergonomics and eliminating awkward empty spaces.
+- **Elimination of Confusing Checkmark Icons**: Removed the ambiguous bottom-right checkmark icons from care routine cards to avoid false impressions of "already completed" tasks, putting full visual focus on actionable status pills and timestamps.
+- **Icon Modernization**: Replaced generic layout and bar chart icons with botanical-native `Sprout` (🌱) for dashboard collection and `TrendingUp` (📈) for growth insights across `Navbar.tsx` and `StatisticsClient.tsx`.
+- **Text-Free Minimalist Navigation**: Completely removed redundant text labels under navigation icons, maximizing vertical screen real estate on mobile (~54px height) while providing full accessibility with 48x48px touch targets, clean `aria-label` tags, and native browser tooltips.
+- **High-Contrast Dock Opacity & Ambient Shadows**: Elevated dock background opacity to 98% (`bg-surface/98 backdrop-blur-2xl`) combined with a soft ambient shadow (`shadow-lg`), eliminating icon visual bleed-through when scrolling past saturated foliage images or dense plant cards.
+
 ## [3.5.8] - 2026-09-10
 ### Fixed
 - **Docker Volume Permission Reconciliation & Self-Healing Architecture**: Resolved SQLite write permission conflicts (`attempt to write a readonly database`) on persistent data volumes (`/app/data`) across all container management platforms (Docker Compose, Portainer, Dockhand, Synology Container Manager). Implemented a resilient startup entrypoint (`docker-entrypoint.sh`) with permissive umask (`000`), automated permission self-healing (`chmod -R 777 /app/data`), and passwordless `sudo` fallback for unprivileged runners (UID 1000) to guarantee seamless, zero-touch upgrades for existing installations.

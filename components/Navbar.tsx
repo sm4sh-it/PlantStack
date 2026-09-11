@@ -3,19 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Moon, Sun, Settings, BarChart2, Ghost, LayoutDashboard, Plus } from "lucide-react";
+import { Moon, Sun, Settings, TrendingUp, Ghost, Sprout, Plus } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
-
-  const navItems = [
-    { href: "/", icon: LayoutDashboard, label: "Dschungel", title: "Dashboard & Pflanzensammlung" },
-    { href: "/statistics", icon: BarChart2, label: "Statistiken", title: "Statistiken & Abzeichen" },
-    { href: "/archive", icon: Ghost, label: "Archiv", title: "Archiv / Verlorene Pflanzen" },
-  ];
 
   const handleCreatePlant = () => {
     if (pathname === "/") {
@@ -32,10 +26,10 @@ export default function Navbar() {
   return (
     <>
       {/* ================= DESKTOP TOPBAR (md and up) ================= */}
-      <header className="hidden md:block border-b border-border-hairline bg-surface/85 backdrop-blur-xl sticky top-0 z-50 transition-colors">
+      <header className="hidden md:block border-b border-border-hairline/80 bg-surface/98 backdrop-blur-2xl sticky top-0 z-50 transition-colors shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
           {/* Brand Logo & Name */}
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center gap-2.5 group" title="PlantStack">
             <div className="w-8 h-8 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Image
                 src="/logo-green.svg"
@@ -53,59 +47,92 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Center Navigation */}
-          <nav aria-label="Hauptnavigation" className="flex items-center gap-1 p-1 bg-surface-subtle/70 border border-border-hairline rounded-xl">
-            {navItems.map((item) => {
-              const active = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  title={item.title}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    active
-                      ? "bg-surface text-brand font-semibold shadow-xs"
-                      : "text-text-secondary hover:text-foreground hover:bg-surface/50"
-                  }`}
-                >
-                  <Icon size={16} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          {/* Desktop Center Navigation Dock (5-Punkte Icon Dock — 100% konsistent mit Mobile) */}
+          <nav aria-label="Hauptnavigation" className="flex items-center gap-1.5 p-1 bg-surface-subtle/80 border border-border-hairline rounded-2xl shadow-xs">
+            {/* 1. Dashboard (Sprout) */}
+            <Link
+              href="/"
+              title="Dashboard & Pflanzensammlung"
+              aria-label="Dashboard & Pflanzensammlung"
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+                pathname === "/"
+                  ? "bg-surface text-brand font-semibold shadow-xs"
+                  : "text-text-secondary hover:text-foreground hover:bg-surface/60"
+              }`}
+            >
+              <Sprout size={19} />
+            </Link>
+
+            {/* 2. Statistik (TrendingUp) */}
+            <Link
+              href="/statistics"
+              title="Statistiken & Abzeichen"
+              aria-label="Statistiken & Abzeichen"
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+                pathname === "/statistics"
+                  ? "bg-surface text-brand font-semibold shadow-xs"
+                  : "text-text-secondary hover:text-foreground hover:bg-surface/60"
+              }`}
+            >
+              <TrendingUp size={19} />
+            </Link>
+
+            {/* 3. Pflanze hinzufügen (+) */}
+            <button
+              onClick={handleCreatePlant}
+              title="Neue Pflanze hinzufügen"
+              aria-label="Neue Pflanze hinzufügen"
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-brand hover:bg-brand-hover text-white shadow-xs active:scale-95 transition-all cursor-pointer"
+            >
+              <Plus size={19} strokeWidth={2.5} />
+            </button>
+
+            {/* 4. Archiv (Ghost) */}
+            <Link
+              href="/archive"
+              title="Archiv / Verlorene Pflanzen"
+              aria-label="Archiv / Verlorene Pflanzen"
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+                pathname === "/archive"
+                  ? "bg-surface text-brand font-semibold shadow-xs"
+                  : "text-text-secondary hover:text-foreground hover:bg-surface/60"
+              }`}
+            >
+              <Ghost size={19} />
+            </Link>
+
+            {/* 5. Settings (Settings) */}
+            <Link
+              href="/settings"
+              title="Einstellungen"
+              aria-label="Einstellungen"
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+                pathname === "/settings"
+                  ? "bg-surface text-brand font-semibold shadow-xs"
+                  : "text-text-secondary hover:text-foreground hover:bg-surface/60"
+              }`}
+            >
+              <Settings size={19} />
+            </Link>
           </nav>
 
-          {/* Desktop Right Utilities */}
+          {/* Desktop Right Utilities (Theme Toggle) */}
           <div className="flex items-center gap-1.5">
             <button
               onClick={toggleTheme}
-              className="w-10 h-10 flex items-center justify-center rounded-lg text-text-secondary hover:text-foreground hover:bg-surface-subtle transition-all"
+              className="w-10 h-10 flex items-center justify-center rounded-xl text-text-secondary hover:text-foreground hover:bg-surface-subtle transition-all cursor-pointer"
               aria-label="Theme umschalten"
               title={theme === "light" ? "Dunkelmodus aktivieren" : "Hellmodus aktivieren"}
             >
               {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
             </button>
-
-            <Link
-              href="/settings"
-              title="Einstellungen"
-              aria-label="Einstellungen"
-              className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all ${
-                pathname === "/settings"
-                  ? "bg-brand-subtle text-brand font-semibold"
-                  : "text-text-secondary hover:text-foreground hover:bg-surface-subtle"
-              }`}
-            >
-              <Settings size={18} />
-            </Link>
           </div>
         </div>
       </header>
 
       {/* ================= MOBILE HEADER (< md) ================= */}
-      <header className="flex md:hidden border-b border-border-hairline bg-surface/85 backdrop-blur-xl sticky top-0 z-40 px-4 h-14 items-center justify-between transition-colors">
-        <Link href="/" className="flex items-center gap-2">
+      <header className="flex md:hidden border-b border-border-hairline/80 bg-surface/98 backdrop-blur-2xl sticky top-0 z-40 px-4 h-14 items-center justify-between transition-colors shadow-xs">
+        <Link href="/" className="flex items-center gap-2" title="PlantStack">
           <div className="w-7 h-7 flex items-center justify-center">
             <Image
               src="/logo-green.svg"
@@ -123,8 +150,9 @@ export default function Navbar() {
 
         <button
           onClick={toggleTheme}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-foreground hover:bg-surface-subtle transition-all"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-foreground hover:bg-surface-subtle transition-all cursor-pointer"
           aria-label="Theme umschalten"
+          title={theme === "light" ? "Dunkelmodus aktivieren" : "Hellmodus aktivieren"}
         >
           {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
         </button>
@@ -133,69 +161,73 @@ export default function Navbar() {
       {/* ================= MOBILE BOTTOM NAVIGATION (< md) ================= */}
       <nav
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-border-hairline shadow-lg pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/98 backdrop-blur-2xl border-t border-border-hairline/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.4)] pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2 transition-colors"
       >
-        <div className="max-w-md mx-auto px-2 flex items-center justify-around">
-          {/* 1. Dschungel */}
+        <div className="max-w-md mx-auto px-4 flex items-center justify-between">
+          {/* 1. Dashboard (Sprout) */}
           <Link
             href="/"
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1.5 rounded-lg transition-colors ${
+            title="Dashboard & Dschungel"
+            aria-label="Dashboard & Dschungel"
+            className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
               pathname === "/"
-                ? "text-brand font-semibold"
-                : "text-text-muted hover:text-foreground"
+                ? "bg-brand-subtle dark:bg-brand/15 text-brand font-bold shadow-2xs"
+                : "text-text-secondary hover:text-foreground hover:bg-surface-subtle/70"
             }`}
           >
-            <LayoutDashboard size={20} />
-            <span className="text-[10px] mt-0.5">Dschungel</span>
+            <Sprout size={22} />
           </Link>
 
-          {/* 2. Statistik */}
+          {/* 2. Statistik (TrendingUp) */}
           <Link
             href="/statistics"
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1.5 rounded-lg transition-colors ${
+            title="Statistiken & Abzeichen"
+            aria-label="Statistiken & Abzeichen"
+            className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
               pathname === "/statistics"
-                ? "text-brand font-semibold"
-                : "text-text-muted hover:text-foreground"
+                ? "bg-brand-subtle dark:bg-brand/15 text-brand font-bold shadow-2xs"
+                : "text-text-secondary hover:text-foreground hover:bg-surface-subtle/70"
             }`}
           >
-            <BarChart2 size={20} />
-            <span className="text-[10px] mt-0.5">Statistik</span>
+            <TrendingUp size={22} />
           </Link>
 
-          {/* Center FAB: Pflanze hinzufügen (+) */}
+          {/* 3. Center FAB: Pflanze hinzufügen (+) */}
           <button
             onClick={handleCreatePlant}
-            className="w-12 h-12 -mt-5 rounded-full bg-brand text-white shadow-md flex items-center justify-center hover:scale-105 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-surface"
+            className="w-12 h-12 -mt-5 rounded-full bg-brand hover:bg-brand-hover text-white shadow-md flex items-center justify-center active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-surface ring-4 ring-surface cursor-pointer"
             title="Pflanze hinzufügen"
             aria-label="Pflanze hinzufügen"
           >
             <Plus size={24} strokeWidth={2.5} />
           </button>
 
-          {/* 3. Archiv */}
+          {/* 4. Archiv (Ghost) */}
           <Link
             href="/archive"
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1.5 rounded-lg transition-colors ${
+            title="Archiv / Verlorene Pflanzen"
+            aria-label="Archiv / Verlorene Pflanzen"
+            className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
               pathname === "/archive"
-                ? "text-brand font-semibold"
-                : "text-text-muted hover:text-foreground"
+                ? "bg-brand-subtle dark:bg-brand/15 text-brand font-bold shadow-2xs"
+                : "text-text-secondary hover:text-foreground hover:bg-surface-subtle/70"
             }`}
           >
-            <Ghost size={20} />
-            <span className="text-[10px] mt-0.5">Archiv</span>
+            <Ghost size={22} />
           </Link>
 
-          {/* 4. Settings */}
+          {/* 5. Settings (Settings) */}
           <Link
             href="/settings"
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1.5 rounded-lg transition-colors ${
+            title="Einstellungen"
+            aria-label="Einstellungen"
+            className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
               pathname === "/settings"
-                ? "text-brand font-semibold"
-                : "text-text-muted hover:text-foreground"
+                ? "bg-brand-subtle dark:bg-brand/15 text-brand font-bold shadow-2xs"
+                : "text-text-secondary hover:text-foreground hover:bg-surface-subtle/70"
             }`}
           >
-            <Settings size={20} />
-            <span className="text-[10px] mt-0.5">Settings</span>
+            <Settings size={22} />
           </Link>
         </div>
       </nav>

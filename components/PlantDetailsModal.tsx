@@ -23,7 +23,7 @@ import {
   CloudRain,
   Scissors,
   StickyNote,
-  Check,
+  ChevronDown,
   Edit2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -55,6 +55,7 @@ export default function PlantDetailsModal({
   const [photoNote, setPhotoNote] = useState("");
   const [showPhotoInput, setShowPhotoInput] = useState(false);
   const [mobileTab, setMobileTab] = useState<"care" | "diary">("care");
+  const [careLogOpen, setCareLogOpen] = useState(false);
 
   useEffect(() => {
     async function loadDetails() {
@@ -362,7 +363,7 @@ export default function PlantDetailsModal({
     </div>
   );
 
-  // 3. 1-Click Care Routines (100% Konturfrei, Farbkontinuität, Bekämpfen statt Prüfen)
+  // 3. 1-Click Care Routines (100% Konturfrei, Farbkontinuität, Bekämpfen statt Prüfen, 2x2 Grid)
   const renderCareRoutines = () => (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -373,7 +374,7 @@ export default function PlantDetailsModal({
           {lang === "de" ? "Tippen = Erfassen" : "Tap = Log"}
         </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2.5">
         {/* Water */}
         <button
           onClick={() => handleCareAction("water")}
@@ -381,7 +382,7 @@ export default function PlantDetailsModal({
           title={lang === "de" ? "Klicken zum Gießen" : "Click to water"}
         >
           <div className="flex items-center justify-between text-care-water font-bold text-xs">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
               <Droplet size={14} /> {t("water", lang)}
             </span>
             <span className="text-[10px] font-mono opacity-75">
@@ -398,9 +399,8 @@ export default function PlantDetailsModal({
               <span className="w-1.5 h-1.5 rounded-full bg-care-water animate-pulse"></span>
             )}
           </div>
-          <div className="mt-1 text-[10px] text-care-water font-semibold flex items-center justify-between">
+          <div className="mt-1 text-[10px] text-care-water font-semibold">
             <span>{lang === "de" ? "Jetzt gießen" : "Water now"}</span>
-            <Check size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
           </div>
         </button>
 
@@ -411,7 +411,7 @@ export default function PlantDetailsModal({
           title={lang === "de" ? "Klicken zum Düngen" : "Click to fertilize"}
         >
           <div className="flex items-center justify-between text-care-fertilizer font-bold text-xs">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
               <FlaskConical size={14} /> {t("fertilize", lang)}
             </span>
             <span className="text-[10px] font-mono opacity-75">
@@ -423,9 +423,8 @@ export default function PlantDetailsModal({
               ? fertDays <= 0 ? (lang === "de" ? "Heute fällig" : "Due today") : `in ${fertDays} T.`
               : "-"}
           </div>
-          <div className="mt-1 text-[10px] text-care-fertilizer font-semibold flex items-center justify-between">
+          <div className="mt-1 text-[10px] text-care-fertilizer font-semibold">
             <span>{lang === "de" ? "Düngen" : "Fertilize"}</span>
-            <Check size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
           </div>
         </button>
 
@@ -436,7 +435,7 @@ export default function PlantDetailsModal({
           title={lang === "de" ? "Schädlingsbehandlung dokumentieren" : "Log pest control"}
         >
           <div className="flex items-center justify-between text-care-bug font-bold text-xs">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
               <BugOff size={14} /> {lang === "de" ? "Bekämpfen" : "Pest"}
             </span>
             <span className="text-[10px] font-mono opacity-75">
@@ -448,9 +447,8 @@ export default function PlantDetailsModal({
               ? bugDays <= 0 ? (lang === "de" ? "Behandlung fällig" : "Due") : `in ${bugDays} T.`
               : (lang === "de" ? "Kein Befall" : "No pests")}
           </div>
-          <div className="mt-1 text-[10px] text-care-bug font-semibold flex items-center justify-between">
+          <div className="mt-1 text-[10px] text-care-bug font-semibold">
             <span>{lang === "de" ? "Behandeln" : "Treat"}</span>
-            <Check size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
           </div>
         </button>
 
@@ -461,7 +459,7 @@ export default function PlantDetailsModal({
           title={lang === "de" ? "Pilzbehandlung dokumentieren" : "Log fungus treatment"}
         >
           <div className="flex items-center justify-between text-care-fungus font-bold text-xs">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
               <SprayCan size={14} /> {lang === "de" ? "Pilzschutz" : "Fungus"}
             </span>
             <span className="text-[10px] font-mono opacity-75">
@@ -473,9 +471,8 @@ export default function PlantDetailsModal({
               ? fungDays <= 0 ? (lang === "de" ? "Behandlung fällig" : "Due") : `in ${fungDays} T.`
               : (lang === "de" ? "Inaktiv" : "Inactive")}
           </div>
-          <div className="mt-1 text-[10px] text-care-fungus font-semibold flex items-center justify-between">
+          <div className="mt-1 text-[10px] text-care-fungus font-semibold">
             <span>{lang === "de" ? "Behandeln" : "Treat"}</span>
-            <Check size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
           </div>
         </button>
       </div>
@@ -554,11 +551,20 @@ export default function PlantDetailsModal({
     );
   };
 
-  // 6. Botanical Insights (Cleane Überschrift ohne Klammern)
+  // 6. Botanical Insights (Ausführliche Wissens-Karten ohne Duplikate zur 4er-Kompaktleiste)
   const renderBotanical = () => {
-    if (!plant.wateringInfo && !(extraInfo && (extraInfo.good_neighbors || extraInfo.sowing_outdoors_month))) {
-      return null;
-    }
+    const hasBotanicalInfo = Boolean(
+      plant.wateringInfo ||
+      extraInfo?.sowing_outdoors_month ||
+      (extraInfo?.good_neighbors && extraInfo.good_neighbors.length > 0) ||
+      (extraInfo?.bad_neighbors && extraInfo.bad_neighbors.length > 0) ||
+      (extraInfo?.min_light_lux && extraInfo?.max_light_lux) ||
+      (extraInfo?.min_soil_moist && extraInfo?.max_soil_moist && !plant.wateringInfo?.includes(String(extraInfo.min_soil_moist))) ||
+      (plant.pruningInfo && plant.pruningInfo.length > 15)
+    );
+
+    if (!hasBotanicalInfo) return null;
+
     return (
       <div className="space-y-2.5 pt-2 border-t border-border-hairline">
         <h4 className="text-xs font-bold text-text-primary flex items-center gap-1.5">
@@ -573,6 +579,46 @@ export default function PlantDetailsModal({
               <div>
                 <span className="font-bold text-text-primary">{t("conditions", lang as Locale)}:</span>
                 <p className="text-[11px] text-text-secondary leading-tight mt-0.5">{plant.wateringInfo}</p>
+              </div>
+            </div>
+          )}
+
+          {extraInfo?.min_light_lux && extraInfo?.max_light_lux && (
+            <div className="flex gap-2">
+              <Sun size={14} className="text-care-sun shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">
+                  {lang === "de" ? "Lichtstärke (Lux):" : "Light level (Lux):"}
+                </span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
+                  {extraInfo.min_light_lux.toLocaleString()} – {extraInfo.max_light_lux.toLocaleString()} Lux
+                </p>
+              </div>
+            </div>
+          )}
+
+          {extraInfo?.min_soil_moist && extraInfo?.max_soil_moist && !plant.wateringInfo?.includes(String(extraInfo.min_soil_moist)) && (
+            <div className="flex gap-2">
+              <Droplet size={14} className="text-care-water shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">
+                  {lang === "de" ? "Bodenfeuchte:" : "Soil Moisture:"}
+                </span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
+                  {extraInfo.min_soil_moist} – {extraInfo.max_soil_moist} %
+                </p>
+              </div>
+            </div>
+          )}
+
+          {plant.pruningInfo && plant.pruningInfo.length > 15 && (
+            <div className="flex gap-2">
+              <Scissors size={14} className="text-brand shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">
+                  {lang === "de" ? "Beschnitt & Schnitt:" : "Pruning details:"}
+                </span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">{plant.pruningInfo}</p>
               </div>
             </div>
           )}
@@ -715,53 +761,70 @@ export default function PlantDetailsModal({
     </div>
   );
 
-  // 8. Care Log / History
+  // 8. Care Log / History (Collapsible Accordion, default collapsed)
   const renderCareLog = () => (
     <div className="pt-2 border-t border-border-hairline">
-      <div className="flex items-center gap-1.5 text-text-primary font-bold text-xs mb-2.5">
-        <History size={15} className="text-brand" />
-        <span>{t("careLog", lang)}</span>
-        {events.length > 0 && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-subtle text-text-muted font-semibold">
-            {events.length}
-          </span>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={() => setCareLogOpen(!careLogOpen)}
+        className="w-full flex items-center justify-between text-xs py-2.5 px-3 rounded-xl bg-surface-subtle hover:bg-surface-subtle/80 text-text-primary font-bold transition-all cursor-pointer select-none"
+      >
+        <span className="flex items-center gap-2">
+          <History size={15} className="text-brand" />
+          <span>{t("careLog", lang)}</span>
+          {events.length > 0 && (
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-brand-subtle text-brand font-semibold">
+              {events.length} {lang === "de" ? (events.length === 1 ? "Eintrag" : "Einträge") : (events.length === 1 ? "entry" : "entries")}
+            </span>
+          )}
+        </span>
+        <span className="flex items-center gap-1.5 text-[11px] text-brand font-medium">
+          <span>{careLogOpen ? (lang === "de" ? "Einklappen" : "Collapse") : (lang === "de" ? "Aufklappen" : "Expand")}</span>
+          <ChevronDown
+            size={14}
+            className={`transition-transform duration-200 ${careLogOpen ? "rotate-180" : ""}`}
+          />
+        </span>
+      </button>
 
-      {events.length > 0 ? (
-        <div className="relative pl-4 space-y-2.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border-hairline">
-          {events.slice(0, 8).map((evt) => {
-            const badge = getEventBadge(evt.type);
-            return (
-              <div key={evt.id} className="relative flex items-center justify-between text-xs">
-                <span className="absolute -left-4 w-2 h-2 rounded-full bg-brand ring-4 ring-surface" />
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] flex items-center gap-1 ${badge.color}`}>
-                    {badge.icon}
-                    <span>{badge.label}</span>
-                  </span>
-                </div>
-                <div className="text-[11px] text-text-muted text-right">
-                  <span className="font-medium text-text-secondary mr-1.5">
-                    {formatRelativeTime(evt.createdAt)}
-                  </span>
-                  <span className="hidden sm:inline opacity-70">
-                    ({new Date(evt.createdAt).toLocaleDateString(lang === "de" ? "de-DE" : "en-US", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })})
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+      {careLogOpen && (
+        <div className="mt-3 animate-in fade-in duration-200">
+          {events.length > 0 ? (
+            <div className="relative pl-4 space-y-2.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border-hairline">
+              {events.slice(0, 10).map((evt) => {
+                const badge = getEventBadge(evt.type);
+                return (
+                  <div key={evt.id} className="relative flex items-center justify-between text-xs">
+                    <span className="absolute -left-4 w-2 h-2 rounded-full bg-brand ring-4 ring-surface" />
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] flex items-center gap-1 ${badge.color}`}>
+                        {badge.icon}
+                        <span>{badge.label}</span>
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-text-muted text-right">
+                      <span className="font-medium text-text-secondary mr-1.5">
+                        {formatRelativeTime(evt.createdAt)}
+                      </span>
+                      <span className="hidden sm:inline opacity-70">
+                        ({new Date(evt.createdAt).toLocaleDateString(lang === "de" ? "de-DE" : "en-US", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })})
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-text-muted italic py-1 px-3">
+              {t("noEvents", lang)}
+            </p>
+          )}
         </div>
-      ) : (
-        <p className="text-xs text-text-muted italic py-1">
-          {t("noEvents", lang)}
-        </p>
       )}
     </div>
   );

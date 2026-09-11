@@ -25,7 +25,7 @@ import {
   Apple,
   Ghost,
   Monitor,
-  BarChart2,
+  TrendingUp,
   Globe,
   Pizza,
   Utensils,
@@ -175,7 +175,7 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight mb-1 flex items-center gap-3 text-foreground">
-            <BarChart2 className="text-brand" size={32} />
+            <TrendingUp className="text-brand" size={32} />
             {t("statistics", lang)}
           </h1>
           <p className="text-sm text-text-muted">
