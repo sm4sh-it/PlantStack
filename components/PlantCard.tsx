@@ -129,8 +129,15 @@ export default function PlantCard({
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-brand-subtle/30 group-hover:bg-brand-subtle/50 transition-colors">
-            <Leaf className="w-16 h-16 text-brand/30 group-hover:text-brand/50 transition-transform duration-500 group-hover:scale-110" />
+          <div className="w-full h-full flex items-center justify-center bg-brand-subtle/25 dark:bg-surface-subtle group-hover:bg-brand-subtle/40 transition-colors">
+            <div className="w-16 h-16 relative opacity-35 dark:opacity-45 group-hover:opacity-60 transition-all duration-500 group-hover:scale-110">
+              <Image
+                src="/logo-green.svg"
+                alt="PlantStack"
+                fill
+                className="object-contain"
+              />
+            </div>
           </div>
         )}
 
@@ -189,7 +196,7 @@ export default function PlantCard({
               e.stopPropagation();
               setMenuOpen(!menuOpen);
             }}
-            className="w-7 h-7 bg-black/40 hover:bg-black/60 backdrop-blur-xs rounded-full text-white flex items-center justify-center transition-colors shadow-xs"
+            className="w-7 h-7 md:w-8 md:h-8 bg-black/40 hover:bg-black/60 backdrop-blur-xs rounded-full text-white flex items-center justify-center transition-colors shadow-xs"
             aria-label="Menü öffnen"
           >
             <MoreVertical size={15} />

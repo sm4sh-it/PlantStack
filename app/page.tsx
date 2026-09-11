@@ -63,7 +63,7 @@ export default function Dashboard() {
     confirmText?: string;
     cancelText?: string;
     isDestructive?: boolean;
-    variant?: "destructive" | "warning" | "info" | "success";
+    variant?: "destructive" | "warning" | "info" | "success" | "water";
     onConfirm: () => void;
   } | null>(null);
 
@@ -206,7 +206,7 @@ export default function Dashboard() {
       description: confirmMsg,
       confirmText: lang === 'de' ? "Jetzt gießen" : "Water now",
       cancelText: lang === 'de' ? "Abbrechen" : "Cancel",
-      variant: "info",
+      variant: "water",
       onConfirm: async () => {
         setConfirmModal(null);
         setBatchWatering(true);
@@ -446,7 +446,7 @@ export default function Dashboard() {
               onClick={() => setFilterMode("indoor")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
                 filterMode === "indoor"
-                  ? "bg-brand-subtle text-brand border border-brand-border/40 font-bold"
+                  ? "bg-brand-subtle text-brand font-bold"
                   : "bg-surface-subtle text-text-muted hover:text-foreground"
               }`}
             >
@@ -457,7 +457,7 @@ export default function Dashboard() {
               onClick={() => setFilterMode("outdoor")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
                 filterMode === "outdoor"
-                  ? "bg-brand-subtle text-brand border border-brand-border/40 font-bold"
+                  ? "bg-brand-subtle text-brand font-bold"
                   : "bg-surface-subtle text-text-muted hover:text-foreground"
               }`}
             >
@@ -517,7 +517,7 @@ export default function Dashboard() {
           </div>
         )
       ) : (
-        <div className="text-center py-20 bg-surface rounded-2xl border border-dashed border-border-strong card-elevation">
+        <div className="text-center py-20 bg-surface rounded-2xl border border-border-hairline card-elevation">
           <div 
             onClick={() => { setEditingPlant(null); setShowForm(true); }}
             className="w-16 h-16 bg-brand-subtle text-brand rounded-2xl flex items-center justify-center mx-auto mb-4 cursor-pointer hover:scale-105 transition-all shadow-xs"

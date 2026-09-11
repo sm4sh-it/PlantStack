@@ -26,7 +26,7 @@ export default function Navbar() {
   return (
     <>
       {/* ================= DESKTOP TOPBAR (md and up) ================= */}
-      <header className="hidden md:block border-b border-border-hairline/80 bg-surface/98 backdrop-blur-2xl sticky top-0 z-50 transition-colors shadow-xs">
+      <header className="hidden md:block bg-surface/98 backdrop-blur-2xl sticky top-0 z-50 transition-colors shadow-xs dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
           {/* Brand Logo & Name */}
           <Link href="/" className="flex items-center gap-2.5 group" title="PlantStack">
@@ -131,7 +131,7 @@ export default function Navbar() {
       </header>
 
       {/* ================= MOBILE HEADER (< md) ================= */}
-      <header className="flex md:hidden border-b border-border-hairline/80 bg-surface/98 backdrop-blur-2xl sticky top-0 z-40 px-4 h-14 items-center justify-between transition-colors shadow-xs">
+      <header className="flex md:hidden bg-surface/98 backdrop-blur-2xl sticky top-0 z-40 px-4 h-14 items-center justify-between transition-colors shadow-xs dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
         <Link href="/" className="flex items-center gap-2" title="PlantStack">
           <div className="w-7 h-7 flex items-center justify-center">
             <Image
@@ -161,7 +161,7 @@ export default function Navbar() {
       {/* ================= MOBILE BOTTOM NAVIGATION (< md) ================= */}
       <nav
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/98 backdrop-blur-2xl border-t border-border-hairline/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.4)] pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2 transition-colors"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/98 backdrop-blur-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.4)] pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2 transition-colors"
       >
         <div className="max-w-md mx-auto px-4 flex items-center justify-between">
           {/* 1. Dashboard (Sprout) */}

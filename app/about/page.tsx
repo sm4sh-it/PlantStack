@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Markdown from 'react-markdown';
-import { Leaf } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default async function AboutPage() {
@@ -25,8 +25,14 @@ export default async function AboutPage() {
   return (
     <div className="max-w-4xl mx-auto pb-24 px-4 pt-12">
       <div className="flex flex-col items-center justify-center text-center mb-12">
-        <div className="p-3 rounded-full bg-brand-light dark:bg-brand-dark/30 text-brand mb-3 shadow-lg">
-          <Leaf size={32} />
+        <div className="w-16 h-16 relative mb-3 hover:scale-105 transition-transform">
+          <Image
+            src="/logo-green.svg"
+            alt="PlantStack Logo"
+            fill
+            priority
+            className="object-contain"
+          />
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight mb-2">PlantStack</h1>
         <p className="text-lg text-surface-foreground/70 mb-4">A minimalist, self-hosted Plant-Tracker.</p>

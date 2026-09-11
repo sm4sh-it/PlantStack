@@ -108,6 +108,28 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
       }));
   }, [plants]);
 
+  const uniqueOriginsCount = useMemo(() => {
+    return new Set(
+      plants
+        .filter((p) => !p.isArchived && p.origin && p.origin !== "Unbekannt" && p.origin !== "Unknown")
+        .map((p) => p.origin)
+    ).size;
+  }, [plants]);
+
+  const harvestCount = useMemo(() => {
+    if (badges.harvestTime) return 1;
+    const foodKeywords = ["tomat", "chili", "paprika", "basil", "minze", "mint", "erdbeer", "strawberr", "salat", "lettuc", "gurke", "cucumb", "zitrone", "lemon", "rosmarin", "rosemary", "thymi", "thyme", "oregano", "kartoffel", "potato"];
+    const hasFood = plants.some((p) => {
+      if (p.isArchived) return false;
+      if (["Nutzpflanze", "Gemüsepflanze", "Kräuter"].includes(p.plantType)) return true;
+      const n = (p.name || "").toLowerCase();
+      const s = (p.scientificName || "").toLowerCase();
+      const a = (p.alias || "").toLowerCase();
+      return foodKeywords.some((k) => n.includes(k) || s.includes(k) || a.includes(k));
+    });
+    return hasFood ? 1 : 0;
+  }, [plants, badges.harvestTime]);
+
   const litersWatered = (stats.totalWatered * 0.15).toFixed(1);
   const oldestDateString = stats.oldestPlantDate
     ? new Date(stats.oldestPlantDate).toLocaleDateString(lang === "de" ? "de-DE" : "en-US")
@@ -259,6 +281,8 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
             unlocked={badges.rainmaker}
             color="text-care-water"
             isTeaser
+            progress={{ current: Math.min(stats.totalWatered, 100), max: 100 }}
+            lang={lang}
           />
 
           {/* Teaser 2: Botanik-Nerd */}
@@ -269,6 +293,8 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
             unlocked={badges.botanyNerd}
             color="text-brand"
             isTeaser
+            progress={{ current: Math.min(stats.activeCount, 10), max: 10 }}
+            lang={lang}
           />
 
           {/* Teaser 3: Erntezeit */}
@@ -279,6 +305,8 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
             unlocked={badges.harvestTime}
             color="text-rose-500"
             isTeaser
+            progress={{ current: harvestCount, max: 1 }}
+            lang={lang}
           />
 
           {/* Teaser 4: Weltreise (Aspirativ) */}
@@ -290,6 +318,8 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
             color="text-amber-500"
             isTeaser
             isAspirational
+            progress={{ current: Math.min(uniqueOriginsCount, 8), max: 8 }}
+            lang={lang}
           />
 
           {/* Dynamische Unlocked Badges */}
@@ -418,10 +448,12 @@ export default function StatisticsClient({ plants, badges, stats }: StatisticsCl
           <BadgeCard
             isMystery
             desc={lang === "de" ? "Finde die Kombination!" : "Find the secret combo!"}
+            lang={lang}
           />
           <BadgeCard
             isMystery
             desc={lang === "de" ? "Geheime Pflanzenerfolge" : "Secret botanical combos"}
+            lang={lang}
           />
         </div>
       </section>
@@ -670,22 +702,24 @@ function BadgeCard({
   isTeaser = false,
   isAspirational = false,
   isMystery = false,
+  progress,
+  lang = "de",
 }: any) {
   if (!unlocked && !isTeaser && !isMystery) return null;
 
   if (isMystery) {
     return (
-      <div className="p-3.5 rounded-xl flex flex-col items-center text-center bg-surface-subtle/50 border border-border-hairline opacity-60 hover:opacity-90 transition-opacity">
-        <div className="w-11 h-11 rounded-xl bg-surface-subtle text-text-muted/60 flex items-center justify-center mb-2">
+      <div className="p-4 rounded-xl flex flex-col items-center text-center bg-surface-subtle/60 opacity-70 hover:opacity-100 transition-opacity">
+        <div className="w-10 h-10 rounded-lg bg-surface text-text-muted flex items-center justify-center mb-2 shadow-xs">
           <Lock size={18} />
         </div>
         <h4 className="font-bold text-xs text-text-secondary mb-0.5 leading-tight">
-          {title || "Geheimes Abzeichen"}
+          {title || (lang === "de" ? "Geheim" : "Secret")}
         </h4>
-        <p className="text-[11px] text-text-muted leading-tight">
-          {desc || "Freischalten durch Entdecken!"}
+        <p className="text-[10px] text-text-muted leading-tight">
+          {desc || (lang === "de" ? "Überraschung!" : "Surprise!")}
         </p>
-        <span className="mt-2 text-[10px] font-bold text-text-muted px-2 py-0.5 rounded-full bg-surface-subtle">
+        <span className="mt-2 text-[10px] font-semibold text-text-muted px-2 py-0.5 rounded-md bg-surface">
           ???
         </span>
       </div>
@@ -693,58 +727,71 @@ function BadgeCard({
   }
 
   if (isTeaser && !unlocked) {
+    const percent = progress && progress.max > 0 ? Math.min(100, Math.round((progress.current / progress.max) * 100)) : 0;
     return (
-      <div
-        className={`p-3.5 rounded-xl flex flex-col items-center text-center relative border-2 border-dashed ${
-          isAspirational
-            ? "border-amber-500/30 bg-amber-500/5"
-            : "border-brand/30 bg-brand-subtle/20"
-        } transition-all hover-lift`}
-      >
+      <div className="p-4 rounded-xl flex flex-col items-center text-center relative bg-surface-subtle transition-all hover-lift">
         <span
-          className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.2 rounded-md ${
+          className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.2 rounded ${
             isAspirational
-              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
               : "bg-brand-subtle text-brand"
           }`}
         >
-          {isAspirational ? "Aspirativ ★" : "Teaser"}
+          {isAspirational ? (lang === "de" ? "Aspirativ ★" : "Aspirational ★") : "Teaser"}
         </span>
         <div
-          className={`w-11 h-11 rounded-xl bg-surface ${
-            isAspirational ? "text-amber-500/80" : "text-brand/80"
+          className={`w-10 h-10 rounded-lg bg-surface ${
+            isAspirational ? "text-amber-500" : "text-text-muted"
           } flex items-center justify-center mb-2 shadow-xs`}
         >
           {icon}
         </div>
         <h4 className="font-bold text-xs text-text-primary mb-0.5 leading-tight">{title}</h4>
-        <p className="text-[11px] text-text-muted leading-tight">{desc}</p>
-        <span
-          className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-            isAspirational
-              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-              : "bg-brand-subtle text-brand"
-          }`}
-        >
-          Ziel
-        </span>
+        <p className="text-[10px] text-text-muted leading-tight">{desc}</p>
+        {progress ? (
+          <>
+            <div className="w-full bg-surface h-1.5 rounded-full mt-2 overflow-hidden">
+              <div
+                className={`${isAspirational ? "bg-amber-500" : "bg-brand"} h-full rounded-full transition-all duration-500`}
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+            <span
+              className={`text-[10px] font-mono font-bold mt-1 tabular ${
+                isAspirational ? "text-amber-600 dark:text-amber-400" : "text-brand"
+              }`}
+            >
+              {progress.current} / {progress.max}
+            </span>
+          </>
+        ) : (
+          <span
+            className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md ${
+              isAspirational
+                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                : "bg-brand-subtle text-brand"
+            }`}
+          >
+            {isAspirational ? (lang === "de" ? "Aspirativ" : "Aspirational") : (lang === "de" ? "Ziel" : "Goal")}
+          </span>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="p-3.5 rounded-xl flex flex-col items-center text-center transition-all bg-surface border border-border-hairline card-elevation hover-lift">
+    <div className="p-4 rounded-xl flex flex-col items-center text-center transition-all bg-surface-subtle hover-lift">
       <div
-        className={`w-11 h-11 rounded-xl bg-surface-subtle flex items-center justify-center mb-2 shadow-xs ${color} ${
+        className={`w-10 h-10 rounded-lg bg-surface flex items-center justify-center mb-2 shadow-xs ${color} ${
           pulse ? "animate-pulse" : ""
         }`}
       >
         {icon}
       </div>
       <h4 className="font-bold text-xs text-text-primary mb-0.5 leading-tight">{title}</h4>
-      <p className="text-[11px] text-text-muted leading-tight">{desc}</p>
-      <span className="mt-2 text-[10px] font-bold text-brand px-2 py-0.5 rounded-full bg-brand-subtle flex items-center gap-1">
-        <Check size={10} /> Freigeschaltet
+      <p className="text-[10px] text-text-muted leading-tight">{desc}</p>
+      <span className="mt-2 text-[10px] font-bold text-brand px-2 py-0.5 rounded-md bg-brand-subtle flex items-center gap-1">
+        <Check size={10} /> {lang === "de" ? "Erreicht ✓" : "Unlocked ✓"}
       </span>
     </div>
   );

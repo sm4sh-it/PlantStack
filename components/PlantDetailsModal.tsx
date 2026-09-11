@@ -284,8 +284,15 @@ export default function PlantDetailsModal({
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-brand-subtle/40">
-            <Leaf className="w-20 h-20 text-brand/30" />
+          <div className="w-full h-full flex items-center justify-center bg-brand-subtle/25 dark:bg-surface-subtle">
+            <div className="w-20 h-20 relative opacity-35 dark:opacity-45 hover:opacity-60 transition-all duration-500 hover:scale-105">
+              <Image
+                src="/logo-green.svg"
+                alt={plant.name}
+                fill
+                className="object-contain"
+              />
+            </div>
           </div>
         )}
 
@@ -902,8 +909,8 @@ export default function PlantDetailsModal({
               <>
                 {renderCareRoutines()}
                 {renderEnvironment()}
-                {renderNotes()}
                 {renderBotanical()}
+                {renderNotes()}
               </>
             ) : (
               <>
@@ -925,14 +932,14 @@ export default function PlantDetailsModal({
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Profile, Routines, Environment, Notes & Care Log (58% Width) */}
+          {/* RIGHT COLUMN: Profile, Routines, Environment, Botanical Insights, Notes & Care Log (58% Width) */}
           <div className="w-7/12 p-6 md:p-8 flex flex-col justify-between space-y-5 overflow-y-auto">
             <div className="space-y-5">
               {renderPlantIdentity(false)}
               {renderCareRoutines()}
               {renderEnvironment()}
-              {renderNotes()}
               {renderBotanical()}
+              {renderNotes()}
               {renderCareLog()}
             </div>
             {renderFooter(false)}

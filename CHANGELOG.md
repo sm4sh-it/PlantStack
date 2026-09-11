@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.6.1] - 2026-09-11
+### Added
+- **Gamification Teaser Progress Bars (`StatisticsClient.tsx`)**: Added animated live mini progress bars (`h-1.5 rounded-full`) and ratio counters (e.g. `2 / 3`) to teaser achievement cards to gamify and encourage collection milestones.
+- **Dedicated Water Confirm Dialog Variant (`ConfirmModal.tsx`)**: Added a dedicated `water` variant with blue droplet styling and soft-tint backgrounds for the batch watering dialog.
+
+### Changed
+- **Anti-Outline & Zero-Wireframe Standard Alignment (`app/page.tsx`)**: Removed remaining border strokes from active indoor and outdoor filter chips in favor of unified, accessible soft-tint fills (`bg-brand-subtle text-brand font-bold`).
+- **Borderless Achievement Cards (`StatisticsClient.tsx`)**: Replaced harsh stroke borders and dashed frames on mystery, teaser, and unlocked badges with calm, borderless soft-tints (`bg-surface-subtle`).
+- **Empty State Border Harmonization**: Replaced prominent dashed wireframe boundaries (`border-dashed border-border-strong`) with calm, subtle hairline elevation (`border border-border-hairline card-elevation`) across empty states on Dashboard (`app/page.tsx`), Archive (`app/archive/page.tsx`), and Settings locations (`app/settings/page.tsx`).
+- **Borderless Floating Navigation (Zero White Lines in Dark Mode)**: Replaced hard hairline border strokes at the bottom of the Desktop/Mobile header and top of the mobile bottom dock with natural surface elevation and soft ambient shadows (`dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)]`), resolving distracting white divider lines on OLED/dark displays.
+- **Modal Section Hierarchy Reorder (`PlantDetailsModal.tsx`)**: Reordered the content flow so that detailed Botanical Insights immediately follow quick environmental indicators, placing personal user notes directly before the historical care log.
+- **Brand Identity Logo Consistency**: Replaced generic leaf icons in `PlantCard.tsx`, `PlantDetailsModal.tsx` (photo placeholder), and `app/about/page.tsx` with the official PlantStack vector logo (`/logo-green.svg`).
+- **Borderless Dialog Icon Tiles (`ConfirmModal.tsx`)**: Eliminated harsh white border contours around modal icon containers in dark mode.
+- **Desktop 3-Dots Menu Sizing (`PlantCard.tsx`)**: Increased the desktop touch/click target of the plant card action menu from `w-7 h-7` to `w-8 h-8` (32×32px) for improved desktop ergonomics while preserving compact 28px styling on mobile.
+
 ## [3.6.0] - 2026-09-11
 ### Added
 - **Unified 5-Point Icon-Only Dock (Desktop & Mobile)**: Aligned desktop and mobile navigation into an identical, highly ergonomic 5-point dock architecture:

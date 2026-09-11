@@ -488,7 +488,7 @@ export default function SettingsPage() {
 
           <div className="space-y-2.5">
             {locations.length === 0 ? (
-              <p className="text-xs text-text-muted italic py-6 text-center border border-dashed border-border-strong rounded-xl">{t('noLocations', lang)}</p>
+              <p className="text-xs text-text-muted italic py-6 text-center bg-surface-subtle/50 border border-border-hairline rounded-xl">{t('noLocations', lang)}</p>
             ) : (
               locations.map(loc => (
                 <div key={loc.id} className="flex items-center justify-between bg-surface-subtle p-3 px-4 rounded-xl border border-border-hairline">

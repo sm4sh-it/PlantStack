@@ -112,7 +112,7 @@ export default function ArchivePage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 bg-surface rounded-2xl border border-dashed border-border-strong card-elevation">
+        <div className="text-center py-20 bg-surface rounded-2xl border border-border-hairline card-elevation">
           <div className="w-16 h-16 bg-brand-subtle text-brand rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xs">
             <Ghost size={32} />
           </div>

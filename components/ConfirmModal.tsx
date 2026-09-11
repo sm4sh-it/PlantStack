@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, HelpCircle, X } from "lucide-react";
+import { AlertTriangle, HelpCircle, Droplet, X } from "lucide-react";
 
 type ConfirmModalProps = {
   isOpen: boolean;
@@ -9,7 +9,8 @@ type ConfirmModalProps = {
   confirmText?: string;
   cancelText?: string | null;
   isDestructive?: boolean;
-  variant?: "destructive" | "warning" | "info" | "success";
+  variant?: "destructive" | "warning" | "info" | "success" | "water";
+  customIcon?: React.ReactNode;
   onConfirm: () => void;
   onCancel?: () => void;
 };
@@ -22,6 +23,7 @@ export default function ConfirmModal({
   cancelText = "Abbrechen",
   isDestructive = false,
   variant,
+  customIcon,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
@@ -30,11 +32,14 @@ export default function ConfirmModal({
   const actualVariant = variant || (isDestructive ? "destructive" : "info");
 
   const getIcon = () => {
+    if (customIcon) return customIcon;
     switch (actualVariant) {
       case "destructive":
         return <AlertTriangle size={20} />;
       case "warning":
         return <AlertTriangle size={20} />;
+      case "water":
+        return <Droplet size={20} />;
       case "success":
         return <HelpCircle size={20} />;
       case "info":
@@ -46,14 +51,16 @@ export default function ConfirmModal({
   const getIconClasses = () => {
     switch (actualVariant) {
       case "destructive":
-        return "bg-urgency-overdue/10 text-urgency-overdue border border-urgency-overdue/20";
+        return "bg-urgency-overdue/10 text-urgency-overdue";
       case "warning":
-        return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+        return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
+      case "water":
+        return "bg-care-water-bg text-care-water";
       case "success":
-        return "bg-brand-subtle text-brand border border-brand-border/40";
+        return "bg-brand-subtle text-brand";
       case "info":
       default:
-        return "bg-brand-subtle text-brand border border-brand-border/40";
+        return "bg-brand-subtle text-brand";
     }
   };
 
@@ -63,6 +70,8 @@ export default function ConfirmModal({
         return "bg-urgency-overdue hover:bg-red-600";
       case "warning":
         return "bg-amber-600 hover:bg-amber-700";
+      case "water":
+        return "bg-care-water hover:bg-care-water/90";
       default:
         return "bg-brand hover:bg-brand-hover";
     }
