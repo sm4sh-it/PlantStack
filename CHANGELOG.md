@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.7.0] - 2026-09-12
+### Added
+- **1-Click Pruning & Repotting in Detail Modal (`PlantDetailsModal.tsx`)**: Added dedicated 1-click action buttons for pruning (✂️ *Beschneiden*) and repotting (🪴 *Umtopfen*) exclusively inside the plant details modal.
+- **Dual-Storage Retention Architecture (`prisma/schema.prisma`)**: Implemented persistent timestamps directly on the `Plant` model (`lastPruned`, `lastRepotted`) combined with chronological `PlantEvent` entries (`PRUNE`, `REPOT`), guaranteeing that long-term care actions are never displaced by frequent routine watering.
+- **Care Log Quick Status Chips & Pagination**: Added sticky status chips at the top of the Care Log for immediate visibility of the last pruning and repotting dates, alongside a dynamic "Show more" / "Show less" toggle for viewing up to 50 events.
+- **Extended Relative Time Formatter**: Enhanced `formatRelativeTime` to naturally format weeks (`vor 3 Wochen`), months (`vor 8 Monaten`), and years (`vor 1 Jahr`) for long-term care tracking.
+- **Long-Term Event Protection during Reset (`/api/statistics/reset-stats`)**: Routine care statistic resets now selectively clear routine watering/fertilizing/pest logs while preserving long-term pruning and repotting events and timestamps.
+- **Backup & Restore Integration (`/api/backup`)**: Full export/import support for `lastPruned` and `lastRepotted` timestamps.
+
 ## [3.6.1] - 2026-09-11
 ### Added
 - **Gamification Teaser Progress Bars (`StatisticsClient.tsx`)**: Added animated live mini progress bars (`h-1.5 rounded-full`) and ratio counters (e.g. `2 / 3`) to teaser achievement cards to gamify and encourage collection milestones.

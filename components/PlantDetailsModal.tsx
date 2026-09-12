@@ -25,6 +25,8 @@ import {
   StickyNote,
   ChevronDown,
   Edit2,
+  Sprout,
+  Shovel,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -35,7 +37,7 @@ type PlantDetailsModalProps = {
   plant: Plant & { location?: Location };
   lang: string;
   onClose: () => void;
-  onAction?: (plantId: string, action: "water" | "fertilize" | "bug" | "fungus" | "snooze") => void;
+  onAction?: (plantId: string, action: "water" | "fertilize" | "bug" | "fungus" | "snooze" | "prune" | "repot") => void;
   onEdit?: (plant: Plant) => void;
 };
 
@@ -56,6 +58,7 @@ export default function PlantDetailsModal({
   const [showPhotoInput, setShowPhotoInput] = useState(false);
   const [mobileTab, setMobileTab] = useState<"care" | "diary">("care");
   const [careLogOpen, setCareLogOpen] = useState(false);
+  const [showAllEvents, setShowAllEvents] = useState(false);
 
   useEffect(() => {
     async function loadDetails() {
@@ -74,7 +77,7 @@ export default function PlantDetailsModal({
     loadDetails();
   }, [plant.id]);
 
-  const handleCareAction = async (action: "water" | "fertilize" | "bug" | "fungus") => {
+  const handleCareAction = async (action: "water" | "fertilize" | "bug" | "fungus" | "prune" | "repot") => {
     if (onAction) {
       onAction(plant.id, action);
     } else {
@@ -155,7 +158,26 @@ export default function PlantDetailsModal({
       return lang === "de" ? `vor ${diffHours} Std.` : `${diffHours}h ago`;
     }
     if (diffDays === 1) return lang === "de" ? "Gestern" : "Yesterday";
-    return lang === "de" ? `vor ${diffDays} Tagen` : `${diffDays} days ago`;
+    if (diffDays < 14) return lang === "de" ? `vor ${diffDays} Tagen` : `${diffDays} days ago`;
+
+    const diffWeeks = Math.floor(diffDays / 7);
+    if (diffDays < 60) {
+      return lang === "de"
+        ? `vor ${diffWeeks} ${diffWeeks === 1 ? "Woche" : "Wochen"}`
+        : `${diffWeeks} ${diffWeeks === 1 ? "week" : "weeks"} ago`;
+    }
+
+    const diffMonths = Math.floor(diffDays / 30.4);
+    if (diffDays < 365) {
+      return lang === "de"
+        ? `vor ${diffMonths} ${diffMonths === 1 ? "Monat" : "Monaten"}`
+        : `${diffMonths} ${diffMonths === 1 ? "month" : "months"} ago`;
+    }
+
+    const diffYears = Math.floor(diffDays / 365.25);
+    return lang === "de"
+      ? `vor ${diffYears} ${diffYears === 1 ? "Jahr" : "Jahren"}`
+      : `${diffYears} ${diffYears === 1 ? "year" : "years"} ago`;
   };
 
   const getEventBadge = (type: string) => {
@@ -183,6 +205,18 @@ export default function PlantDetailsModal({
           icon: <SprayCan size={13} />,
           label: t("eventFungus", lang),
           color: "bg-care-fungus-bg text-care-fungus",
+        };
+      case "PRUNE":
+        return {
+          icon: <Scissors size={13} />,
+          label: t("eventPrune", lang),
+          color: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+        };
+      case "REPOT":
+        return {
+          icon: <Shovel size={13} />,
+          label: t("eventRepot", lang),
+          color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
         };
       case "ARCHIVE":
         return {
@@ -486,6 +520,67 @@ export default function PlantDetailsModal({
     </div>
   );
 
+  // 3b. Occasional Care: Beschneiden & Umtopfen (1-Click, Langzeit-Retention)
+  const renderOccasionalCare = () => (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
+          {t("occasionalCare", lang)}
+        </span>
+        <span className="text-[10px] text-brand font-medium">
+          {t("tapToLog", lang)}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        {/* Pruning: Beschneiden */}
+        <button
+          onClick={() => handleCareAction("prune")}
+          className="p-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/15 text-left hover-lift active:scale-95 transition-all group/btn cursor-pointer"
+          title={lang === "de" ? "Klicken zum Dokumentieren von Rückschnitt" : "Click to log pruning"}
+        >
+          <div className="flex items-center justify-between text-amber-700 dark:text-amber-400 font-bold text-xs">
+            <span className="flex items-center gap-1.5">
+              <Scissors size={14} /> {t("prune", lang)}
+            </span>
+            <span className="text-[10px] font-mono opacity-75 truncate max-w-[80px]">
+              {plantData.pruningInfo ? (plantData.pruningInfo.length > 12 ? plantData.pruningInfo.slice(0, 10) + "…" : plantData.pruningInfo) : ""}
+            </span>
+          </div>
+          <div className="mt-1.5 text-xs font-bold text-text-primary tabular">
+            {plantData.lastPruned ? formatRelativeTime(plantData.lastPruned) : t("never", lang)}
+          </div>
+          <div className="mt-1 text-[10px] text-amber-700 dark:text-amber-400 font-semibold">
+            <span>{t("pruneNow", lang)}</span>
+          </div>
+        </button>
+
+        {/* Repotting: Umtopfen */}
+        <button
+          onClick={() => handleCareAction("repot")}
+          className="p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 text-left hover-lift active:scale-95 transition-all group/btn cursor-pointer"
+          title={lang === "de" ? "Klicken zum Dokumentieren von Umtopfen" : "Click to log repotting"}
+        >
+          <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+            <span className="flex items-center gap-1.5">
+              <Shovel size={14} /> {t("repot", lang)}
+            </span>
+            {(plantData as any).potSize && (
+              <span className="text-[10px] font-mono opacity-75">
+                Ø {(plantData as any).potSize} cm
+              </span>
+            )}
+          </div>
+          <div className="mt-1.5 text-xs font-bold text-text-primary tabular">
+            {plantData.lastRepotted ? formatRelativeTime(plantData.lastRepotted) : t("never", lang)}
+          </div>
+          <div className="mt-1 text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">
+            <span>{t("repotNow", lang)}</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+
   // 4. Environment & Location (Cleane Überschrift ohne Klammern & 100% ohne weiße Rahmen)
   const renderEnvironment = () => (
     <div>
@@ -562,6 +657,8 @@ export default function PlantDetailsModal({
   const renderBotanical = () => {
     const hasBotanicalInfo = Boolean(
       plant.wateringInfo ||
+      extraInfo?.sowing_indoors_month ||
+      extraInfo?.planting_month ||
       extraInfo?.sowing_outdoors_month ||
       (extraInfo?.good_neighbors && extraInfo.good_neighbors.length > 0) ||
       (extraInfo?.bad_neighbors && extraInfo.bad_neighbors.length > 0) ||
@@ -630,11 +727,31 @@ export default function PlantDetailsModal({
             </div>
           )}
 
+          {extraInfo?.sowing_indoors_month && (
+            <div className="flex gap-2">
+              <Sprout size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">{t("sowingIndoors", lang as Locale)}:</span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">{extraInfo.sowing_indoors_month}</p>
+              </div>
+            </div>
+          )}
+
+          {extraInfo?.planting_month && (
+            <div className="flex gap-2">
+              <Sun size={14} className="text-care-sun shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">{t("plantingTime", lang as Locale)}:</span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">{extraInfo.planting_month}</p>
+              </div>
+            </div>
+          )}
+
           {extraInfo?.sowing_outdoors_month && (
             <div className="flex gap-2">
               <Sun size={14} className="text-care-sun shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-text-primary">{t("sowingOutdoors", lang)}:</span>
+                <span className="font-bold text-text-primary">{t("sowingOutdoors", lang as Locale)}:</span>
                 <p className="text-[11px] text-text-secondary leading-tight mt-0.5">{extraInfo.sowing_outdoors_month}</p>
               </div>
             </div>
@@ -795,36 +912,70 @@ export default function PlantDetailsModal({
       </button>
 
       {careLogOpen && (
-        <div className="mt-3 animate-in fade-in duration-200">
+        <div className="mt-3 animate-in fade-in duration-200 space-y-3">
+          {/* Quick Status Chips for Prune & Repot */}
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface text-[11px] font-medium text-text-secondary border border-border-hairline shadow-xs">
+              <Scissors size={12} className="text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>{t("lastPruned", lang)}:</span>
+              <span className="font-bold text-text-primary">
+                {plantData.lastPruned ? formatRelativeTime(plantData.lastPruned) : t("never", lang)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface text-[11px] font-medium text-text-secondary border border-border-hairline shadow-xs">
+              <Shovel size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span>{t("lastRepotted", lang)}:</span>
+              <span className="font-bold text-text-primary">
+                {plantData.lastRepotted ? formatRelativeTime(plantData.lastRepotted) : t("never", lang)}
+              </span>
+            </div>
+          </div>
+
           {events.length > 0 ? (
-            <div className="relative pl-4 space-y-2.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border-hairline">
-              {events.slice(0, 10).map((evt) => {
-                const badge = getEventBadge(evt.type);
-                return (
-                  <div key={evt.id} className="relative flex items-center justify-between text-xs">
-                    <span className="absolute -left-4 w-2 h-2 rounded-full bg-brand ring-4 ring-surface" />
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] flex items-center gap-1 ${badge.color}`}>
-                        {badge.icon}
-                        <span>{badge.label}</span>
-                      </span>
+            <div className="space-y-3">
+              <div className="relative pl-4 space-y-2.5 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border-hairline">
+                {(showAllEvents ? events : events.slice(0, 10)).map((evt) => {
+                  const badge = getEventBadge(evt.type);
+                  return (
+                    <div key={evt.id} className="relative flex items-center justify-between text-xs">
+                      <span className="absolute -left-4 w-2 h-2 rounded-full bg-brand ring-4 ring-surface" />
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] flex items-center gap-1 ${badge.color}`}>
+                          {badge.icon}
+                          <span>{badge.label}</span>
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-text-muted text-right">
+                        <span className="font-medium text-text-secondary mr-1.5">
+                          {formatRelativeTime(evt.createdAt)}
+                        </span>
+                        <span className="hidden sm:inline opacity-70">
+                          ({new Date(evt.createdAt).toLocaleDateString(lang === "de" ? "de-DE" : "en-US", {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })})
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-text-muted text-right">
-                      <span className="font-medium text-text-secondary mr-1.5">
-                        {formatRelativeTime(evt.createdAt)}
-                      </span>
-                      <span className="hidden sm:inline opacity-70">
-                        ({new Date(evt.createdAt).toLocaleDateString(lang === "de" ? "de-DE" : "en-US", {
-                          day: "2-digit",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })})
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              {events.length > 10 && (
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllEvents(!showAllEvents)}
+                    className="text-[11px] font-semibold text-brand hover:text-brand-hover bg-brand-subtle px-3 py-1 rounded-lg transition-all cursor-pointer"
+                  >
+                    {showAllEvents
+                      ? t("showLess", lang)
+                      : `${t("showMore", lang)} (+${events.length - 10})`}
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-xs text-text-muted italic py-1 px-3">
@@ -908,6 +1059,7 @@ export default function PlantDetailsModal({
             {mobileTab === "care" ? (
               <>
                 {renderCareRoutines()}
+                {renderOccasionalCare()}
                 {renderEnvironment()}
                 {renderBotanical()}
                 {renderNotes()}
@@ -937,6 +1089,7 @@ export default function PlantDetailsModal({
             <div className="space-y-5">
               {renderPlantIdentity(false)}
               {renderCareRoutines()}
+              {renderOccasionalCare()}
               {renderEnvironment()}
               {renderBotanical()}
               {renderNotes()}

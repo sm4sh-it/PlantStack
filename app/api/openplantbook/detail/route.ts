@@ -32,18 +32,21 @@ export async function GET(req: NextRequest) {
   };
 
   const getCropName = (id: string, l: "en" | "de"): string | null => {
-    const found = cropsData.find(c => c.id === id);
+    const targetId = id === "crop_bean" ? "crop_bush_bean" : id;
+    const found = cropsData.find(c => c.id === targetId);
     return found ? found.name[l] : null;
   };
 
   try {
     if (pid.startsWith("crop_")) {
-      const crop = cropsData.find(c => c.id === pid);
+      const targetPid = pid === "crop_bean" ? "crop_bush_bean" : pid;
+      const crop = cropsData.find(c => c.id === targetPid);
       if (crop) {
         return NextResponse.json({
           pid: crop.id,
           display_pid: crop.name.en,
           alias: crop.name.de,
+          category: crop.category,
           min_soil_moist: crop.watering_interval_days <= 2 ? 45 : (crop.watering_interval_days >= 7 ? 10 : 30),
           min_light_lux: crop.sunlight === "full_sun" ? 50000 : (crop.sunlight === "partial_shade" ? 10000 : 1000),
           min_temp: crop.frost_hardy ? -10 : 5,
@@ -53,6 +56,8 @@ export async function GET(req: NextRequest) {
           sunlight_text: crop.sunlight,
           good_neighbors: crop.good_neighbors.map(id => getCropName(id, lang)).filter(Boolean),
           bad_neighbors: crop.bad_neighbors.map(id => getCropName(id, lang)).filter(Boolean),
+          sowing_indoors_month: crop.sowing_indoors_month ? getMonthName(crop.sowing_indoors_month, lang) : null,
+          planting_month: crop.planting_month ? getMonthName(crop.planting_month, lang) : null,
           sowing_outdoors_month: crop.sowing_outdoors_month ? getMonthName(crop.sowing_outdoors_month, lang) : null,
           origin: crop.origin || null
         });

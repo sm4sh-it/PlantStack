@@ -165,6 +165,8 @@ export default function Dashboard() {
       lastFertilized: targetPlant.lastFertilized,
       lastBug: targetPlant.lastBug,
       lastFungus: targetPlant.lastFungus,
+      lastPruned: targetPlant.lastPruned,
+      lastRepotted: targetPlant.lastRepotted,
       wateredCount: targetPlant.wateredCount,
     } : undefined;
 
@@ -179,6 +181,10 @@ export default function Dashboard() {
         showToast(t('snoozeSuccess', lang), plantId, prevData);
       } else if (action === "water") {
         showToast(`${targetPlant?.name || "Plant"} ${t('plantMarkedWatered', lang)}`, plantId, prevData);
+      } else if (action === "prune") {
+        showToast(`${targetPlant?.name || "Plant"} ${t('plantMarkedPruned', lang)}`, plantId, prevData);
+      } else if (action === "repot") {
+        showToast(`${targetPlant?.name || "Plant"} ${t('plantMarkedRepotted', lang)}`, plantId, prevData);
       } else {
         showToast(`${targetPlant?.name || "Plant"} updated`, plantId, prevData);
       }

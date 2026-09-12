@@ -187,6 +187,8 @@ export async function POST(req: NextRequest) {
             lastFertilized: p.lastFertilized ? new Date(p.lastFertilized) : null,
             lastBug: p.lastBug ? new Date(p.lastBug) : null,
             lastFungus: p.lastFungus ? new Date(p.lastFungus) : null,
+            lastPruned: p.lastPruned ? new Date(p.lastPruned) : null,
+            lastRepotted: p.lastRepotted ? new Date(p.lastRepotted) : null,
             imagePath: p.imagePath || null,
             notes: p.notes || null,
             createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),

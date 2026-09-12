@@ -16,6 +16,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     if (action === "fertilize") updateData.lastFertilized = now;
     if (action === "bug") updateData.lastBug = now;
     if (action === "fungus") updateData.lastFungus = now;
+    if (action === "prune") updateData.lastPruned = now;
+    if (action === "repot") updateData.lastRepotted = now;
 
     if (action === "snooze") {
       const existing = await prisma.plant.findUnique({ where: { id: params.id } });
@@ -31,6 +33,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       if (previousData.lastFertilized !== undefined) updateData.lastFertilized = previousData.lastFertilized ? new Date(previousData.lastFertilized) : null;
       if (previousData.lastBug !== undefined) updateData.lastBug = previousData.lastBug ? new Date(previousData.lastBug) : null;
       if (previousData.lastFungus !== undefined) updateData.lastFungus = previousData.lastFungus ? new Date(previousData.lastFungus) : null;
+      if (previousData.lastPruned !== undefined) updateData.lastPruned = previousData.lastPruned ? new Date(previousData.lastPruned) : null;
+      if (previousData.lastRepotted !== undefined) updateData.lastRepotted = previousData.lastRepotted ? new Date(previousData.lastRepotted) : null;
       if (previousData.wateredCount !== undefined) updateData.wateredCount = previousData.wateredCount;
 
       const latestEvent = await prisma.plantEvent.findFirst({
@@ -47,7 +51,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       data: updateData,
     });
 
-    const validActions = ["water", "fertilize", "bug", "fungus"];
+    const validActions = ["water", "fertilize", "bug", "fungus", "prune", "repot"];
     if (validActions.includes(action)) {
       await prisma.plantEvent.create({
         data: {

@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         location: true,
         events: {
           orderBy: { createdAt: "desc" },
-          take: 20,
+          take: 50,
         },
         photos: {
           orderBy: { createdAt: "desc" },
@@ -20,6 +20,33 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
     if (!plant) {
       return NextResponse.json({ error: "Plant not found" }, { status: 404 });
+    }
+
+    // Ensure the latest PRUNE and REPOT events are always included even if older than 50 events
+    const hasPrune = plant.events.some((e) => e.type === "PRUNE");
+    const hasRepot = plant.events.some((e) => e.type === "REPOT");
+
+    if (!hasPrune || !hasRepot) {
+      const typesToFetch: string[] = [];
+      if (!hasPrune) typesToFetch.push("PRUNE");
+      if (!hasRepot) typesToFetch.push("REPOT");
+
+      const olderEvents = await prisma.plantEvent.findMany({
+        where: {
+          plantId: params.id,
+          type: { in: typesToFetch },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      });
+
+      if (olderEvents.length > 0) {
+        const eventMap = new Map();
+        [...plant.events, ...olderEvents].forEach((e) => eventMap.set(e.id, e));
+        plant.events = Array.from(eventMap.values()).sort(
+          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
     }
 
     return NextResponse.json(plant);
@@ -42,6 +69,8 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         fertilizerInterval: data.fertilizerInterval ? parseInt(data.fertilizerInterval) : null,
         bugInterval: data.bugInterval ? parseInt(data.bugInterval) : null,
         fungusInterval: data.fungusInterval ? parseInt(data.fungusInterval) : null,
+        lastPruned: data.lastPruned !== undefined ? (data.lastPruned ? new Date(data.lastPruned) : null) : undefined,
+        lastRepotted: data.lastRepotted !== undefined ? (data.lastRepotted ? new Date(data.lastRepotted) : null) : undefined,
         imagePath: data.imagePath !== undefined ? data.imagePath : undefined,
         notes: data.notes !== undefined ? data.notes : undefined,
         scientificName: data.scientificName !== undefined ? data.scientificName : undefined,

@@ -67,6 +67,8 @@ model Plant {
   lastFertilized     DateTime?
   lastBug            DateTime?
   lastFungus         DateTime?
+  lastPruned         DateTime?
+  lastRepotted       DateTime?
   
   imagePath          String?
   notes              String?
@@ -91,6 +93,6 @@ model PlantEvent {
   id        String   @id @default(uuid())
   plantId   String
   plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  type      String   // "WATER", "FERTILIZE", "BUG", "FUNGUS", "CREATE", "ARCHIVE"
+  type      String   // "WATER", "FERTILIZE", "BUG", "FUNGUS", "CREATE", "ARCHIVE", "PRUNE", "REPOT"
   createdAt DateTime @default(now())
 }

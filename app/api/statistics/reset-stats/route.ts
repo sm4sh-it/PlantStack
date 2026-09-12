@@ -8,8 +8,12 @@ export async function POST() {
       data: { wateredCount: 0 }
     });
     
-    // 2. Delete all PlantEvent entries
-    await prisma.plantEvent.deleteMany();
+    // 2. Delete routine care PlantEvent entries (keeping long-term PRUNE, REPOT, CREATE)
+    await prisma.plantEvent.deleteMany({
+      where: {
+        type: { in: ["WATER", "FERTILIZE", "BUG", "FUNGUS"] }
+      }
+    });
 
     return NextResponse.json({ success: true, message: "Statistics and history reset successfully." });
   } catch (error) {
