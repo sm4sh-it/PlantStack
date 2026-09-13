@@ -29,31 +29,31 @@
 ## 📸 Screenshots & Showcase
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-preview.png" alt="PlantStack Dashboard Preview" width="850" onerror="this.style.display='none'" />
+  <img src="docs/screenshots/dashboard-preview.png" alt="PlantStack Dashboard Preview" width="100%" />
 </p>
 
 <details open>
   <summary><strong>🖼️ Click to expand preview gallery</strong></summary>
   <br>
-  <table align="center">
+  <table align="center" width="100%">
     <tr>
       <td width="50%" align="center">
         <strong>🌿 Botanical Studio & Care Modal</strong><br><br>
-        <img src="docs/screenshots/plant-details.png" alt="Plant Details Modal" onerror="this.src='https://placehold.co/600x400/18181b/10B981?text=Plant+Details+Modal'" />
+        <img src="docs/screenshots/plant-details.png" alt="Plant Details Modal" width="100%" />
       </td>
       <td width="50%" align="center">
         <strong>📱 Mobile PWA & Ergonomic Dock</strong><br><br>
-        <img src="docs/screenshots/mobile-pwa.png" alt="Mobile PWA Dock" onerror="this.src='https://placehold.co/600x400/18181b/10B981?text=Mobile+5-Point+Dock'" />
+        <img src="docs/screenshots/mobile-pwa.png" alt="Mobile PWA Dock" width="100%" />
       </td>
     </tr>
     <tr>
       <td width="50%" align="center">
         <strong>📈 Vitality Curves & Gamification</strong><br><br>
-        <img src="docs/screenshots/statistics.png" alt="Statistics & Badges" onerror="this.src='https://placehold.co/600x400/18181b/10B981?text=Statistics+%26+Badges'" />
+        <img src="docs/screenshots/statistics.png" alt="Statistics & Badges" width="100%" />
       </td>
       <td width="50%" align="center">
-        <strong>📷 Growth Diary & Photo Timeline</strong><br><br>
-        <img src="docs/screenshots/photo-diary.png" alt="Photo Diary" onerror="this.src='https://placehold.co/600x400/18181b/10B981?text=Growth+Photo+Diary'" />
+        <strong>📷 Growth Diary & Care History</strong><br><br>
+        <img src="docs/screenshots/photo-diary.png" alt="Growth Diary & Care History" width="100%" />
       </td>
     </tr>
   </table>
