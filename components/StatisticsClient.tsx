@@ -210,7 +210,7 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
   const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-surface/95 backdrop-blur-md border border-border-hairline px-3 py-2 rounded-xl shadow-xl text-xs">
+        <div className="bg-surface border border-border-hairline px-3 py-2 rounded-xl shadow-xl text-xs">
           <p className="font-bold text-foreground">{payload[0].payload.name || label}</p>
           <p className="text-brand font-semibold mt-0.5">
             {payload[0].value} {lang === "de" ? "mal gegossen" : "times watered"}
@@ -224,7 +224,7 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
   const CustomOriginTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-surface/95 backdrop-blur-md border border-border-hairline px-3 py-2 rounded-xl shadow-xl text-xs">
+        <div className="bg-surface border border-border-hairline px-3 py-2 rounded-xl shadow-xl text-xs">
           <p className="font-bold text-foreground">{payload[0].payload.name}</p>
           <p className="text-brand font-semibold mt-0.5">
             {payload[0].value} {lang === "de" ? "Pflanzen" : "plants"}
@@ -246,7 +246,7 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
       else if (s.includes("shade")) lightLoc = lang === "de" ? "Schatten" : "Shade";
 
       return (
-        <div className="bg-surface/95 backdrop-blur-md border border-border-hairline p-3 rounded-xl shadow-xl text-xs">
+        <div className="bg-surface border border-border-hairline p-3 rounded-xl shadow-xl text-xs">
           <p className="font-bold text-foreground mb-0.5">{data.name}</p>
           <p className="text-text-muted">
             {lang === "de" ? "Intervall:" : "Interval:"} {data.originalInterval} {lang === "de" ? "Tage" : "days"}
@@ -905,16 +905,16 @@ function BadgeInspectionModal({
       role="dialog"
       aria-modal="true"
       aria-label={badge.title}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 dark:bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="relative bg-surface/98 border border-border-hairline rounded-3xl p-6 sm:p-8 max-w-sm sm:max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200 overflow-hidden"
+        className="relative bg-surface border border-border-hairline rounded-3xl p-6 sm:p-8 max-w-sm sm:max-w-md w-full shadow-2xl card-elevation flex flex-col items-center text-center animate-in zoom-in-95 duration-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Subtle decorative glow in the background */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-brand/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Subtle decorative ambient glow */}
+        <div className="absolute -top-24 -left-24 w-48 h-48 bg-brand/5 dark:bg-brand/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Close button */}
         <button
@@ -988,7 +988,7 @@ function BadgeInspectionModal({
 
           {!badge.unlocked && !badge.isMystery && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-12 h-12 rounded-full bg-surface/90 backdrop-blur-xs flex items-center justify-center shadow-md border border-border-hairline">
+              <div className="w-12 h-12 rounded-full bg-surface shadow-md border border-border-hairline flex items-center justify-center">
                 <Lock size={22} className="text-text-muted" />
               </div>
             </div>
@@ -1010,7 +1010,7 @@ function BadgeInspectionModal({
 
         {/* Progress details for Tiered Badges */}
         {badge.nextTier && badge.progress && (
-          <div className="w-full bg-surface-subtle/80 border border-border-hairline rounded-2xl p-3.5 mb-4 text-left">
+          <div className="w-full bg-surface-subtle border border-border-hairline rounded-2xl p-3.5 mb-4 text-left">
             <div className="flex items-center justify-between text-xs font-semibold text-text-primary mb-1.5">
               <span className="truncate pr-2">
                 {lang === "de"
@@ -1047,7 +1047,7 @@ function BadgeInspectionModal({
         {/* Close action button */}
         <button
           onClick={onClose}
-          className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-surface-subtle hover:bg-border-hairline text-text-primary transition-colors border border-border-hairline cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-surface-subtle hover:bg-surface-hover text-text-primary transition-colors border border-border-hairline cursor-pointer"
         >
           {lang === "de" ? "Schließen" : "Close"}
         </button>
@@ -1140,7 +1140,7 @@ function TieredBadgeCard({
               className="w-full h-full object-contain filter grayscale contrast-125 opacity-35 transition-all duration-300 group-hover:opacity-55"
             />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-6 h-6 rounded-full bg-surface/85 backdrop-blur-xs flex items-center justify-center shadow-xs border border-border-hairline">
+              <div className="w-6 h-6 rounded-full bg-surface flex items-center justify-center shadow-xs border border-border-hairline">
                 <Lock size={12} className="text-text-muted" />
               </div>
             </div>
@@ -1388,7 +1388,7 @@ function BadgeCard({
               className="w-full h-full object-contain filter grayscale contrast-125 opacity-35 transition-all duration-300 group-hover:opacity-55"
             />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-6 h-6 rounded-full bg-surface/85 backdrop-blur-xs flex items-center justify-center shadow-xs border border-border-hairline">
+              <div className="w-6 h-6 rounded-full bg-surface flex items-center justify-center shadow-xs border border-border-hairline">
                 <Lock size={12} className="text-text-muted" />
               </div>
             </div>
