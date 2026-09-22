@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.1] - 2026-09-22
+### Fixed
+- **Badge Inspection Lightbox Opaque Surface (`StatisticsClient.tsx`)**: Replaced invalid Tailwind opacity-modifier syntax (`bg-surface/98`) on CSS hex-variables with solid, fully opaque `bg-surface` (`#FFFFFF` in light mode, `#151C17` in dark mode) paired with `card-elevation` and `shadow-2xl`. Resolved complete background transparency in light mode where modal contents appeared uncontained over blurred background layers.
+- **Sub-Element & Tooltip Surface Normalization**: Swapped nested `bg-surface-subtle/80`, `bg-surface/90`, and chart tooltip `bg-surface/95` to solid semantic tokens (`bg-surface-subtle`, `bg-surface`, `hover:bg-surface-hover`), ensuring solid contrast and legibility across all display environments.
+- **Harmonized Modal Backdrop**: Aligned the lightbox backdrop overlay with standard PlantStack dialogs (`bg-black/60 dark:bg-black/75 backdrop-blur-md`).
+
 ## [3.8.0] - 2026-09-22
 ### Added
 - **Level-Up Progression System for Badges (`lib/badges.ts`)**:
