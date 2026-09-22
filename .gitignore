@@ -40,6 +40,8 @@ next-env.d.ts
 # User-uploaded images
 /public/images/*
 !/public/images/.keep
+!/public/images/badges/
+!/public/images/badges/**
 
 # Database & Docker Volumes
 /data/

@@ -12,5 +12,7 @@ prisma/*.db
 prisma/*.db-journal
 public/images/*
 !public/images/.keep
-_Work
+!public/images/badges/
+!public/images/badges/**
 _work
+

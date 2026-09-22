@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="shieldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37" />
+      <stop offset="30%" stop-color="#FFF2B2" />
+      <stop offset="70%" stop-color="#996515" />
+      <stop offset="100%" stop-color="#5B3A0A" />
+    </linearGradient>
+    <linearGradient id="shieldInner" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1B2B20" />
+      <stop offset="100%" stop-color="#0E1711" />
+    </linearGradient>
+    <linearGradient id="lockGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFDF73" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#8C6517" />
+    </linearGradient>
+    <filter id="shieldShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Shadow & Shield Outer -->
+  <g filter="url(#shieldShadow)">
+    <!-- Hexagon Outer Border -->
+    <path d="M 128 16 
+             L 218 68 
+             L 218 172 
+             L 128 224 
+             L 38 172 
+             L 38 68 Z" 
+          fill="url(#shieldBorder)" 
+          stroke="#42290B" 
+          stroke-width="3" 
+          stroke-linejoin="round" />
+    
+    <!-- Hexagon Inner Rim -->
+    <path d="M 128 28 
+             L 206 73 
+             L 206 167 
+             L 128 212 
+             L 50 167 
+             L 50 73 Z" 
+          fill="url(#shieldInner)" 
+          stroke="url(#shieldBorder)" 
+          stroke-width="4" 
+          stroke-linejoin="round" />
+  </g>
+
+  <!-- Decorative Botanical Filigree (Ivy twirls) -->
+  <path d="M 68 150 Q 80 130 95 140 T 115 130" fill="none" stroke="#2D5A3C" stroke-width="3" stroke-linecap="round" />
+  <path d="M 85 135 Q 80 125 90 120 Q 98 128 85 135 Z" fill="#3D7A52" />
+  
+  <path d="M 188 150 Q 176 130 161 140 T 141 130" fill="none" stroke="#2D5A3C" stroke-width="3" stroke-linecap="round" />
+  <path d="M 171 135 Q 176 125 166 120 Q 158 128 171 135 Z" fill="#3D7A52" />
+
+  <!-- Lock Shackle -->
+  <path d="M 104 110 V 88 A 24 24 0 0 1 152 88 V 110" 
+        fill="none" 
+        stroke="url(#lockGold)" 
+        stroke-width="10" 
+        stroke-linecap="round" />
+
+  <!-- Lock Body -->
+  <rect x="92" y="104" width="72" height="60" rx="12" fill="url(#lockGold)" stroke="#66460B" stroke-width="2.5" />
+
+  <!-- Keyhole & Glow -->
+  <circle cx="128" cy="126" r="6" fill="#1C1408" />
+  <path d="M 125 128 L 123 144 L 133 144 L 131 128 Z" fill="#1C1408" />
+  
+  <!-- Question Mark / Mystery Symbol -->
+  <text x="128" y="196" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="28" fill="url(#lockGold)" text-anchor="middle" letter-spacing="2">???</text>
+</svg>

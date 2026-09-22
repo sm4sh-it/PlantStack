@@ -1,5 +1,39 @@
 # Changelog
 
+## [3.8.0] - 2026-09-22
+### Added
+- **Level-Up Progression System for Badges (`lib/badges.ts`)**:
+  - Replaced static badges with 8 dynamically escalating progression chains:
+    - 💧 **Regenmacher** (`rainmaker`): 5 Tiers (50x, 100x, 250x, 500x, 1.000x gegossen) von *Tropfen-Pate* bis *Herr der Gezeiten (Max Level)*.
+    - 🌿 **Botanik-Nerd** (`botanyNerd`): 4 Tiers (10, 20, 35, 50 aktive Pflanzen) von *Pflanzensammler* bis *Botanischer Gartenpalast (Max Level)*.
+    - 🌍 **Weltreise** (`worldTour`): 3 Tiers (4+, 8+, 15+ Herkunftsländer) von *Weltenbummler* bis *Kosmopolit (Max Level)*.
+    - 🏠 **Räume** (`rooms`): 3 Tiers (3+, 6+, 10+ Standorte) von *Gärtnerwohnung* über *Villa mit Wintergarten* bis *Pflanzenschloss (Max Level)*.
+    - 🪴 **Umtopf-Pate** (`repotMaster`): 3 Tiers (3x, 10x, 25x umgetopft) von *Frische Erde* bis *Umtopf-Meister (Max Level)*.
+    - ✂️ **Meister-Gärtner** (`pruneMaster`): 3 Tiers (5x, 15x, 30x Formschnitt) von *Formschnitt* über *Bonsai-Adept mit Hasami-Schere* bis *Gartenbaumeister mit Lorbeerkranz (Max Level)*.
+    - ⏳ **Methusalem** (`methusalem`): 4 Tiers (180 Tage, 365 Tage / 1 Jahr, 730 Tage / 2 Jahre, 1.825 Tage / 5 Jahre) von *Grüner Überlebender* über *Vier-Jahreszeiten-Jubiläum* bis *Uralter Wächter (Max Level)*.
+    - 🌱 **Artenvielfalt** (`diversity`): 4 Tiers (5+, 10+, 20+, 35+ Arten) von Bronze über Silber und Gold bis zur Platin-Krone der Biodiversität.
+  - Höhere Stufen ersetzen jeweils elegant die Vorstufe im selben Slot.
+  - Dynamischer Live-Fortschrittsbalken mit Zielanzeige (`Ziel: Stufe II`, Zähler z. B. `45/100`) und goldener Meisterstufen-Auszeichnung (`★ Meisterstufe erreicht`).
+- **Botanical Enamel Pins Art Collection (`public/images/badges/`)**:
+  - 44 maßgeschneiderte Cloisonné Hard Enamel Pins mit polierten Metallstegen, haptischem Schattenfall und organischen Konturen.
+  - Strikte Anti-Kitsch-Regel: Reine Emaille- und Edelmetall-Oberflächen ohne künstliche Strass- oder Diamanteneffekte.
+  - Enthält auch geheime Rezepte & Entdeckungen: *Pizza Margherita*, *Wedges*, *Gin-Tonic*, *Mittelmeer-Mix*, *Jungle (4x Monstera)*, *Rainforest*, *Desert*, *Drama Queen*, *Gothic Garden*, *IT-Support*, *Die Verlorenen (Pet Sematary)*, *Serial Killer*, *Geisterschloss* und versiegelte *Mystery-Schlösser*.
+- **Interactive Lightbox Inspection Modal (`BadgeInspectionModal` in `StatisticsClient.tsx`)**:
+  - Großansicht jedes Abzeichens per Klick oder Tastatur (`Enter`/`Space`) auf Desktop und Mobile.
+  - Hochauflösende 512×512px Master-Darstellung (skaliert auf bis zu 288×288px) für gestochen scharfe Details auf Retina-/HiDPI-Displays.
+  - Transluzenter Hintergrund mit Weichzeichner (`bg-black/80 backdrop-blur-md`), Schließen per `X`-Button, Klick ins Leere oder `Escape`-Taste.
+  - Integrierter Body-Scroll-Lock während der Inspektion.
+  - Visueller Hover-Tipp mit Lupe (`ZoomIn`) auf jeder Karte.
+- **Automated Pin Processing Pipeline (`scripts/process-pins.js`)**:
+  - CLI-Pipeline (`npm run process-badges`) zum automatischen Freistellen (Flood-Fill Alpha Maske mit Farbtoleranz und Alphablending) und Generieren optimierter 512×512 WebP-Pins aus `_work/badges_raw/`.
+  - Automatische Synchronisation der TypeScript-Bildzuordnungen (`BADGE_IMAGES`).
+
+### Changed
+- **Asset-Auflösung**: Master-Pins von 256×256px auf 512×512px High-DPI WebP verdoppelt.
+- **Projektstruktur-Bereinigung**: Vereinigung der Arbeitsordner `_Work` und `_work` in einen einheitlichen, git-ignorierten Ordner `_work/`.
+- **Docker & Git Configuration**:
+  - `.dockerignore` und `.gitignore` aktualisiert, sodass statische Badge-Assets (`public/images/badges/**`) zuverlässig in Docker-Images und Git-Releases enthalten sind, während dynamische Nutzer-Uploads (`public/images/*`) ausgeschlossen bleiben.
+
 ## [3.7.0] - 2026-09-12
 ### Added
 - **1-Click Pruning & Repotting in Detail Modal (`PlantDetailsModal.tsx`)**: Added dedicated 1-click action buttons for pruning (✂️ *Beschneiden*) and repotting (🪴 *Umtopfen*) exclusively inside the plant details modal.

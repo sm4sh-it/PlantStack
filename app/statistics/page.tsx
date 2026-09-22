@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import StatisticsClient from "../../components/StatisticsClient";
 import { cropsData } from "@/lib/crops";
+import { calculateTieredBadges } from "@/lib/badges";
 
 export const dynamic = "force-dynamic";
 
@@ -77,12 +78,26 @@ export default async function StatisticsPage() {
   const badgeArchivedCount = badgePlants.filter(p => p.isArchived).length;
   const badgeActiveCount = badgeActivePlants.length;
 
-  const badgeWaterings = await prisma.plantEvent.count({
-    where: {
-      type: "WATER",
-      createdAt: { gte: badgesResetAt }
-    }
-  });
+  const [badgeWaterings, badgeRepots, badgePrunes] = await Promise.all([
+    prisma.plantEvent.count({
+      where: {
+        type: "WATER",
+        createdAt: { gte: badgesResetAt }
+      }
+    }),
+    prisma.plantEvent.count({
+      where: {
+        type: "REPOT",
+        createdAt: { gte: badgesResetAt }
+      }
+    }),
+    prisma.plantEvent.count({
+      where: {
+        type: "PRUNE",
+        createdAt: { gte: badgesResetAt }
+      }
+    }),
+  ]);
 
   const badgeHasVegetableOrFruit = badgeActivePlants.some(p => p.isVegetableOrFruit);
   const badgeHasEasterEggActive = badgeActivePlants.some(p => p.isBohniOrPiranha);
@@ -144,6 +159,7 @@ export default async function StatisticsPage() {
     serialKiller: badgeRecentArchivedCount >= 3,
     gothicGarden: badgeGothicCount >= 3,
     castle: badgeUniqueLocations.size >= 6,
+    rooms: badgeUniqueLocations.size >= 6,
     hauntedCastle: badgeArchivedCount >= 10,
     diversityBronze: badgeUniqueSpecies >= 5,
     diversitySilver: badgeUniqueSpecies >= 10,
@@ -159,6 +175,24 @@ export default async function StatisticsPage() {
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
+
+  const activePlantDates = activePlants.map(p => new Date(p.createdAt).getTime());
+  const oldestActiveDate = activePlantDates.length > 0 ? Math.min(...activePlantDates) : null;
+  const oldestActiveAgeDays = oldestActiveDate 
+    ? Math.max(0, Math.floor((now.getTime() - oldestActiveDate) / (1000 * 60 * 60 * 24))) 
+    : 0;
+
+  const tieredBadges = calculateTieredBadges({
+    rainmaker: badgeWaterings,
+    botanyNerd: badgeActiveCount,
+    worldTour: badgeUniqueOrigins.size,
+    rooms: badgeUniqueLocations.size,
+    castle: badgeUniqueLocations.size,
+    repotMaster: badgeRepots,
+    pruneMaster: badgePrunes,
+    methusalem: oldestActiveAgeDays,
+    diversity: badgeUniqueSpecies,
+  });
 
   const events = await prisma.plantEvent.findMany({
     where: {
@@ -263,6 +297,7 @@ export default async function StatisticsPage() {
     <StatisticsClient 
       plants={enrichedPlants}
       badges={badges}
+      tieredBadges={tieredBadges}
       stats={stats}
     />
   );
