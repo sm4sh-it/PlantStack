@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.8.2] - 2026-09-23
+### Added
+- **Photoshop AI Batch Automation Tool (`scripts/photoshop_batch_badges.jsx`)**: ExtendScript for 1-click batch background removal using Adobe Sensei AI. Flawlessly segments complex interior cutouts (e.g. circular anniversary wreath in `methusalem_t2` or scissor finger loops in `pruneMaster`) while preserving fine white enamel details.
+
+### Changed
+- **Enhanced Background Removal & Shadow-Eating Pipeline (`scripts/process-pins.js`)**:
+  - Upgraded flood-fill algorithm with adaptive neutral grey shadow-gradient tracking (`minC > 85..115`, `diff < 16`), removing >98% of drop shadow residues directly up to the metal rim.
+  - Implemented 2-pass edge defringing to eliminate white border halos.
+  - Added 16px breathing room padding (480px contain on 512×512 canvas) to prevent boundary clipping on interactive hover effects.
+  - Hybrid pipeline support: automatically detects pre-cutout transparent images (e.g. from Photoshop) and converts them to optimized WebP without re-flooding.
+- **Asset Clean-Up & Map Synchronization (`components/StatisticsClient.tsx`, `public/images/badges/`)**:
+  - Removed obsolete unversioned placeholders (`botanyNerd.webp`, `rainmaker.webp`, `worldTour.webp`, `mystery.svg`).
+  - Synchronized `BADGE_IMAGES` to strictly map all 44 active Cloisonné enamel pins.
+
 ## [3.8.1] - 2026-09-22
 ### Fixed
 - **Badge Inspection Lightbox Opaque Surface (`StatisticsClient.tsx`)**: Replaced invalid Tailwind opacity-modifier syntax (`bg-surface/98`) on CSS hex-variables with solid, fully opaque `bg-surface` (`#FFFFFF` in light mode, `#151C17` in dark mode) paired with `card-elevation` and `shadow-2xl`. Resolved complete background transparency in light mode where modal contents appeared uncontained over blurred background layers.
