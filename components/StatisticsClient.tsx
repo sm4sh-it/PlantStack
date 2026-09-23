@@ -792,7 +792,6 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
 }
 
 const BADGE_IMAGES: Record<string, string> = {
-  botanyNerd: "/images/badges/botanyNerd.webp",
   botanyNerd_t1: "/images/badges/botanyNerd_t1.webp",
   botanyNerd_t2: "/images/badges/botanyNerd_t2.webp",
   botanyNerd_t3: "/images/badges/botanyNerd_t3.webp",
@@ -821,7 +820,6 @@ const BADGE_IMAGES: Record<string, string> = {
   pruneMaster_t2: "/images/badges/pruneMaster_t2.webp",
   pruneMaster_t3: "/images/badges/pruneMaster_t3.webp",
   rainforest: "/images/badges/rainforest.webp",
-  rainmaker: "/images/badges/rainmaker.webp",
   rainmaker_t1: "/images/badges/rainmaker_t1.webp",
   rainmaker_t2: "/images/badges/rainmaker_t2.webp",
   rainmaker_t3: "/images/badges/rainmaker_t3.webp",
@@ -835,7 +833,6 @@ const BADGE_IMAGES: Record<string, string> = {
   rooms_t3: "/images/badges/rooms_t3.webp",
   serialKiller: "/images/badges/serialKiller.webp",
   wedges: "/images/badges/wedges.webp",
-  worldTour: "/images/badges/worldTour.webp",
   worldTour_t1: "/images/badges/worldTour_t1.webp",
   worldTour_t2: "/images/badges/worldTour_t2.webp",
   worldTour_t3: "/images/badges/worldTour_t3.webp",
