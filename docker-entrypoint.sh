@@ -44,7 +44,43 @@ if ! touch /app/data/.perm_check 2>/dev/null; then
 fi
 rm -f /app/data/.perm_check 2>/dev/null || true
 
+# Create a pre-migration snapshot if database.db exists and is non-empty, retaining max 3 snapshots
+create_pre_migration_snapshot() {
+    db_file="${PLANTSTACK_DB_PATH:-/app/data/database.db}"
+    backup_dir="${PLANTSTACK_BACKUP_DIR:-/app/data/backups}"
+
+    if [ ! -f "$db_file" ] || [ ! -s "$db_file" ]; then
+        return 0
+    fi
+
+    mkdir -p "$backup_dir"
+    ts="$(date -u +%Y%m%d-%H%M%S)"
+    seq=0
+    while :; do
+        snap_file="$backup_dir/database-${ts}-$(printf '%02d' "$seq").db"
+        [ ! -e "$snap_file" ] && break
+        seq=$((seq + 1))
+    done
+
+    cp "$db_file" "$snap_file"
+    chmod 640 "$snap_file" 2>/dev/null || true
+    echo "[PlantStack] Created pre-migration database snapshot: $snap_file"
+
+    count=0
+    old_ifs="$IFS"
+    IFS='
+'
+    for old_snap in $(ls -1r "$backup_dir"/database-*.db 2>/dev/null); do
+        count=$((count + 1))
+        if [ "$count" -gt 3 ]; then
+            rm -f "$old_snap"
+        fi
+    done
+    IFS="$old_ifs"
+}
+
 # Sync database schema using pre-generated Prisma client (read-only node_modules)
+create_pre_migration_snapshot
 echo "[PlantStack] Syncing database schema with Prisma..."
 ./node_modules/.bin/prisma db push --accept-data-loss --skip-generate
 
