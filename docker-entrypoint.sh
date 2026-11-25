@@ -55,9 +55,25 @@ create_pre_migration_snapshot() {
 
     mkdir -p "$backup_dir"
     ts="$(date -u +%Y%m%d-%H%M%S)"
-    seq=0
+    max_seq=-1
+    for existing in "$backup_dir/database-${ts}-"*.db; do
+        [ -e "$existing" ] || continue
+        suffix="${existing##*-}"
+        suffix="${suffix%.db}"
+        while [ "${suffix#0}" != "$suffix" ] && [ -n "${suffix#0}" ]; do
+            suffix="${suffix#0}"
+        done
+        case "$suffix" in
+            ""|*[!0-9]*) continue ;;
+        esac
+        if [ "$suffix" -gt "$max_seq" ]; then
+            max_seq="$suffix"
+        fi
+    done
+
+    seq=$((max_seq + 1))
     while :; do
-        snap_file="$backup_dir/database-${ts}-$(printf '%02d' "$seq").db"
+        snap_file="$backup_dir/database-${ts}-$(printf '%04d' "$seq").db"
         [ ! -e "$snap_file" ] && break
         seq=$((seq + 1))
     done
