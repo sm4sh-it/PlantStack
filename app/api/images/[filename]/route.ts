@@ -43,8 +43,7 @@ export async function GET(
       "Content-Type": contentType,
       "Content-Length": fileStat.size.toString(),
       "X-Content-Type-Options": "nosniff",
-      // Cache images heavily
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": "private, no-cache, must-revalidate",
     },
   });
 }

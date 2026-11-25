@@ -2,13 +2,13 @@
 const nextConfig = {
   output: "standalone",
   serverExternalPackages: ["@prisma/client", "prisma", "adm-zip"],
+  experimental: {
+    // Allow 150 MB ZIP backup uploads plus multipart form-data overhead through middleware
+    middlewareClientMaxBodySize: 152 * 1024 * 1024,
+  },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'open.plantbook.io',
-      },
-    ],
+    // Serve protected /api/images directly from the browser so session cookies are attached
+    unoptimized: true,
   },
   async headers() {
     return [

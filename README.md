@@ -109,13 +109,18 @@ services:
     container_name: plantstack
     restart: unless-stopped
     ports:
-      - "9666:3000"
+      - "${PLANTSTACK_BIND_ADDR:-0.0.0.0}:9666:3000"
     volumes:
       - plantstack_data:/app/data
     environment:
       - NODE_ENV=production
       # Optional: Protect access with an API secret/password (see Security below)
       # - PLANTSTACK_API_SECRET=your_secret_password_here
+      # Optional: Dedicated read-only token for GET /api/plants/status
+      # - PLANTSTACK_STATUS_TOKEN=your_readonly_status_token_here
+      # Optional: Reverse proxy settings (only trust forwarded headers behind a proxy)
+      # - PLANTSTACK_TRUST_PROXY=true
+      # - PLANTSTACK_PUBLIC_ORIGIN=https://plants.example.com
       # Optional: Open Plantbook credentials for automated care data lookup
       # - OPENPLANTBOOK_CLIENT_ID=your_client_id_here
       # - OPENPLANTBOOK_CLIENT_SECRET=your_client_secret_here
@@ -135,8 +140,9 @@ Access the web dashboard at `http://<your-server-ip>:9666`.
 ## 🔒 Security & Self-Healing Architecture
 
 ### Access Control
-- **Open LAN Mode (Default):** If `PLANTSTACK_API_SECRET` is unset, PlantStack requires zero login credentials on your private home network.
-- **Protected Mode:** Set `PLANTSTACK_API_SECRET="your_strong_password"`. Visiting the UI displays an elegant botanical lockscreen and issues a secure 30-day session cookie (compatible with both plain local HTTP and reverse-proxy HTTPS).
+- **Open LAN Mode (Default):** If `PLANTSTACK_API_SECRET` is unset, PlantStack requires zero login credentials on your private home network. Docker binds `0.0.0.0:9666` by default via `${PLANTSTACK_BIND_ADDR:-0.0.0.0}:9666:3000`.
+- **Reverse Proxy Lockdown:** If deploying behind Nginx, Caddy, or Traefik on the same machine, set `PLANTSTACK_BIND_ADDR=127.0.0.1` in `.env` (and configure `PLANTSTACK_TRUST_PROXY=true` / `PLANTSTACK_PUBLIC_ORIGIN=https://your-domain` if terminating TLS).
+- **Protected Mode:** Set `PLANTSTACK_API_SECRET="your_strong_password"`. Visiting the UI displays an elegant botanical lockscreen and issues a signed 30-day session cookie (compatible with both plain local HTTP and reverse-proxy HTTPS). Protected media under `/api/images/*` also requires authentication.
 
 ### 🐳 Self-Healing SQLite Volume Permissions
 Early Docker setups often suffer from `attempt to write a readonly database` when container managers (e.g. Synology Container Manager, Portainer, Dockhand) enforce unprivileged user IDs (`--user 1000`) on existing root-owned volumes.
@@ -145,9 +151,9 @@ Early Docker setups often suffer from `attempt to write a readonly database` whe
 - Guarantees seamless, zero-touch upgrades without manual SSH file permission fixes.
 
 ### Hardened Application Pipeline
-- **Strict Media Validation:** Uploads are checked against binary magic-byte signatures (JPEG, PNG, WebP) and size limits.
-- **Safe Archives:** Backup decompression features path-traversal protection and zip-bomb thresholds.
-- **Security Headers & CSRF:** Enforced modern HTTP headers and origin checks for mutating requests.
+- **Strict Media Validation:** Uploads are checked against binary magic-byte signatures (JPEG, PNG, WebP) and size limits (10 MB per image).
+- **Safe Archives:** Backup uploads support up to 150 MB (including plant photos) with pre-extraction central-directory checks, path-traversal protection, and zip-bomb thresholds.
+- **Security Headers & CSRF:** Enforced modern HTTP headers and origin/fetch-site checks for mutating requests.
 
 ---
 
@@ -173,10 +179,14 @@ Send a `GET` request to:
 GET /api/plants/status
 ```
 
-Returns a compact JSON list of all currently overdue plants, days overdue, and care recommendations. If Protected Mode is enabled, authenticate via:
-- Query param: `?token=your_secret_password`
-- Header: `Authorization: Bearer your_secret_password`
-- Header: `X-API-Key: your_secret_password`
+Returns a compact JSON list of all currently overdue plants, days overdue, and care recommendations. If Protected Mode (`PLANTSTACK_API_SECRET`) is enabled, authenticate via:
+- **Recommended (read-only widget token `PLANTSTACK_STATUS_TOKEN`):**
+  - Header: `Authorization: Bearer <PLANTSTACK_STATUS_TOKEN>` or `X-API-Key: <PLANTSTACK_STATUS_TOKEN>`
+  - Query param (strictly scoped to `GET /api/plants/status` only): `?token=<PLANTSTACK_STATUS_TOKEN>`
+- **Full API access (`PLANTSTACK_API_SECRET`):**
+  - Header: `Authorization: Bearer <PLANTSTACK_API_SECRET>` or `X-API-Key: <PLANTSTACK_API_SECRET>`
+
+> **Breaking Change Notice:** Passing the master `PLANTSTACK_API_SECRET` in `?token=` URL query parameters is no longer accepted. Existing Home Assistant or dashboard integrations using `?token=` must either switch to `Authorization: Bearer` / `X-API-Key` headers or set a dedicated read-only `PLANTSTACK_STATUS_TOKEN`.
 
 ---
 

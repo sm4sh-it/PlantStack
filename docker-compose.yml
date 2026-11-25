@@ -8,7 +8,7 @@ services:
     container_name: plantstack
     restart: unless-stopped
     ports:
-      - "9666:3000"
+      - "${PLANTSTACK_BIND_ADDR:-0.0.0.0}:9666:3000"
     volumes:
       - plantstack_data:/app/data
     environment:
@@ -16,6 +16,9 @@ services:
       - OPENPLANTBOOK_CLIENT_ID=${OPENPLANTBOOK_CLIENT_ID}
       - OPENPLANTBOOK_CLIENT_SECRET=${OPENPLANTBOOK_CLIENT_SECRET}
       - PLANTSTACK_API_SECRET=${PLANTSTACK_API_SECRET:-}
+      - PLANTSTACK_STATUS_TOKEN=${PLANTSTACK_STATUS_TOKEN:-}
+      - PLANTSTACK_PUBLIC_ORIGIN=${PLANTSTACK_PUBLIC_ORIGIN:-}
+      - PLANTSTACK_TRUST_PROXY=${PLANTSTACK_TRUST_PROXY:-false}
 
 volumes:
   plantstack_data:

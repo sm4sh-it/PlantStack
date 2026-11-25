@@ -14,10 +14,12 @@ import {
 // Route prefixes (matched only at segment boundary) and root static files exempt from auth
 const PUBLIC_ROUTE_PREFIXES = [
   "/_next",
-  "/api/images",
   "/api/auth",
   "/login",
 ];
+
+const BACKUP_MAX_CONTENT_LENGTH = 151 * 1024 * 1024; // 150 MB archive + multipart boundary overhead
+const IMAGE_UPLOAD_MAX_CONTENT_LENGTH = 11 * 1024 * 1024; // 10 MB image + multipart boundary overhead
 
 const PUBLIC_ASSET_BASES = [
   "/favicon",
@@ -177,6 +179,38 @@ function isAttemptAllowed(request: NextRequest): boolean {
   return perKeyOk && globalOk;
 }
 
+function checkUploadContentLength(
+  request: NextRequest,
+  pathname: string
+): NextResponse | null {
+  if (request.method !== "POST") return null;
+  const contentLengthHeader = request.headers.get("content-length");
+  if (!contentLengthHeader) return null;
+  const contentLength = Number(contentLengthHeader);
+  if (!Number.isFinite(contentLength)) return null;
+
+  if (
+    pathname === "/api/backup/import" &&
+    contentLength > BACKUP_MAX_CONTENT_LENGTH
+  ) {
+    return NextResponse.json(
+      { error: "Backup archive exceeds the 150 MB upload limit" },
+      { status: 413 }
+    );
+  }
+  if (
+    (pathname === "/api/upload" ||
+      /^\/api\/plants\/[^/]+\/photos$/.test(pathname)) &&
+    contentLength > IMAGE_UPLOAD_MAX_CONTENT_LENGTH
+  ) {
+    return NextResponse.json(
+      { error: "Image upload exceeds the 10 MB size limit" },
+      { status: 413 }
+    );
+  }
+  return null;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const secret = getAuthSecret();
@@ -248,6 +282,8 @@ export async function middleware(request: NextRequest) {
     if (pathname === "/login") {
       return NextResponse.redirect(new URL("/", request.url));
     }
+    const sizeRejection = checkUploadContentLength(request, pathname);
+    if (sizeRejection) return sizeRejection;
     return NextResponse.next();
   }
 
@@ -286,6 +322,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthenticated) {
+    const sizeRejection = checkUploadContentLength(request, pathname);
+    if (sizeRejection) return sizeRejection;
     return NextResponse.next();
   }
 
