@@ -1,7 +1,9 @@
 import { randomBytes } from "crypto";
 import { basename, resolve, sep } from "path";
+import sharp from "sharp";
 
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+export const MAX_IMAGE_INPUT_PIXELS = 268402689; // ~268 MP pixel limit against image bombs
 export const ALLOWED_IMAGE_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -75,6 +77,25 @@ export function validateUploadedImage(
   }
 
   return validateImageMagicBytes(buffer);
+}
+
+/**
+ * Decodes an uploaded image, applies EXIF orientation via .rotate(), and re-encodes
+ * as WebP (which strips EXIF, GPS, IPTC, and XMP metadata by default).
+ */
+export async function sanitizeAndEncodeImage(
+  input: Buffer
+): Promise<{ buffer: Buffer; ext: "webp" }> {
+  const output = await sharp(input, { limitInputPixels: MAX_IMAGE_INPUT_PIXELS })
+    .rotate()
+    .webp({ quality: 85 })
+    .toBuffer();
+
+  if (!output || output.length === 0) {
+    throw new Error("Encoded WebP buffer is empty");
+  }
+
+  return { buffer: output, ext: "webp" };
 }
 
 /**

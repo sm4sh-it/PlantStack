@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  serverExternalPackages: ["@prisma/client", "prisma", "adm-zip"],
+  serverExternalPackages: ["@prisma/client", "prisma", "adm-zip", "sharp"],
   experimental: {
     // Allow 150 MB ZIP backup uploads plus multipart form-data overhead through middleware
     middlewareClientMaxBodySize: 152 * 1024 * 1024,

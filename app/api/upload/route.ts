@@ -4,6 +4,7 @@ import { getUploadsDir } from "@/lib/storage";
 import {
   MAX_IMAGE_FILE_SIZE,
   validateUploadedImage,
+  sanitizeAndEncodeImage,
   generateSafeImageFilename,
   resolveSafeUploadPath,
 } from "@/lib/security";
@@ -35,6 +36,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let sanitized: { buffer: Buffer; ext: "webp" };
+    try {
+      sanitized = await sanitizeAndEncodeImage(buffer);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid or corrupted image file" },
+        { status: 400 }
+      );
+    }
+
     // Resolve uploads directory
     const dataDir = getUploadsDir();
 
@@ -43,14 +54,14 @@ export async function POST(req: NextRequest) {
     const uniqueName = generateSafeImageFilename(
       originalName,
       "plant",
-      validation.ext || "jpg"
+      sanitized.ext
     );
     const filePath = resolveSafeUploadPath(dataDir, uniqueName);
     if (!filePath) {
       return NextResponse.json({ error: "Invalid destination path" }, { status: 400 });
     }
 
-    await writeFile(filePath, buffer);
+    await writeFile(filePath, sanitized.buffer);
 
     return NextResponse.json({ filename: uniqueName });
   } catch (error) {

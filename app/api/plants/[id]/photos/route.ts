@@ -5,6 +5,7 @@ import { getUploadsDir } from "@/lib/storage";
 import {
   MAX_IMAGE_FILE_SIZE,
   validateUploadedImage,
+  sanitizeAndEncodeImage,
   generateSafeImageFilename,
   resolveSafeUploadPath,
 } from "@/lib/security";
@@ -66,19 +67,29 @@ export async function POST(
       );
     }
 
+    let sanitized: { buffer: Buffer; ext: "webp" };
+    try {
+      sanitized = await sanitizeAndEncodeImage(buffer);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid or corrupted image file" },
+        { status: 400 }
+      );
+    }
+
     const uploadsDir = getUploadsDir();
     const originalName = (file as { name?: string }).name;
     const uniqueName = generateSafeImageFilename(
       originalName,
       `growth-${params.id.slice(0, 8)}`,
-      validation.ext || "jpg"
+      sanitized.ext
     );
     const filePath = resolveSafeUploadPath(uploadsDir, uniqueName);
     if (!filePath) {
       return NextResponse.json({ error: "Invalid destination path" }, { status: 400 });
     }
 
-    await writeFile(filePath, buffer);
+    await writeFile(filePath, sanitized.buffer);
 
     try {
       const photo = await prisma.plantPhoto.create({
