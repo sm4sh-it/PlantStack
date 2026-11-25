@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import AdmZip from "adm-zip";
 import { getUploadsDir } from "@/lib/storage";
-import { writeFileSync, existsSync, mkdirSync } from "fs";
+import { writeFileSync, existsSync, mkdirSync, unlinkSync } from "fs";
 import {
   validateImageMagicBytes,
   sanitizeStoredImageFilename,
@@ -244,116 +244,129 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Write validated image files to disk (only after all validation passes)
-    for (const upload of validatedUploads) {
-      try {
+    // 3. Write validated image files and restore DB with rollback cleanup for newly created files
+    const writtenNewFiles: string[] = [];
+    try {
+      for (const upload of validatedUploads) {
+        const existedBefore = existsSync(upload.destPath);
         writeFileSync(upload.destPath, upload.data);
-      } catch (err) {
-        console.error(`Failed to write uploaded image ${upload.destPath}:`, err);
+        if (!existedBefore) {
+          writtenNewFiles.push(upload.destPath);
+        }
       }
+
+      await prisma.$transaction(async (tx) => {
+        await tx.plantEvent.deleteMany();
+        await tx.plantPhoto.deleteMany();
+        await tx.plant.deleteMany();
+        await tx.location.deleteMany();
+
+        for (const loc of data.locations) {
+          await tx.location.create({
+            data: {
+              id: loc.id,
+              name: loc.name,
+              createdAt: loc.createdAt ? new Date(loc.createdAt) : new Date(),
+            },
+          });
+        }
+
+        for (const p of data.plants) {
+          const safePlantImage = sanitizeStoredImageFilename(p.imagePath);
+          await tx.plant.create({
+            data: {
+              id: p.id,
+              name: p.name,
+              alias: p.alias || null,
+              scientificName: p.scientificName || null,
+              locationId: p.locationId,
+              locationType: p.locationType || "INDOOR",
+              plantType: p.plantType || "Zierpflanze",
+              placement: p.placement || "Drinnen",
+              pruningInfo: p.pruningInfo || null,
+              apiId: p.apiId || null,
+              origin: p.origin || null,
+              wateredCount: p.wateredCount || 0,
+              isArchived: Boolean(p.isArchived),
+              archivedAt: p.archivedAt ? new Date(p.archivedAt) : null,
+              waterInterval: p.waterInterval,
+              fertilizerInterval: p.fertilizerInterval || null,
+              bugInterval: p.bugInterval || null,
+              fungusInterval: p.fungusInterval || null,
+              wateringInfo: p.wateringInfo || null,
+              sunlightInfo: p.sunlightInfo || null,
+              lastWatered: p.lastWatered ? new Date(p.lastWatered) : new Date(),
+              lastFertilized: p.lastFertilized ? new Date(p.lastFertilized) : null,
+              lastBug: p.lastBug ? new Date(p.lastBug) : null,
+              lastFungus: p.lastFungus ? new Date(p.lastFungus) : null,
+              lastPruned: p.lastPruned ? new Date(p.lastPruned) : null,
+              lastRepotted: p.lastRepotted ? new Date(p.lastRepotted) : null,
+              imagePath: safePlantImage,
+              notes: p.notes || null,
+              createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+              updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+              events:
+                p.events && p.events.length > 0
+                  ? {
+                      create: p.events.map((e: any) => ({
+                        id: e.id,
+                        type: e.type,
+                        createdAt: e.createdAt ? new Date(e.createdAt) : new Date(),
+                      })),
+                    }
+                  : undefined,
+              photos:
+                p.photos && p.photos.length > 0
+                  ? {
+                      create: p.photos.map((ph: any) => ({
+                        id: ph.id,
+                        imagePath: sanitizeStoredImageFilename(ph.imagePath)!,
+                        note: ph.note || null,
+                        createdAt: ph.createdAt ? new Date(ph.createdAt) : new Date(),
+                      })),
+                    }
+                  : undefined,
+            },
+          });
+        }
+
+        if (data.config) {
+          await tx.appConfig.upsert({
+            where: { id: 1 },
+            update: {
+              language: data.config.language || "en",
+              gridColumns: data.config.gridColumns || 4,
+              dashboardTitle: data.config.dashboardTitle || "My Jungle",
+              latitude: data.config.latitude ?? null,
+              longitude: data.config.longitude ?? null,
+              locationName: data.config.locationName ?? null,
+              winterDormancyEnabled: Boolean(data.config.winterDormancyEnabled),
+            },
+            create: {
+              id: 1,
+              language: data.config.language || "en",
+              gridColumns: data.config.gridColumns || 4,
+              dashboardTitle: data.config.dashboardTitle || "My Jungle",
+              latitude: data.config.latitude ?? null,
+              longitude: data.config.longitude ?? null,
+              locationName: data.config.locationName ?? null,
+              winterDormancyEnabled: Boolean(data.config.winterDormancyEnabled),
+            },
+          });
+        }
+      });
+    } catch (restoreError) {
+      for (const writtenPath of writtenNewFiles) {
+        try {
+          if (existsSync(writtenPath)) {
+            unlinkSync(writtenPath);
+          }
+        } catch {
+          // Best-effort rollback cleanup
+        }
+      }
+      throw restoreError;
     }
-
-    // 4. Restore database in transaction
-    await prisma.$transaction(async (tx) => {
-      await tx.plantEvent.deleteMany();
-      await tx.plantPhoto.deleteMany();
-      await tx.plant.deleteMany();
-      await tx.location.deleteMany();
-
-      for (const loc of data.locations) {
-        await tx.location.create({
-          data: {
-            id: loc.id,
-            name: loc.name,
-            createdAt: loc.createdAt ? new Date(loc.createdAt) : new Date(),
-          },
-        });
-      }
-
-      for (const p of data.plants) {
-        const safePlantImage = sanitizeStoredImageFilename(p.imagePath);
-        await tx.plant.create({
-          data: {
-            id: p.id,
-            name: p.name,
-            alias: p.alias || null,
-            scientificName: p.scientificName || null,
-            locationId: p.locationId,
-            locationType: p.locationType || "INDOOR",
-            plantType: p.plantType || "Zierpflanze",
-            placement: p.placement || "Drinnen",
-            pruningInfo: p.pruningInfo || null,
-            apiId: p.apiId || null,
-            origin: p.origin || null,
-            wateredCount: p.wateredCount || 0,
-            isArchived: Boolean(p.isArchived),
-            archivedAt: p.archivedAt ? new Date(p.archivedAt) : null,
-            waterInterval: p.waterInterval,
-            fertilizerInterval: p.fertilizerInterval || null,
-            bugInterval: p.bugInterval || null,
-            fungusInterval: p.fungusInterval || null,
-            wateringInfo: p.wateringInfo || null,
-            sunlightInfo: p.sunlightInfo || null,
-            lastWatered: p.lastWatered ? new Date(p.lastWatered) : new Date(),
-            lastFertilized: p.lastFertilized ? new Date(p.lastFertilized) : null,
-            lastBug: p.lastBug ? new Date(p.lastBug) : null,
-            lastFungus: p.lastFungus ? new Date(p.lastFungus) : null,
-            lastPruned: p.lastPruned ? new Date(p.lastPruned) : null,
-            lastRepotted: p.lastRepotted ? new Date(p.lastRepotted) : null,
-            imagePath: safePlantImage,
-            notes: p.notes || null,
-            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
-            updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
-            events:
-              p.events && p.events.length > 0
-                ? {
-                    create: p.events.map((e: any) => ({
-                      id: e.id,
-                      type: e.type,
-                      createdAt: e.createdAt ? new Date(e.createdAt) : new Date(),
-                    })),
-                  }
-                : undefined,
-            photos:
-              p.photos && p.photos.length > 0
-                ? {
-                    create: p.photos.map((ph: any) => ({
-                      id: ph.id,
-                      imagePath: sanitizeStoredImageFilename(ph.imagePath)!,
-                      note: ph.note || null,
-                      createdAt: ph.createdAt ? new Date(ph.createdAt) : new Date(),
-                    })),
-                  }
-                : undefined,
-          },
-        });
-      }
-
-      if (data.config) {
-        await tx.appConfig.upsert({
-          where: { id: 1 },
-          update: {
-            language: data.config.language || "en",
-            gridColumns: data.config.gridColumns || 4,
-            dashboardTitle: data.config.dashboardTitle || "My Jungle",
-            latitude: data.config.latitude ?? null,
-            longitude: data.config.longitude ?? null,
-            locationName: data.config.locationName ?? null,
-            winterDormancyEnabled: Boolean(data.config.winterDormancyEnabled),
-          },
-          create: {
-            id: 1,
-            language: data.config.language || "en",
-            gridColumns: data.config.gridColumns || 4,
-            dashboardTitle: data.config.dashboardTitle || "My Jungle",
-            latitude: data.config.latitude ?? null,
-            longitude: data.config.longitude ?? null,
-            locationName: data.config.locationName ?? null,
-            winterDormancyEnabled: Boolean(data.config.winterDormancyEnabled),
-          },
-        });
-      }
-    });
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sanitizeStoredImageFilename } from "@/lib/security";
 
 export async function GET() {
   try {
@@ -141,6 +142,14 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
+    let safeImagePath: string | null = null;
+    if (typeof data.imagePath === "string" && data.imagePath.trim() !== "") {
+      safeImagePath = sanitizeStoredImageFilename(data.imagePath);
+      if (!safeImagePath) {
+        return NextResponse.json({ error: "Invalid imagePath" }, { status: 400 });
+      }
+    }
+
     const plant = await prisma.plant.create({
       data: {
         name: data.name,
@@ -149,7 +158,7 @@ export async function POST(req: NextRequest) {
         fertilizerInterval: data.fertilizerInterval ? parseInt(data.fertilizerInterval) : null,
         bugInterval: data.bugInterval ? parseInt(data.bugInterval) : null,
         fungusInterval: data.fungusInterval ? parseInt(data.fungusInterval) : null,
-        imagePath: data.imagePath || null,
+        imagePath: safeImagePath,
         notes: data.notes || null,
         scientificName: data.scientificName || null,
         alias: data.alias || null,

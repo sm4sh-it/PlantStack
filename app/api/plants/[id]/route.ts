@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sanitizeStoredImageFilename } from "@/lib/security";
+import { unlinkUnusedImages } from "@/lib/storage";
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -60,6 +62,28 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
   try {
     const params = await props.params;
     const data = await req.json();
+
+    let nextImagePath: string | null | undefined = undefined;
+    if (data.imagePath !== undefined) {
+      if (data.imagePath === null || data.imagePath === "") {
+        nextImagePath = null;
+      } else {
+        const safe = sanitizeStoredImageFilename(data.imagePath);
+        if (!safe) {
+          return NextResponse.json({ error: "Invalid imagePath" }, { status: 400 });
+        }
+        nextImagePath = safe;
+      }
+    }
+
+    const existing = await prisma.plant.findUnique({
+      where: { id: params.id },
+      select: { imagePath: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Plant not found" }, { status: 404 });
+    }
+
     const plant = await prisma.plant.update({
       where: { id: params.id },
       data: {
@@ -71,7 +95,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         fungusInterval: data.fungusInterval ? parseInt(data.fungusInterval) : null,
         lastPruned: data.lastPruned !== undefined ? (data.lastPruned ? new Date(data.lastPruned) : null) : undefined,
         lastRepotted: data.lastRepotted !== undefined ? (data.lastRepotted ? new Date(data.lastRepotted) : null) : undefined,
-        imagePath: data.imagePath !== undefined ? data.imagePath : undefined,
+        imagePath: nextImagePath,
         notes: data.notes !== undefined ? data.notes : undefined,
         scientificName: data.scientificName !== undefined ? data.scientificName : undefined,
         alias: data.alias !== undefined ? data.alias : undefined,
@@ -85,6 +109,11 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         origin: data.origin !== undefined ? data.origin : undefined,
       },
     });
+
+    if (existing.imagePath && existing.imagePath !== plant.imagePath) {
+      await unlinkUnusedImages([existing.imagePath]);
+    }
+
     return NextResponse.json(plant);
   } catch (error) {
     return NextResponse.json({ error: "Failed to update plant" }, { status: 500 });
@@ -98,9 +127,25 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     const force = searchParams.get("force") === "true";
 
     if (force) {
+      const existing = await prisma.plant.findUnique({
+        where: { id: params.id },
+        select: {
+          imagePath: true,
+          photos: { select: { imagePath: true } },
+        },
+      });
+      if (!existing) {
+        return NextResponse.json({ error: "Plant not found" }, { status: 404 });
+      }
+
       await prisma.plant.delete({
         where: { id: params.id },
       });
+
+      await unlinkUnusedImages([
+        existing.imagePath,
+        ...existing.photos.map((photo) => photo.imagePath),
+      ]);
     } else {
       await prisma.plant.update({
         where: { id: params.id },

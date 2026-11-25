@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import AdmZip from "adm-zip";
 import { getUploadsDir } from "@/lib/storage";
-import { existsSync, readdirSync, readFileSync, statSync } from "fs";
-import { join } from "path";
+import { existsSync, lstatSync, readFileSync } from "fs";
+import { resolveSafeUploadPath, sanitizeStoredImageFilename } from "@/lib/security";
 
 export async function GET() {
   try {
@@ -29,13 +29,24 @@ export async function GET() {
     const zip = new AdmZip();
     zip.addFile("data.json", Buffer.from(JSON.stringify(backupData, null, 2), "utf-8"));
 
+    // Only archive regular image files actively referenced by plants or growth photos
+    const referencedFiles = new Set<string>();
+    for (const plant of plants) {
+      const cover = sanitizeStoredImageFilename(plant.imagePath);
+      if (cover) referencedFiles.add(cover);
+      for (const photo of plant.photos) {
+        const growth = sanitizeStoredImageFilename(photo.imagePath);
+        if (growth) referencedFiles.add(growth);
+      }
+    }
+
     const uploadsDir = getUploadsDir();
     if (existsSync(uploadsDir)) {
-      const files = readdirSync(uploadsDir);
-      for (const file of files) {
-        const filePath = join(uploadsDir, file);
+      for (const file of Array.from(referencedFiles)) {
+        const filePath = resolveSafeUploadPath(uploadsDir, file);
+        if (!filePath || !existsSync(filePath)) continue;
         try {
-          if (statSync(filePath).isFile()) {
+          if (lstatSync(filePath).isFile()) {
             const fileData = readFileSync(filePath);
             zip.addFile(`uploads/${file}`, fileData);
           }

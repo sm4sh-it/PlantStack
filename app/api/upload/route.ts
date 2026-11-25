@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
-import { getUploadsDir } from "@/lib/storage";
+import {
+  enforceUploadQuotaAndCleanup,
+  getUploadsDir,
+} from "@/lib/storage";
 import {
   MAX_IMAGE_FILE_SIZE,
   validateUploadedImage,
@@ -59,6 +62,11 @@ export async function POST(req: NextRequest) {
     const filePath = resolveSafeUploadPath(dataDir, uniqueName);
     if (!filePath) {
       return NextResponse.json({ error: "Invalid destination path" }, { status: 400 });
+    }
+
+    const quota = await enforceUploadQuotaAndCleanup(sanitized.buffer.length);
+    if (!quota.ok) {
+      return NextResponse.json({ error: quota.error }, { status: quota.status });
     }
 
     await writeFile(filePath, sanitized.buffer);
