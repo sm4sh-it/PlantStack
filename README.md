@@ -114,8 +114,8 @@ services:
       - plantstack_data:/app/data
     environment:
       - NODE_ENV=production
-      # Optional: Protect access with an API secret/password (see Security below)
-      # - PLANTSTACK_API_SECRET=your_secret_password_here
+      # Required declaration in .env/environment: set a strong secret, or "" explicitly for private Open LAN Mode
+      - PLANTSTACK_API_SECRET=${PLANTSTACK_API_SECRET?Set PLANTSTACK_API_SECRET in .env or environment}
       # Optional: Dedicated read-only token for GET /api/plants/status
       # - PLANTSTACK_STATUS_TOKEN=your_readonly_status_token_here
       # Optional: Reverse proxy settings (only trust forwarded headers behind a proxy)
@@ -140,15 +140,14 @@ Access the web dashboard at `http://<your-server-ip>:9666`.
 ## 🔒 Security & Self-Healing Architecture
 
 ### Access Control
-- **Open LAN Mode (Default):** If `PLANTSTACK_API_SECRET` is unset, PlantStack requires zero login credentials on your private home network. Docker binds `0.0.0.0:9666` by default via `${PLANTSTACK_BIND_ADDR:-0.0.0.0}:9666:3000`.
+- **Open LAN Mode (Explicit Opt-In):** Docker Compose requires `PLANTSTACK_API_SECRET` to be explicitly declared in `.env` (or environment) to avoid accidental open deployments. Setting `PLANTSTACK_API_SECRET=""` explicitly keeps zero-login access on your private home network; Docker binds `0.0.0.0:9666` by default via `${PLANTSTACK_BIND_ADDR:-0.0.0.0}:9666:3000`.
 - **Reverse Proxy Lockdown:** If deploying behind Nginx, Caddy, or Traefik on the same machine, set `PLANTSTACK_BIND_ADDR=127.0.0.1` in `.env` (and configure `PLANTSTACK_TRUST_PROXY=true` / `PLANTSTACK_PUBLIC_ORIGIN=https://your-domain` if terminating TLS).
 - **Protected Mode:** Set `PLANTSTACK_API_SECRET="your_strong_password"`. Visiting the UI displays an elegant botanical lockscreen and issues a signed 30-day session cookie (compatible with both plain local HTTP and reverse-proxy HTTPS). Protected media under `/api/images/*` also requires authentication.
 
-### 🐳 Self-Healing SQLite Volume Permissions
-Early Docker setups often suffer from `attempt to write a readonly database` when container managers (e.g. Synology Container Manager, Portainer, Dockhand) enforce unprivileged user IDs (`--user 1000`) on existing root-owned volumes.
-- **Release v3.5.8+** introduces an automated self-healing startup entrypoint (`docker-entrypoint.sh`).
-- Operates with permissive `umask 000`, reconciles volume permissions (`chmod -R 777 /app/data`), and provides passwordless `sudo` elevation if started as UID 1000.
-- Guarantees seamless, zero-touch upgrades without manual SSH file permission fixes.
+### 🐳 Least-Privilege Runtime & SQLite Volume Self-Healing
+Early Docker setups often suffer from `attempt to write a readonly database` when upgrading from older root-owned volumes (`0644`/`0755`).
+- The startup entrypoint (`docker-entrypoint.sh`) operates with restrictive `umask 027`, repairs ownership/permissions solely on regular files and directories inside `/app/data` (`node:node`, `750`/`640`, never following symlinks or setting `777`), and then permanently drops root privileges via `su-exec node` before running Prisma or Node.js.
+- If an external container manager forces `--user 1000` over an existing root-owned host directory, the startup pre-check waits cleanly and prints least-privilege `chown 1000:1000` instructions instead of triggering a crash loop or granting `sudo`.
 
 ### Hardened Application Pipeline
 - **Strict Media Validation:** Uploads are checked against binary magic-byte signatures (JPEG, PNG, WebP) and size limits (10 MB per image).
