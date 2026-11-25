@@ -1,27 +1,20 @@
-FROM node:22-alpine AS base
+FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS base
 
 # -----------------------------------------------------------------------------
-# CRITICAL RUNTIME ARCHITECTURE: SQLite Volume Permissions & Self-Healing
-# PlantStack stores its SQLite database and user uploads in /app/data (mounted volume).
-# Depending on host deployment (Dockhand, Portainer, Synology, Docker Compose),
-# containers may boot as UID 0 (root) or UID 1000 (node).
+# RUNTIME ARCHITECTURE: Least-Privilege Drop & SQLite Volume Self-Healing
+# PlantStack stores its SQLite database and user uploads in /app/data.
 # OpenSSL is required by Prisma on Alpine (musl).
-# Sudo with NOPASSWD allows entrypoint self-healing (chmod -R 777 /app/data)
-# even when container managers force unprivileged UID 1000 execution. DO NOT REMOVE.
+# No sudo/NOPASSWD is granted; root-level volume repair happens solely in
+# docker-entrypoint.sh before permanently dropping privileges via su-exec node.
 # -----------------------------------------------------------------------------
-RUN apk add --no-cache openssl sudo && \
-    adduser node wheel 2>/dev/null || true && \
-    echo "node ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
-    mkdir -p /etc/sudoers.d && \
-    echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node && \
-    chmod 0440 /etc/sudoers.d/node
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies strictly from package-lock.json
 FROM base AS deps
-COPY package*.json ./
-RUN npm install --legacy-peer-deps
+COPY package.json package-lock.json ./
+RUN npm ci --legacy-peer-deps
 
 # Build the app
 FROM base AS builder
@@ -44,10 +37,11 @@ RUN npm run build
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV CHECKPOINT_DISABLE=1
 ENV DATABASE_URL="file:/app/data/database.db"
 ENV DATA_DIR="/app/data/uploads"
 
-RUN mkdir -p /app/data/uploads /app/public
+RUN apk add --no-cache su-exec
 
 # Copy built application and required production dependencies
 COPY --from=builder /app/public ./public
@@ -58,13 +52,18 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
+RUN mkdir -p /app/data/uploads /app/public /app/.next/cache && \
+    chown -R node:node /app/.next/cache /app/data
+
+# Container boots as root only when host runtime does not force --user 1000 so
+# docker-entrypoint.sh can reconcile /app/data for node:node, then exec su-exec node.
 USER root
 
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 3000
 ENV PORT=3000
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "server.js"]
