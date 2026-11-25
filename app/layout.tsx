@@ -1,11 +1,19 @@
 import "./globals.css";
 import pkg from "../package.json";
 import Link from "next/link";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "../components/ThemeProvider";
 import Navbar from "../components/Navbar";
 import OnboardingModal from "../components/OnboardingModal";
 
 import type { Metadata, Viewport } from "next";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "PlantStack — Houseplant Care Companion",
@@ -43,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="de" suppressHydrationWarning>
+    <html lang="de" suppressHydrationWarning className={plusJakartaSans.variable}>
       <body className="min-h-screen bg-background font-sans antialiased flex flex-col selection:bg-brand selection:text-white">
         <ThemeProvider>
           <OnboardingModal />

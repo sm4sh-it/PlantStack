@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.9.1] - 2026-11-26
+### Added
+- **Compact Dashboard List View (`components/PlantRow.tsx`, `app/page.tsx`)**: Added a `[Grid | List]` view toggle (`localStorage`-persisted) with slim rows, thumbnail, room badge, 1-click watering, and dynamic secondary care pills (fertilize, pest, fungus) rendered only when due or overdue.
+- **Offline Houseplant Catalog & Resilient Lookup (`lib/houseplants.ts`, `lib/openplantbook.ts`)**: Added a curated local houseplant catalog (with ASPCA pet-toxicity indicators and synonym normalization) as a 0 ms offline-first search tier with 3.5 s timeout fallback for Open Plantbook.
+- **Keyboard Search Shortcut & Focus Rings**: Pressing `/` on the dashboard jumps directly to the search bar; added consistent `:focus-visible` outlines across interactive controls.
+
+### Changed & Improved
+- **Offline-Safe Local Fonts (`next/font/google`)**: Replaced external Google Fonts CSS `@import` with locally bundled *Plus Jakarta Sans* variable font (`app/layout.tsx`, `app/globals.css`, `tailwind.config.ts`) for zero-CLS rendering and 100% offline Docker compatibility.
+- **Modal Ergonomics & WAI-ARIA**: Added `Escape`-key dismissal (respecting nested lightbox/dropdown priority), backdrop click-to-close, body scroll lock, and `role="dialog"` / `role="alertdialog"` semantics across `PlantDetailsModal`, `PlantForm`, `ConfirmModal`, and `OnboardingModal`.
+- **Card & Visual Polish**: Enforced a 1-badge alert rule on plant card photos (moving location and environment chips cleanly into the card body), removed the non-functional mobile sheet handle, and reduced unnecessary `backdrop-blur` overdraw.
+- **i18n Completeness (`lib/i18n.ts`)**: Localized `About`, `OnboardingModal`, and the dashboard `Timeline` / `Zeitstrahl` sort toggle.
+
 ## [3.9.0] - 2026-11-25
 ### ⚠️ Breaking Changes & Migration Notes
 - **Scoped `?token=` Query Auth (`PLANTSTACK_STATUS_TOKEN`)**: Passing the master `PLANTSTACK_API_SECRET` in URL query parameters (`?token=`) is no longer accepted. Home Assistant, MagicMirror, and dashboard integrations using `?token=` must switch to `Authorization: Bearer` / `X-API-Key` headers or configure a dedicated read-only `PLANTSTACK_STATUS_TOKEN` (strictly scoped to `GET /api/plants/status`).

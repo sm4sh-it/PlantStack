@@ -60,6 +60,8 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
 
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchInfoMessage, setSearchInfoMessage] = useState<string | null>(null);
 
   const [addingLocation, setAddingLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
@@ -104,41 +106,70 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSearchOpenPlantbook = async () => {
-    if (!formData.searchAlias) return;
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (showDropdown) {
+          setShowDropdown(false);
+        } else {
+          onCancel();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onCancel, showDropdown]);
+
+  const executeSearch = async (queryText: string) => {
+    if (!queryText || queryText.trim().length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      setSearchInfoMessage(null);
+      return;
+    }
     setSearching(true);
-    setSearchResults([]);
+    setSearchInfoMessage(null);
     setErrorMessage(null);
     try {
-      const res = await fetch(`/api/openplantbook/search?q=${encodeURIComponent(formData.searchAlias)}`);
-      const { results } = await res.json();
-      if (results && results.length > 0) {
-        setSearchResults(results.slice(0, 5)); // show top 5
+      const res = await fetch(`/api/openplantbook/search?q=${encodeURIComponent(queryText)}&lang=${lang}`);
+      const data = await res.json();
+      if (data && data.results && data.results.length > 0) {
+        setSearchResults(data.results.slice(0, 8));
+        setShowDropdown(true);
       } else {
-        setErrorMessage(
+        setSearchResults([]);
+        setShowDropdown(false);
+        setSearchInfoMessage(
           lang === "de"
-            ? "Kein Treffer in Open Plantbook gefunden."
-            : "No match found in Open Plantbook."
+            ? "Keine passende Vorlage gefunden. Du kannst alle Werte frei selbst eintragen."
+            : "No template found. You can enter all care values manually."
         );
       }
     } catch (e) {
-      console.error(e);
-      setErrorMessage(
-        lang === "de"
-          ? "Fehler bei der Plantbook-Suche. Zugangsdaten in .env vorhanden?"
-          : "Error searching Open Plantbook. Are credentials configured in .env?"
-      );
+      console.warn("Search fetch failed:", e);
+      setSearchResults([]);
+      setShowDropdown(false);
     } finally {
       setSearching(false);
     }
   };
 
+  const handleSearchOpenPlantbook = async () => {
+    executeSearch(formData.searchAlias);
+  };
+
   const handleSelectResult = async (plantInfo: any) => {
     setSearching(true);
+    setShowDropdown(false);
     setSearchResults([]);
+    setSearchInfoMessage(null);
     setErrorMessage(null);
     try {
-      const res = await fetch(`/api/openplantbook/detail?pid=${encodeURIComponent(plantInfo.pid)}`);
+      const res = await fetch(`/api/openplantbook/detail?pid=${encodeURIComponent(plantInfo.pid)}&lang=${lang}`);
       const details = await res.json();
 
       let waterDays = 7;
@@ -152,12 +183,16 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
       const sunlightText = details.sunlight_text
         ? details.sunlight_text
         : `${details.min_light_lux || 0} - ${details.max_light_lux || 0} Lux | ${t("temperature", lang)}: ${details.min_temp || 0} - ${details.max_temp || 0} °C`;
-      const wateringText = details.watering_interval_days
-        ? `${t("watering", lang)}: ~${details.watering_interval_days} ${t("days", lang)}`
-        : `${t("soilMoisture", lang)}: ${details.min_soil_moist || 0} - ${details.max_soil_moist || 0}% | ${t("humidity", lang)}: ${details.min_env_humid || 0} - ${details.max_env_humid || 0}%`;
+      const wateringText = details.watering_text
+        ? details.watering_text
+        : (details.watering_interval_days
+          ? `${t("watering", lang)}: ~${details.watering_interval_days} ${t("days", lang)}`
+          : `${t("soilMoisture", lang)}: ${details.min_soil_moist || 0} - ${details.max_soil_moist || 0}% | ${t("humidity", lang)}: ${details.min_env_humid || 0} - ${details.max_env_humid || 0}%`);
 
       setFormData((prev) => ({
         ...prev,
+        // Vorbelegung des Namens NUR wenn das Namensfeld noch leer ist
+        name: prev.name.trim() === "" ? (details.alias || plantInfo.alias || prev.name) : prev.name,
         searchAlias: details.alias || plantInfo.alias || prev.searchAlias,
         scientificName: details.display_pid || plantInfo.display_pid || prev.scientificName,
         wateringInfo: wateringText,
@@ -165,7 +200,8 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
         apiId: plantInfo.pid || prev.apiId,
         origin: details.origin || details.Origin || prev.origin,
         plantType: plantInfo.pid && plantInfo.pid.startsWith("crop_") ? "Nutzpflanze" : "Zierpflanze",
-        waterInterval: prev.waterInterval === 7 ? waterDays : prev.waterInterval,
+        waterInterval: waterDays,
+        fertilizerInterval: details.fertilizer_interval_days ? details.fertilizer_interval_days : prev.fertilizerInterval,
         pruningInfo: details.pruning_month
           ? Array.isArray(details.pruning_month)
             ? details.pruning_month.join(", ")
@@ -268,12 +304,21 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
-      <div className="bg-surface w-full max-w-2xl rounded-2xl md:rounded-3xl shadow-2xl border border-border-hairline overflow-hidden flex flex-col max-h-[92vh] my-auto animate-in fade-in zoom-in-95 duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="plant-form-title"
+      onClick={onCancel}
+      className="fixed inset-0 z-50 bg-black/65 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-surface w-full max-w-2xl rounded-2xl md:rounded-3xl shadow-2xl border border-border-hairline overflow-hidden flex flex-col max-h-[92vh] my-auto animate-in fade-in zoom-in-95 duration-200"
+      >
         {/* Header */}
         <div className="px-5 py-4 border-b border-border-hairline flex justify-between items-center bg-surface">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-foreground">
+            <h2 id="plant-form-title" className="text-lg sm:text-xl font-bold text-foreground">
               {initialData
                 ? lang === "de"
                   ? "Pflanze bearbeiten"
@@ -396,9 +441,9 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
               />
             </div>
 
-            {/* 2. Basisdaten (Pflanzenname & OpenPlantbook Autocomplete) */}
+            {/* 2. Basisdaten (Pflanzenname & Vorlagen-Suche) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Name Input (44px) */}
+              {/* Name Input (44px) - Freier Rufname */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-text-primary">
                   {lang === "de" ? "Pflanzenname *" : "Plant Name *"}
@@ -409,29 +454,54 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                   className="w-full h-11 bg-surface border border-border-strong rounded-lg px-3.5 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all placeholder:text-text-muted"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Monstera Deliciosa"
+                  placeholder={lang === "de" ? "z. B. Monstera im Büro, Frieda..." : "e.g. Office Monstera..."}
                 />
+                <p className="text-[11px] text-text-muted">
+                  {lang === "de"
+                    ? "Individueller Rufname oder Standort deiner Pflanze"
+                    : "Custom nickname or location for your plant"}
+                </p>
               </div>
 
-              {/* Open Plantbook Search (44px, Floating Dropdown without CLS) */}
+              {/* Plant Search & Preset Dropdown (44px) */}
               <div className="space-y-1.5 relative">
-                <label className="text-xs font-bold text-text-primary">
-                  {t("searchAlias", lang)}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-text-primary">
+                    {lang === "de" ? "Art / Vorlage finden (optional)" : "Species / Care Template (optional)"}
+                  </label>
+                  {formData.scientificName && (
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      {lang === "de" ? "Vorlage aktiv" : "Template active"}
+                    </span>
+                  )}
+                </div>
                 <div className="flex gap-2 relative">
                   <div className="relative flex-1">
                     <input
                       type="text"
                       className="w-full h-11 bg-surface border border-border-strong rounded-lg pl-3.5 pr-8 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all placeholder:text-text-muted"
                       value={formData.searchAlias}
-                      onChange={(e) => setFormData({ ...formData, searchAlias: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, searchAlias: val });
+                        if (val.trim().length >= 2) {
+                          executeSearch(val);
+                        } else {
+                          setSearchResults([]);
+                          setShowDropdown(false);
+                          setSearchInfoMessage(null);
+                        }
+                      }}
+                      onFocus={() => {
+                        if (searchResults.length > 0) setShowDropdown(true);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          handleSearchOpenPlantbook();
+                          executeSearch(formData.searchAlias);
                         }
                       }}
-                      placeholder={lang === "de" ? "z. B. Monstera, Ficus..." : "e.g. Monstera, Ficus..."}
+                      placeholder={lang === "de" ? "z. B. Monstera, Friedenslilie, Bogenhanf..." : "e.g. Monstera, Peace Lily..."}
                     />
                     {formData.searchAlias && (
                       <button
@@ -439,6 +509,8 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                         onClick={() => {
                           setFormData({ ...formData, searchAlias: "" });
                           setSearchResults([]);
+                          setShowDropdown(false);
+                          setSearchInfoMessage(null);
                         }}
                         className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground cursor-pointer p-1"
                         aria-label="Clear search"
@@ -460,8 +532,8 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                 </div>
 
                 {/* Floating Suggestions Dropdown (ABSOLUTE POSITIONED - ZERO CLS!) */}
-                {searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-surface border border-border-strong rounded-xl shadow-2xl overflow-hidden divide-y divide-border-hairline animate-in fade-in slide-in-from-top-1">
+                {showDropdown && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-surface border border-border-strong rounded-xl shadow-2xl overflow-hidden divide-y divide-border-hairline animate-in fade-in slide-in-from-top-1 max-h-72 overflow-y-auto">
                     {searchResults.map((res: any) => (
                       <div
                         key={res.pid}
@@ -469,28 +541,57 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                         className="p-3 hover:bg-surface-subtle cursor-pointer flex items-center justify-between transition-colors group"
                       >
                         <div className="min-w-0 pr-3">
-                          <div className="text-xs font-bold text-text-primary truncate">
-                            {res.alias || res.display_pid}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-text-primary truncate">
+                              {res.alias || res.display_pid}
+                            </span>
+                            {res.source === "houseplant" && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand/10 text-brand font-semibold shrink-0">
+                                {lang === "de" ? "Zimmerpflanze" : "Houseplant"}
+                              </span>
+                            )}
+                            {res.source === "crop" && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-semibold shrink-0">
+                                {lang === "de" ? "Nutzpflanze" : "Crop"}
+                              </span>
+                            )}
+                            {res.pet_toxic === false && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-medium shrink-0" title={lang === "de" ? "Ungiftig für Haustiere" : "Pet safe"}>
+                                🐾 {lang === "de" ? "Tierfreundlich" : "Pet safe"}
+                              </span>
+                            )}
+                            {res.pet_toxic === true && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 font-medium shrink-0" title={lang === "de" ? "Giftig für Haustiere" : "Toxic to pets"}>
+                                ⚠️ {lang === "de" ? "Giftig" : "Toxic"}
+                              </span>
+                            )}
                           </div>
-                          <div className="text-[11px] text-text-muted italic truncate">
+                          <div className="text-[11px] text-text-muted italic truncate mt-0.5">
                             {res.display_pid}
                           </div>
                         </div>
                         <span className="text-[11px] text-brand font-semibold px-2 py-0.5 rounded-md bg-brand-subtle shrink-0 group-hover:bg-brand group-hover:text-white transition-colors">
-                          {lang === "de" ? "Auswählen" : "Select"}
+                          {lang === "de" ? "Übernehmen" : "Apply"}
                         </span>
                       </div>
                     ))}
                     <div className="p-1.5 bg-surface-subtle text-right">
                       <button
                         type="button"
-                        onClick={() => setSearchResults([])}
+                        onClick={() => setShowDropdown(false)}
                         className="text-xs text-text-muted hover:text-foreground px-2 py-1 cursor-pointer"
                       >
                         {t("close", lang)}
                       </button>
                     </div>
                   </div>
+                )}
+
+                {/* Friendly hint when no template found */}
+                {searchInfoMessage && !searching && (
+                  <p className="text-[11px] text-text-muted mt-1 px-1">
+                    {searchInfoMessage}
+                  </p>
                 )}
 
                 {/* Scientific Name Confirmation Badge */}

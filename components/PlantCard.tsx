@@ -20,6 +20,7 @@ import {
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { t } from "@/lib/i18n";
+import { getDaysLeft, getUrgency } from "@/lib/plantCare";
 
 type PlantCardProps = {
   plant: Plant & {
@@ -34,8 +35,6 @@ type PlantCardProps = {
   onDelete: (plantId: string) => void;
   onShowDetails: (plant: Plant & { location?: Location }) => void;
 };
-
-type UrgencyLevel = "overdue" | "today" | "soon" | "ok";
 
 export default function PlantCard({
   plant,
@@ -58,29 +57,6 @@ export default function PlantCard({
   const handleQuickAction = (action: "water" | "fertilize" | "bug" | "fungus") => {
     setJustActioned(action);
     onAction(plant.id, action);
-  };
-
-  const addDays = (date: Date, days: number) => {
-    const r = new Date(date);
-    r.setDate(r.getDate() + days);
-    return r;
-  };
-
-  const getDaysLeft = (last: Date | null, interval: number | null): number | null => {
-    if (!interval || !last) return null;
-    const due = addDays(new Date(last), interval);
-    const now = new Date();
-    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const dueDate = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-    return Math.round((dueDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60 * 24));
-  };
-
-  const getUrgency = (days: number | null): UrgencyLevel => {
-    if (days === null) return "ok";
-    if (days < 0) return "overdue";
-    if (days === 0) return "today";
-    if (days <= 2) return "soon";
-    return "ok";
   };
 
   // Calculate remaining days taking optimistic updates into account
@@ -141,17 +117,14 @@ export default function PlantCard({
           </div>
         )}
 
-        {/* Badges on Image (Strictly borderless with Dark-Scrim) */}
-        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10 pointer-events-none">
-          {plant.location?.name && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-neutral-900/80 text-white backdrop-blur-xs shadow-xs">
-              <MapPin size={11} className="text-emerald-400 shrink-0" />
-              {plant.location.name}
+        {/* Primary Alert Badge on Image (Strict 1-Badge Rule, solid scrim) */}
+        <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+          {plant.frostWarning ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-care-frost text-white shadow-xs animate-pulse">
+              <Snowflake size={11} className="shrink-0" />
+              Frost
             </span>
-          )}
-
-          {/* Urgency Badge following care color continuity */}
-          {anyOverdue ? (
+          ) : anyOverdue ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-status-danger text-white shadow-xs">
               <AlertCircle size={11} className="shrink-0" />
               {lang === "de" ? "Überfällig" : "Overdue"}
@@ -167,26 +140,6 @@ export default function PlantCard({
               {lang === "de" ? "Heute düngen" : "Fertilize today"}
             </span>
           ) : null}
-
-          {/* Environment Badges */}
-          {plant.frostWarning && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-care-frost text-white shadow-xs animate-pulse">
-              <Snowflake size={11} />
-              Frost
-            </span>
-          )}
-          {plant.locationType === "OUTDOOR" && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-neutral-900/80 text-white backdrop-blur-xs shadow-xs">
-              <Sun size={11} className="text-amber-400" />
-              Outdoor
-            </span>
-          )}
-          {(plant as any).winterDormancy && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-neutral-900/80 text-white backdrop-blur-xs shadow-xs">
-              <Snowflake size={11} className="text-sky-300" />
-              {lang === "de" ? "Winterruhe" : "Dormancy"}
-            </span>
-          )}
         </div>
 
         {/* 3-Dots Menu Button */}
@@ -196,7 +149,7 @@ export default function PlantCard({
               e.stopPropagation();
               setMenuOpen(!menuOpen);
             }}
-            className="w-7 h-7 md:w-8 md:h-8 bg-black/40 hover:bg-black/60 backdrop-blur-xs rounded-full text-white flex items-center justify-center transition-colors shadow-xs"
+            className="w-7 h-7 md:w-8 md:h-8 bg-neutral-900/75 hover:bg-neutral-900/90 rounded-full text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             aria-label="Menü öffnen"
           >
             <MoreVertical size={15} />
@@ -252,6 +205,28 @@ export default function PlantCard({
       {/* ================= CARD BODY ================= */}
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
         <div>
+          {(plant.location?.name || plant.locationType === "OUTDOOR" || (plant as any).winterDormancy) && (
+            <div className="flex items-center flex-wrap gap-1.5 text-[11px] font-medium text-text-muted mb-1">
+              {plant.location?.name && (
+                <span className="inline-flex items-center gap-1 text-text-secondary">
+                  <MapPin size={11} className="text-brand shrink-0" />
+                  <span className="truncate max-w-[140px]">{plant.location.name}</span>
+                </span>
+              )}
+              {plant.locationType === "OUTDOOR" && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-surface-subtle text-text-secondary">
+                  <Sun size={10} className="text-amber-500 shrink-0" />
+                  Outdoor
+                </span>
+              )}
+              {(plant as any).winterDormancy && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-surface-subtle text-text-secondary">
+                  <Snowflake size={10} className="text-sky-500 shrink-0" />
+                  {lang === "de" ? "Winterruhe" : "Dormancy"}
+                </span>
+              )}
+            </div>
+          )}
           <h3
             className="font-bold text-base text-text-primary truncate hover:text-brand transition-colors cursor-pointer"
             onClick={() => onShowDetails(plant)}

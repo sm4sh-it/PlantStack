@@ -68,7 +68,7 @@
 - **Progressive Web App (PWA):** Installable on iOS & Android with standalone fullscreen display and custom app icons.
 - **5-Point Mobile Dock:** Seamless thumb-zone navigation between Dashboard, Statistics, Quick-Add `+`, Archive, and Settings.
 - **One-Handed Care:** Enlarged 44px touch targets designed for comfortable operation directly at the flowerpot.
-- **Configurable Grid Layout:** Choose anywhere between 1 to 6 columns to adapt to phones, tablets, or ultrawide monitors.
+- **Configurable Grid & Compact List View:** Switch seamlessly between 1–6 column photo cards and a high-density list view with dynamic due care pills and `/` keyboard search.
 
 ### 🪴 Complete Care Tracking & Long-Term Retention
 - **4-in-1 Routine Tracking:** Water 💧, Fertilizer ✨, Pest Combat 🐛, and Fungus Protection 🛡️.

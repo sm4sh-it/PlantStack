@@ -170,7 +170,23 @@ export const translations = {
     restoreConfirmTitle: "Restore Backup?",
     restoreConfirmDesc: "Warning: Restoring will overwrite all existing plants, locations, history, and uploaded photos with the backup contents!",
     restoring: "Restoring backup...",
-    restoreSuccess: "Backup restored successfully!"
+    restoreSuccess: "Backup restored successfully!",
+    timeline: "Timeline",
+    viewGrid: "Grid view",
+    viewList: "List view",
+    aboutTagline: "A minimalist, self-hosted Plant-Tracker.",
+    backToDashboard: "Back to Dashboard",
+    onboardingTitle: "Welcome to PlantStack",
+    onboardingSubtitle: "Manage your indoor jungle with ease.",
+    onboardingGettingStarted: "Getting Started:",
+    onboardingStep1Title: "1. Create Locations",
+    onboardingStep1Desc: "Go to Settings and add your rooms (e.g. Living Room, Bedroom) to organize your plants properly.",
+    onboardingStep2Title: "2. Open Plantbook Integration",
+    onboardingStep2Desc: "Add your Open Plantbook API credentials in the .env file to get care instructions automatically when adding a plant.",
+    onboardingStep3Title: "3. Add Plants",
+    onboardingStep3Desc: "Click \"Add Plant\" on the Dashboard and assign them to your new rooms!",
+    onboardingGoToSettings: "Go to Settings",
+    onboardingDismiss: "Don't show this again"
   },
   de: {
     // Navigation
@@ -341,7 +357,23 @@ export const translations = {
     restoreConfirmTitle: "Backup wirklich wiederherstellen?",
     restoreConfirmDesc: "Achtung: Dies überschreibt alle aktuellen Pflanzen, Standorte und Fotos mit den Daten aus der Sicherung!",
     restoring: "Wird wiederhergestellt...",
-    restoreSuccess: "Backup erfolgreich wiederhergestellt!"
+    restoreSuccess: "Backup erfolgreich wiederhergestellt!",
+    timeline: "Zeitstrahl",
+    viewGrid: "Kachelansicht",
+    viewList: "Listenansicht",
+    aboutTagline: "Ein minimalistischer, selbst gehosteter Pflanzen-Tracker.",
+    backToDashboard: "Zurück zum Dashboard",
+    onboardingTitle: "Willkommen bei PlantStack",
+    onboardingSubtitle: "Verwalte deine Zimmerpflanzen ganz entspannt.",
+    onboardingGettingStarted: "Erste Schritte:",
+    onboardingStep1Title: "1. Räume anlegen",
+    onboardingStep1Desc: "Gehe in die Einstellungen und erstelle deine Räume (z. B. Wohnzimmer, Schlafzimmer), um deine Pflanzen zu sortieren.",
+    onboardingStep2Title: "2. Open Plantbook Integration",
+    onboardingStep2Desc: "Hinterlege optional deine Open Plantbook API-Daten in der .env-Datei, um Pflegehinweise automatisch abzurufen.",
+    onboardingStep3Title: "3. Pflanzen hinzufügen",
+    onboardingStep3Desc: "Klicke im Dashboard auf \"Pflanze hinzufügen\" und ordne sie deinen Räumen zu!",
+    onboardingGoToSettings: "Zu den Einstellungen",
+    onboardingDismiss: "Nicht mehr anzeigen"
   }
 };
 

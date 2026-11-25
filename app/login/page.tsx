@@ -46,7 +46,7 @@ function LoginForm() {
     <div className="min-h-screen bg-background flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         {/* Brand Card */}
-        <div className="bg-surface border border-border-hairline rounded-2xl shadow-xl p-8 sm:p-10 backdrop-blur-sm">
+        <div className="bg-surface border border-border-hairline rounded-2xl shadow-xl p-8 sm:p-10">
           {/* Logo & Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 mx-auto mb-4 bg-brand-subtle rounded-2xl flex items-center justify-center p-3 shadow-inner">

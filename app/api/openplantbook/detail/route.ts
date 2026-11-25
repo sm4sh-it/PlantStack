@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getPlantDetails } from "@/lib/openplantbook";
 import { cropsData } from "@/lib/crops";
+import { getHouseplantById } from "@/lib/houseplants";
 import { getClientIp, checkRateLimit } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
@@ -38,6 +39,35 @@ export async function GET(req: NextRequest) {
   };
 
   try {
+    if (pid.startsWith("houseplant_")) {
+      const hp = getHouseplantById(pid);
+      if (hp) {
+        return NextResponse.json({
+          pid: hp.id,
+          display_pid: hp.scientificName,
+          alias: hp.name[lang] || hp.name.de,
+          category: hp.category,
+          min_soil_moist: hp.min_soil_moist || (hp.watering_interval_days <= 5 ? 35 : (hp.watering_interval_days >= 14 ? 10 : 25)),
+          max_soil_moist: hp.max_soil_moist || 60,
+          min_light_lux: hp.min_light_lux,
+          max_light_lux: hp.max_light_lux,
+          min_temp: hp.min_temp,
+          max_temp: hp.max_temp,
+          min_env_humid: hp.min_env_humid,
+          watering_interval_days: hp.watering_interval_days,
+          fertilizer_interval_days: hp.fertilizer_interval_days || 14,
+          sunlight_text: hp.sunlight_text[lang] || hp.sunlight_text.de,
+          watering_text: hp.watering_text[lang] || hp.watering_text.de,
+          pruning_month: hp.pruning ? [hp.pruning[lang] || hp.pruning.de] : [],
+          pet_toxic: hp.pet_toxic,
+          toxicity_notes: hp.toxicity_notes ? (hp.toxicity_notes[lang] || hp.toxicity_notes.de) : null,
+          difficulty: hp.difficulty,
+          propagation: hp.propagation ? (hp.propagation[lang] || hp.propagation.de) : null,
+          origin: hp.origin || null
+        });
+      }
+    }
+
     if (pid.startsWith("crop_")) {
       const targetPid = pid === "crop_bean" ? "crop_bush_bean" : pid;
       const crop = cropsData.find(c => c.id === targetPid);

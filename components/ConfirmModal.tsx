@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, HelpCircle, Droplet, X } from "lucide-react";
+import { useEffect } from "react";
+import { AlertTriangle, HelpCircle, Droplet } from "lucide-react";
 
 type ConfirmModalProps = {
   isOpen: boolean;
@@ -27,6 +28,19 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const handleClose = onCancel || onConfirm;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleClose]);
+
   if (!isOpen) return null;
 
   const actualVariant = variant || (isDestructive ? "destructive" : "info");
@@ -77,11 +91,19 @@ export default function ConfirmModal({
     }
   };
 
-  const handleClose = onCancel || onConfirm;
-
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-surface w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-border-hairline card-elevation flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150">
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="confirm-modal-title"
+      aria-describedby="confirm-modal-desc"
+      onClick={handleClose}
+      className="fixed inset-0 z-[100] bg-black/65 flex items-center justify-center p-4"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-surface w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-border-hairline card-elevation flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150"
+      >
         <div className="flex items-start gap-3.5">
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${getIconClasses()}`}
@@ -89,8 +111,8 @@ export default function ConfirmModal({
             {getIcon()}
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-base text-foreground mb-1">{title}</h3>
-            <p className="text-xs text-text-muted leading-relaxed">{description}</p>
+            <h3 id="confirm-modal-title" className="font-bold text-base text-foreground mb-1">{title}</h3>
+            <p id="confirm-modal-desc" className="text-xs text-text-muted leading-relaxed">{description}</p>
           </div>
         </div>
 

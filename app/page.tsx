@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import PlantCard from "@/components/PlantCard";
+import PlantRow from "@/components/PlantRow";
 import PlantForm from "@/components/PlantForm";
 import PlantDetailsModal from "@/components/PlantDetailsModal";
 import ConfirmModal from "@/components/ConfirmModal";
-import { Plus, Search, X, Droplets } from "lucide-react";
+import { Plus, Search, X, Droplets, LayoutGrid, List } from "lucide-react";
 import { Plant, Location } from "@prisma/client";
 import { t } from "@/lib/i18n";
 
@@ -50,10 +51,12 @@ export default function Dashboard() {
   const [detailsPlant, setDetailsPlant] = useState<PlantWithLocation | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [sortMode, setSortMode] = useState<"interval" | "location" | "alphabetical">("interval");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<"all" | "due" | "indoor" | "outdoor">("all");
   const [batchWatering, setBatchWatering] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Confirm Modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -118,6 +121,11 @@ export default function Dashboard() {
     window.addEventListener("open-plant-form", handleOpenForm);
 
     if (typeof window !== "undefined") {
+      const savedView = localStorage.getItem("plantstack-view-mode");
+      if (savedView === "grid" || savedView === "list") {
+        setViewMode(savedView);
+      }
+
       const params = new URLSearchParams(window.location.search);
       if (params.get("action") === "new") {
         setEditingPlant(null);
@@ -130,6 +138,33 @@ export default function Dashboard() {
       window.removeEventListener("open-plant-form", handleOpenForm);
     };
   }, []);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "/" || showForm || detailsPlant || confirmModal) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      e.preventDefault();
+      searchInputRef.current?.focus();
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [showForm, detailsPlant, confirmModal]);
+
+  const handleViewModeChange = (mode: "grid" | "list") => {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("plantstack-view-mode", mode);
+    }
+  };
 
   const showToast = (message: string, plantId?: string, previousData?: any) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -379,7 +414,29 @@ export default function Dashboard() {
               onClick={() => setSortMode("interval")}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${sortMode === "interval" ? "bg-surface shadow-xs text-brand font-bold" : "text-text-muted hover:text-foreground"}`}
             >
-              Timeline
+              {t('timeline', lang)}
+            </button>
+          </div>
+
+          {/* View Mode Toggle (Grid / List) */}
+          <div className="flex bg-surface-subtle border border-border-hairline rounded-lg p-1 shrink-0" role="group" aria-label={lang === "de" ? "Ansicht wechseln" : "Switch view"}>
+            <button
+              onClick={() => handleViewModeChange("grid")}
+              aria-label={t("viewGrid", lang)}
+              aria-pressed={viewMode === "grid"}
+              title={t("viewGrid", lang)}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === "grid" ? "bg-surface shadow-xs text-brand" : "text-text-muted hover:text-foreground"}`}
+            >
+              <LayoutGrid size={15} />
+            </button>
+            <button
+              onClick={() => handleViewModeChange("list")}
+              aria-label={t("viewList", lang)}
+              aria-pressed={viewMode === "list"}
+              title={t("viewList", lang)}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === "list" ? "bg-surface shadow-xs text-brand" : "text-text-muted hover:text-foreground"}`}
+            >
+              <List size={15} />
             </button>
           </div>
 
@@ -401,19 +458,25 @@ export default function Dashboard() {
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder={t('searchPlaceholder', lang)}
-              className="w-full h-10 pl-8 pr-7 bg-surface-subtle border border-border-hairline rounded-lg text-xs text-foreground placeholder:text-text-muted outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
+              className="w-full h-10 pl-8 pr-10 bg-surface-subtle border border-border-hairline rounded-lg text-xs text-foreground placeholder:text-text-muted outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button 
                 onClick={() => setSearchQuery("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground p-0.5 cursor-pointer"
+                aria-label={t("clearFilters", lang)}
               >
                 <X size={14} />
               </button>
+            ) : (
+              <kbd className="hidden md:inline-flex items-center justify-center absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-text-muted bg-surface border border-border-hairline rounded pointer-events-none">
+                /
+              </kbd>
             )}
           </div>
 
@@ -473,11 +536,28 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Plants Grid or Empty State */}
+      {/* Plants Grid / List or Empty State */}
       {loading ? (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-6 animate-pulse`}>
-          {[1,2,3,4].map(n => <div key={n} className="bg-surface border border-border-hairline h-[360px] rounded-2xl card-elevation"></div>)}
-        </div>
+        viewMode === "list" ? (
+          <div className="bg-surface rounded-xl border border-border-hairline card-elevation divide-y divide-border-hairline animate-pulse">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div key={n} className="h-[60px] px-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-surface-subtle" />
+                  <div className="space-y-1.5">
+                    <div className="h-3.5 w-32 rounded bg-surface-subtle" />
+                    <div className="h-2.5 w-20 rounded bg-surface-subtle" />
+                  </div>
+                </div>
+                <div className="h-8 w-20 rounded-lg bg-surface-subtle" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-6 animate-pulse`}>
+            {[1,2,3,4].map(n => <div key={n} className="bg-surface border border-border-hairline h-[360px] rounded-2xl card-elevation"></div>)}
+          </div>
+        )
       ) : plants.length > 0 ? (
         filteredPlants.length === 0 ? (
           <div className="text-center py-16 bg-surface rounded-2xl border border-border-hairline card-elevation">
@@ -499,12 +579,34 @@ export default function Dashboard() {
                      {group.items.length}
                    </span>
                 </h2>
-                <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-6`}>
-                  {group.items.map(plant => (
-                    <PlantCard key={plant.id} plant={plant} lang={lang} onAction={handleAction} onEdit={(p) => { setEditingPlant(p); setShowForm(true); }} onDelete={handleDelete} onShowDetails={setDetailsPlant} />
-                  ))}
-                </div>
+                {viewMode === "list" ? (
+                  <div className="bg-surface rounded-xl border border-border-hairline card-elevation divide-y divide-border-hairline">
+                    {group.items.map(plant => (
+                      <PlantRow key={plant.id} plant={plant} lang={lang} onAction={handleAction} onEdit={(p) => { setEditingPlant(p); setShowForm(true); }} onDelete={handleDelete} onShowDetails={setDetailsPlant} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-6`}>
+                    {group.items.map(plant => (
+                      <PlantCard key={plant.id} plant={plant} lang={lang} onAction={handleAction} onEdit={(p) => { setEditingPlant(p); setShowForm(true); }} onDelete={handleDelete} onShowDetails={setDetailsPlant} />
+                    ))}
+                  </div>
+                )}
               </div>
+            ))}
+          </div>
+        ) : viewMode === "list" ? (
+          <div className="bg-surface rounded-xl border border-border-hairline card-elevation divide-y divide-border-hairline">
+            {sortedPlants.map(plant => (
+              <PlantRow
+                key={plant.id}
+                plant={plant}
+                lang={lang}
+                onAction={handleAction}
+                onEdit={(p) => { setEditingPlant(p); setShowForm(true); }}
+                onDelete={handleDelete}
+                onShowDetails={setDetailsPlant}
+              />
             ))}
           </div>
         ) : (
@@ -568,7 +670,7 @@ export default function Dashboard() {
 
       {/* Undo Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-surface/95 border border-border-hairline text-foreground px-4 py-2.5 rounded-xl shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-surface border border-border-hairline text-foreground px-4 py-2.5 rounded-xl shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200">
           <span className="text-xs font-semibold">{toast.message}</span>
           {toast.previousData && (
             <button

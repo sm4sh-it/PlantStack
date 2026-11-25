@@ -3,8 +3,22 @@ import path from 'path';
 import Markdown from 'react-markdown';
 import Image from 'next/image';
 import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
+import { t } from '@/lib/i18n';
+
+export const dynamic = "force-dynamic";
 
 export default async function AboutPage() {
+  let lang = 'en';
+  try {
+    const appConfig = await prisma.appConfig.findUnique({ where: { id: 1 } });
+    if (appConfig?.language) {
+      lang = appConfig.language;
+    }
+  } catch {
+    // Fallback to default language if DB is unavailable
+  }
+
   // Read version from package.json
   const packagePath = path.join(process.cwd(), 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
@@ -35,7 +49,7 @@ export default async function AboutPage() {
           />
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight mb-2">PlantStack</h1>
-        <p className="text-lg text-surface-foreground/70 mb-4">A minimalist, self-hosted Plant-Tracker.</p>
+        <p className="text-lg text-surface-foreground/70 mb-4">{t('aboutTagline', lang)}</p>
         <div className="bg-surface border border-border-hairline px-3.5 py-1 rounded-full font-mono text-xs font-bold text-brand shadow-xs inline-flex items-center gap-2">
           <span>Version {version}</span>
           {releaseDate && (
@@ -55,7 +69,7 @@ export default async function AboutPage() {
       
       <div className="mt-8 text-center">
         <Link href="/" className="text-surface-foreground/50 hover:text-brand underline font-medium transition-colors">
-          &larr; Back to Dashboard
+          &larr; {t('backToDashboard', lang)}
         </Link>
       </div>
     </div>

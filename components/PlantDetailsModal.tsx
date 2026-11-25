@@ -27,11 +27,14 @@ import {
   Edit2,
   Sprout,
   Shovel,
+  ShieldAlert,
+  ShieldCheck,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { t, Locale } from "@/lib/i18n";
 import { cropsData } from "@/lib/crops";
+import { getDaysLeft } from "@/lib/plantCare";
 
 type PlantDetailsModalProps = {
   plant: Plant & { location?: Location };
@@ -76,6 +79,24 @@ export default function PlantDetailsModal({
     }
     loadDetails();
   }, [plant.id]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (selectedPhoto) {
+          setSelectedPhoto(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose, selectedPhoto]);
 
   const handleCareAction = async (action: "water" | "fertilize" | "bug" | "fungus" | "prune" | "repot") => {
     if (onAction) {
@@ -234,21 +255,6 @@ export default function PlantDetailsModal({
     }
   };
 
-  const addDays = (date: Date, days: number) => {
-    const r = new Date(date);
-    r.setDate(r.getDate() + days);
-    return r;
-  };
-
-  const getDaysLeft = (last: Date | null, interval: number | null): number | null => {
-    if (!interval || !last) return null;
-    const due = addDays(new Date(last), interval);
-    const now = new Date();
-    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const dueDate = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-    return Math.round((dueDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60 * 24));
-  };
-
   const waterDays = getDaysLeft(plantData.lastWatered, plantData.waterInterval);
   const fertDays = getDaysLeft(plantData.lastFertilized, plantData.fertilizerInterval);
   const bugDays = getDaysLeft(plantData.lastBug, plantData.bugInterval);
@@ -332,12 +338,12 @@ export default function PlantDetailsModal({
 
         {/* Photo Badges (Dark-Scrim, 100% borderless!) */}
         <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex flex-wrap gap-1.5 z-10 pointer-events-none">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-neutral-900/80 text-white backdrop-blur-xs shadow-xs">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-neutral-900/85 text-white shadow-xs">
             <MapPin size={11} className="text-emerald-400 shrink-0" />
             {plant.location?.name || (lang === "de" ? "Kein Standort" : "Unassigned")}
           </span>
           {(plant as any).potSize && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-neutral-900/80 text-white backdrop-blur-xs shadow-xs">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-neutral-900/85 text-white shadow-xs">
               Topf: Ø {(plant as any).potSize} cm
             </span>
           )}
@@ -346,8 +352,11 @@ export default function PlantDetailsModal({
         {/* Mobile Close Button on Top Right of Photo */}
         {isMobile && (
           <button
-            onClick={onClose}
-            className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-xs text-white flex items-center justify-center transition-colors shadow-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-neutral-900/75 hover:bg-neutral-900/90 text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
             aria-label={t("close", lang)}
           >
             <X size={16} />
@@ -397,9 +406,21 @@ export default function PlantDetailsModal({
           {plant.scientificName}
         </p>
       )}
-      <div className="flex items-center gap-1.5 text-xs text-text-muted mt-1.5">
-        <Globe size={13} className="text-brand shrink-0" />
-        <span>{(plant as any).origin || (lang === "de" ? "Tropisch / Zimmerpflanze" : "Houseplant")}</span>
+      <div className="flex items-center gap-2 text-xs text-text-muted mt-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <Globe size={13} className="text-brand shrink-0" />
+          <span>{(plant as any).origin || extraInfo?.origin || (lang === "de" ? "Tropisch / Zimmerpflanze" : "Houseplant")}</span>
+        </div>
+        {extraInfo?.pet_toxic === false && (
+          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-flex items-center gap-1" title={extraInfo?.toxicity_notes || "Ungiftig für Katzen & Hunde"}>
+            🐾 {lang === "de" ? "Tierfreundlich" : "Pet safe"}
+          </span>
+        )}
+        {extraInfo?.pet_toxic === true && (
+          <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full inline-flex items-center gap-1" title={extraInfo?.toxicity_notes || "Giftig für Haustiere"}>
+            ⚠️ {lang === "de" ? "Giftig für Haustiere" : "Toxic to pets"}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -657,6 +678,9 @@ export default function PlantDetailsModal({
   const renderBotanical = () => {
     const hasBotanicalInfo = Boolean(
       plant.wateringInfo ||
+      extraInfo?.pet_toxic !== undefined ||
+      extraInfo?.difficulty ||
+      extraInfo?.propagation ||
       extraInfo?.sowing_indoors_month ||
       extraInfo?.planting_month ||
       extraInfo?.sowing_outdoors_month ||
@@ -677,6 +701,58 @@ export default function PlantDetailsModal({
         </h4>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          {extraInfo?.pet_toxic !== undefined && (
+            <div className="flex gap-2">
+              {extraInfo.pet_toxic ? (
+                <ShieldAlert size={14} className="text-amber-500 shrink-0 mt-0.5" />
+              ) : (
+                <ShieldCheck size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+              )}
+              <div>
+                <span className="font-bold text-text-primary">
+                  {lang === "de" ? "Haustier-Sicherheit:" : "Pet Safety:"}
+                </span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
+                  {extraInfo.pet_toxic
+                    ? (extraInfo.toxicity_notes || (lang === "de" ? "⚠️ Giftig für Katzen & Hunde" : "⚠️ Toxic to pets"))
+                    : (extraInfo.toxicity_notes || (lang === "de" ? "🐾 Ungiftig für Katzen & Hunde (ASPCA)" : "🐾 Non-toxic to pets"))}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {extraInfo?.difficulty && (
+            <div className="flex gap-2">
+              <Sprout size={14} className="text-brand shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">
+                  {lang === "de" ? "Schwierigkeit:" : "Care Difficulty:"}
+                </span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
+                  {extraInfo.difficulty === "easy"
+                    ? (lang === "de" ? "Pflegeleicht (ideal für Einsteiger)" : "Easy (beginner-friendly)")
+                    : extraInfo.difficulty === "medium"
+                    ? (lang === "de" ? "Mittel (etwas Aufmerksamkeit nötig)" : "Medium (moderate care)")
+                    : (lang === "de" ? "Anspruchsvoll (für erfahrene Pflanzenfreunde)" : "Hard (experienced plant care)")}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {extraInfo?.propagation && (
+            <div className="flex gap-2">
+              <Scissors size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">
+                  {lang === "de" ? "Vermehrung:" : "Propagation:"}
+                </span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
+                  {extraInfo.propagation}
+                </p>
+              </div>
+            </div>
+          )}
+
           {plant.wateringInfo && (
             <div className="flex gap-2">
               <Droplet size={14} className="text-care-water shrink-0 mt-0.5" />
@@ -1004,19 +1080,23 @@ export default function PlantDetailsModal({
   );
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={plant.name}
+      onClick={onClose}
+      className="fixed inset-0 z-[60] bg-black/65 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+    >
       {/* Outer Card Container */}
-      <div className="bg-surface w-full max-w-5xl rounded-2xl md:rounded-3xl shadow-2xl border border-border-hairline overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-surface w-full max-w-5xl rounded-2xl md:rounded-3xl shadow-2xl border border-border-hairline overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200"
+      >
         
         {/* ================= MOBILE VIEW (Visible on screens < md) ================= */}
         <div className="block md:hidden max-h-[88vh] overflow-y-auto">
-          {/* Sheet Handle Indicator */}
-          <div className="pt-2.5 pb-1 flex justify-center bg-surface-subtle">
-            <div className="w-10 h-1 bg-border-strong rounded-full" />
-          </div>
-
           {/* Hero Picture */}
-          <div className="p-3 bg-surface-subtle">
+          <div className="p-3 pt-3.5 bg-surface-subtle">
             {renderPhoto(true)}
           </div>
 
@@ -1104,7 +1184,10 @@ export default function PlantDetailsModal({
       {/* Photo Lightbox Modal */}
       {selectedPhoto && (
         <div
-          className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedPhoto.note || "Enlarged photo"}
+          className="fixed inset-0 z-[70] bg-black/80 flex items-center justify-center p-4 animate-in fade-in"
           onClick={() => setSelectedPhoto(null)}
         >
           <div
