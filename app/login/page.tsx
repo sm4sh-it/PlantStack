@@ -4,10 +4,11 @@ import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Lock, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react";
+import { sanitizeRedirectPath } from "@/lib/auth";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const from = searchParams.get("from") || "/";
+  const from = sanitizeRedirectPath(searchParams.get("from"));
 
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,7 +35,7 @@ function LoginForm() {
       }
 
       // Hard navigation to trigger full cookie recognition and reload state
-      window.location.href = from;
+      window.location.href = sanitizeRedirectPath(from);
     } catch (err: any) {
       setError(err.message || "Anmeldung fehlgeschlagen");
       setLoading(false);
