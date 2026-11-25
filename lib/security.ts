@@ -1,4 +1,5 @@
-import { basename } from "path";
+import { randomBytes } from "crypto";
+import { basename, resolve, sep } from "path";
 
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 export const ALLOWED_IMAGE_MIME_TYPES = new Set([
@@ -84,16 +85,70 @@ export function generateSafeImageFilename(
   prefix: string = "plant",
   verifiedExt: string = "jpg"
 ): string {
+  const safePrefix = prefix.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 24) || "plant";
   const safeBase = originalName
     ? basename(originalName)
         .replace(/[^a-zA-Z0-9_-]/g, "")
         .slice(0, 30)
     : "";
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  const randomSuffix = randomBytes(8).toString("hex");
   const timestamp = Date.now();
-  const ext = verifiedExt.replace(/^\./, "").toLowerCase();
+  const normalizedExt = verifiedExt.replace(/^\./, "").toLowerCase();
+  const ext = ALLOWED_IMAGE_EXTENSIONS.has(normalizedExt) ? normalizedExt : "jpg";
 
   return safeBase
-    ? `${prefix}-${timestamp}-${safeBase}-${randomSuffix}.${ext}`
-    : `${prefix}-${timestamp}-${randomSuffix}.${ext}`;
+    ? `${safePrefix}-${timestamp}-${safeBase}-${randomSuffix}.${ext}`
+    : `${safePrefix}-${timestamp}-${randomSuffix}.${ext}`;
+}
+
+/**
+ * Validates that a stored or user-supplied image filename is a single safe basename with an allowed extension.
+ */
+export function sanitizeStoredImageFilename(
+  rawFilename: string | null | undefined
+): string | null {
+  if (typeof rawFilename !== "string") return null;
+  const trimmed = rawFilename.trim();
+  if (!trimmed || trimmed.length > 200) return null;
+  if (
+    trimmed.includes("/") ||
+    trimmed.includes("\\") ||
+    trimmed.includes("\0") ||
+    trimmed.includes("..")
+  ) {
+    return null;
+  }
+
+  const base = basename(trimmed);
+  if (base !== trimmed || base === "." || base === "..") {
+    return null;
+  }
+  if (!/^[a-zA-Z0-9_][a-zA-Z0-9._-]*$/.test(base)) {
+    return null;
+  }
+
+  const ext = base.split(".").pop()?.toLowerCase();
+  if (!ext || !ALLOWED_IMAGE_EXTENSIONS.has(ext)) {
+    return null;
+  }
+
+  return base;
+}
+
+/**
+ * Resolves a filename strictly inside uploadsDir, preventing directory traversal.
+ */
+export function resolveSafeUploadPath(
+  uploadsDir: string,
+  filename: string | null | undefined
+): string | null {
+  const safeName = sanitizeStoredImageFilename(filename);
+  if (!safeName) return null;
+
+  const resolvedBase = resolve(uploadsDir);
+  const resolvedTarget = resolve(resolvedBase, safeName);
+  if (!resolvedTarget.startsWith(resolvedBase + sep)) {
+    return null;
+  }
+  return resolvedTarget;
 }

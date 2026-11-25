@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { writeFile } from "fs/promises";
-import { join } from "path";
+import { unlink, writeFile } from "fs/promises";
 import { getUploadsDir } from "@/lib/storage";
 import {
+  MAX_IMAGE_FILE_SIZE,
   validateUploadedImage,
   generateSafeImageFilename,
+  resolveSafeUploadPath,
 } from "@/lib/security";
 
 export async function GET(
@@ -31,12 +32,27 @@ export async function POST(
 ) {
   try {
     const params = await props.params;
-    const formData = await req.formData();
-    const file = formData.get("file") as Blob | null;
-    const note = (formData.get("note") as string) || null;
+    const plant = await prisma.plant.findUnique({
+      where: { id: params.id },
+      select: { id: true },
+    });
+    if (!plant) {
+      return NextResponse.json({ error: "Plant not found" }, { status: 404 });
+    }
 
-    if (!file) {
+    const formData = await req.formData();
+    const file = formData.get("file");
+    const note = formData.get("note");
+
+    if (!file || !(file instanceof Blob)) {
       return NextResponse.json({ error: "No image file provided" }, { status: 400 });
+    }
+
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "Image file size exceeds the 10 MB limit" },
+        { status: 413 }
+      );
     }
 
     const bytes = await file.arrayBuffer();
@@ -51,25 +67,32 @@ export async function POST(
     }
 
     const uploadsDir = getUploadsDir();
-    const originalName = (file as any).name as string | undefined;
+    const originalName = (file as { name?: string }).name;
     const uniqueName = generateSafeImageFilename(
       originalName,
       `growth-${params.id.slice(0, 8)}`,
       validation.ext || "jpg"
     );
-    const filePath = join(uploadsDir, uniqueName);
+    const filePath = resolveSafeUploadPath(uploadsDir, uniqueName);
+    if (!filePath) {
+      return NextResponse.json({ error: "Invalid destination path" }, { status: 400 });
+    }
 
     await writeFile(filePath, buffer);
 
-    const photo = await prisma.plantPhoto.create({
-      data: {
-        plantId: params.id,
-        imagePath: uniqueName,
-        note: note ? note.trim() : null,
-      },
-    });
-
-    return NextResponse.json(photo, { status: 201 });
+    try {
+      const photo = await prisma.plantPhoto.create({
+        data: {
+          plantId: params.id,
+          imagePath: uniqueName,
+          note: typeof note === "string" && note.trim() ? note.trim() : null,
+        },
+      });
+      return NextResponse.json(photo, { status: 201 });
+    } catch (dbError) {
+      await unlink(filePath).catch(() => {});
+      throw dbError;
+    }
   } catch (error) {
     console.error("Add photo error:", error);
     return NextResponse.json({ error: "Failed to upload photo" }, { status: 500 });

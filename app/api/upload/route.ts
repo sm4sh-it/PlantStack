@@ -1,19 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
-import { join } from "path";
 import { getUploadsDir } from "@/lib/storage";
 import {
+  MAX_IMAGE_FILE_SIZE,
   validateUploadedImage,
   generateSafeImageFilename,
+  resolveSafeUploadPath,
 } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as Blob | null;
+    const file = formData.get("file");
 
-    if (!file) {
+    if (!file || !(file instanceof Blob)) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "File size exceeds the 10 MB limit" },
+        { status: 413 }
+      );
     }
 
     const bytes = await file.arrayBuffer();
@@ -31,13 +39,16 @@ export async function POST(req: NextRequest) {
     const dataDir = getUploadsDir();
 
     // Standardize and sanitize filename
-    const originalName = (file as any).name as string | undefined;
+    const originalName = (file as { name?: string }).name;
     const uniqueName = generateSafeImageFilename(
       originalName,
       "plant",
       validation.ext || "jpg"
     );
-    const filePath = join(dataDir, uniqueName);
+    const filePath = resolveSafeUploadPath(dataDir, uniqueName);
+    if (!filePath) {
+      return NextResponse.json({ error: "Invalid destination path" }, { status: 400 });
+    }
 
     await writeFile(filePath, buffer);
 

@@ -3,52 +3,147 @@ import prisma from "@/lib/prisma";
 import AdmZip from "adm-zip";
 import { getUploadsDir } from "@/lib/storage";
 import { writeFileSync, existsSync, mkdirSync } from "fs";
-import { join, resolve, basename } from "path";
-import { ALLOWED_IMAGE_EXTENSIONS, validateImageMagicBytes } from "@/lib/security";
+import {
+  validateImageMagicBytes,
+  sanitizeStoredImageFilename,
+  resolveSafeUploadPath,
+} from "@/lib/security";
+import { preflightZipCentralDirectory } from "@/lib/zipPreflight";
 
 const MAX_ARCHIVE_FILES = 300;
+const MAX_BACKUP_UPLOAD_SIZE = 150 * 1024 * 1024; // 150 MB
 const MAX_TOTAL_UNCOMPRESSED_SIZE = 150 * 1024 * 1024; // 150 MB
 const MAX_SINGLE_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as Blob | null;
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (/size|limit|large|length|body/i.test(msg)) {
+        return NextResponse.json(
+          { error: "Backup archive exceeds the 150 MB upload limit" },
+          { status: 413 }
+        );
+      }
+      return NextResponse.json({ error: "Invalid multipart backup upload" }, { status: 400 });
+    }
 
-    if (!file) {
+    const file = formData.get("file");
+
+    if (!file || !(file instanceof Blob)) {
       return NextResponse.json({ error: "No backup file uploaded" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const zip = new AdmZip(Buffer.from(bytes));
+    if (file.size > MAX_BACKUP_UPLOAD_SIZE) {
+      return NextResponse.json(
+        { error: "Backup archive exceeds the 150 MB upload limit" },
+        { status: 413 }
+      );
+    }
 
-    // 1. Look for and validate data.json entry
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    if (buffer.length > MAX_BACKUP_UPLOAD_SIZE) {
+      return NextResponse.json(
+        { error: "Backup archive exceeds the 150 MB upload limit" },
+        { status: 413 }
+      );
+    }
+
+    // 0. Preflight raw ZIP Central Directory headers before instantiating AdmZip
+    const preflight = preflightZipCentralDirectory(buffer, {
+      maxFiles: MAX_ARCHIVE_FILES,
+      maxSingleFileSize: MAX_SINGLE_FILE_SIZE,
+      maxTotalUncompressedSize: MAX_TOTAL_UNCOMPRESSED_SIZE,
+    });
+    if (!preflight.ok) {
+      return NextResponse.json(
+        { error: preflight.error || "Invalid backup archive" },
+        { status: 400 }
+      );
+    }
+
+    const zip = new AdmZip(buffer);
+
+    // 1. Look for and validate data.json entry before decompression and JSON parsing
     const dataEntry = zip.getEntry("data.json");
-    if (!dataEntry) {
-      return NextResponse.json({ error: "Invalid backup: data.json not found in archive" }, { status: 400 });
+    if (!dataEntry || dataEntry.isDirectory) {
+      return NextResponse.json(
+        { error: "Invalid backup: data.json not found in archive" },
+        { status: 400 }
+      );
+    }
+
+    if (dataEntry.header.size > MAX_SINGLE_FILE_SIZE) {
+      return NextResponse.json(
+        {
+          error: `Archive rejected: data.json exceeds single-file size limit (${MAX_SINGLE_FILE_SIZE / (1024 * 1024)} MB)`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const dataBuffer = dataEntry.getData();
+    if (dataBuffer.length > MAX_SINGLE_FILE_SIZE) {
+      return NextResponse.json(
+        {
+          error: `Archive rejected: Decompressed data.json exceeds single-file size limit (${MAX_SINGLE_FILE_SIZE / (1024 * 1024)} MB)`,
+        },
+        { status: 400 }
+      );
     }
 
     let data: any;
     try {
-      const jsonStr = dataEntry.getData().toString("utf-8");
+      const jsonStr = dataBuffer.toString("utf-8");
       data = JSON.parse(jsonStr);
-    } catch (e) {
-      return NextResponse.json({ error: "Invalid backup: data.json is not valid JSON" }, { status: 400 });
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid backup: data.json is not valid JSON" },
+        { status: 400 }
+      );
     }
 
     if (!Array.isArray(data.locations) || !Array.isArray(data.plants)) {
-      return NextResponse.json({ error: "Invalid backup format: missing locations or plants" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid backup format: missing locations or plants" },
+        { status: 400 }
+      );
     }
 
-    // 2. Comprehensive Archive Validation (Anti-Zip-Bomb, Zip-Slip, Magic Bytes)
+    // Validate imagePath fields in data.json before touching disk or DB
+    for (const p of data.plants) {
+      if (p?.imagePath !== undefined && p?.imagePath !== null && p?.imagePath !== "") {
+        if (!sanitizeStoredImageFilename(p.imagePath)) {
+          return NextResponse.json(
+            { error: "Invalid backup: unsafe plant imagePath in data.json" },
+            { status: 400 }
+          );
+        }
+      }
+      if (Array.isArray(p?.photos)) {
+        for (const ph of p.photos) {
+          if (!sanitizeStoredImageFilename(ph?.imagePath)) {
+            return NextResponse.json(
+              { error: "Invalid backup: unsafe growth photo imagePath in data.json" },
+              { status: 400 }
+            );
+          }
+        }
+      }
+    }
+
+    // 2. Comprehensive Archive Validation (actual decompressed bounds, Zip-Slip, Magic Bytes)
     const uploadsDir = getUploadsDir();
-    const resolvedUploadsDir = resolve(uploadsDir);
     if (!existsSync(uploadsDir)) {
       mkdirSync(uploadsDir, { recursive: true });
     }
 
     const zipEntries = zip.getEntries();
-    let totalUncompressedSize = 0;
+    let actualTotalUncompressedSize = dataBuffer.length;
     let fileCount = 0;
     const validatedUploads: Array<{ destPath: string; data: Buffer }> = [];
 
@@ -63,49 +158,47 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const entrySize = entry.header.size;
-      if (entrySize > MAX_SINGLE_FILE_SIZE) {
+      if (entry.header.size > MAX_SINGLE_FILE_SIZE) {
         return NextResponse.json(
-          { error: `Archive rejected: File "${entry.entryName}" exceeds single-file size limit (${MAX_SINGLE_FILE_SIZE / (1024 * 1024)} MB)` },
+          {
+            error: `Archive rejected: File "${entry.entryName}" exceeds single-file size limit (${MAX_SINGLE_FILE_SIZE / (1024 * 1024)} MB)`,
+          },
           { status: 400 }
         );
       }
 
-      totalUncompressedSize += entrySize;
-      if (totalUncompressedSize > MAX_TOTAL_UNCOMPRESSED_SIZE) {
-        return NextResponse.json(
-          { error: `Archive rejected: Exceeds total uncompressed size limit (${MAX_TOTAL_UNCOMPRESSED_SIZE / (1024 * 1024)} MB)` },
-          { status: 400 }
-        );
-      }
-
-      // Allow data.json
       if (entry.entryName === "data.json") {
         continue;
       }
 
-      // Check upload entries
       if (entry.entryName.startsWith("uploads/")) {
-        const rawFileName = entry.entryName.replace(/^uploads\//, "");
-        const safeFileName = basename(rawFileName).replace(/[^a-zA-Z0-9.\-_]/g, "");
-
-        if (!safeFileName) {
+        const rawFileName = entry.entryName.slice("uploads/".length);
+        if (!rawFileName) {
           continue;
         }
-
-        const ext = safeFileName.split(".").pop()?.toLowerCase();
-        if (!ext || !ALLOWED_IMAGE_EXTENSIONS.has(ext)) {
+        if (
+          rawFileName.includes("/") ||
+          rawFileName.includes("\\") ||
+          rawFileName.includes("..")
+        ) {
           return NextResponse.json(
-            { error: `Archive rejected: Disallowed file extension in uploads ("${safeFileName}"). Only images allowed.` },
+            { error: `Archive rejected: Path traversal attempt detected in "${entry.entryName}"` },
             { status: 400 }
           );
         }
 
-        const destPath = join(uploadsDir, safeFileName);
-        const resolvedDest = resolve(destPath);
+        const safeFileName = sanitizeStoredImageFilename(rawFileName);
+        if (!safeFileName) {
+          return NextResponse.json(
+            {
+              error: `Archive rejected: Disallowed filename or extension in uploads ("${rawFileName}"). Only JPEG/PNG/WebP images allowed.`,
+            },
+            { status: 400 }
+          );
+        }
 
-        // Enforce Zip-Slip containment
-        if (!resolvedDest.startsWith(resolvedUploadsDir + "/") && !resolvedDest.startsWith(resolvedUploadsDir + "\\")) {
+        const destPath = resolveSafeUploadPath(uploadsDir, safeFileName);
+        if (!destPath) {
           return NextResponse.json(
             { error: `Archive rejected: Path traversal attempt detected in "${entry.entryName}"` },
             { status: 400 }
@@ -113,6 +206,25 @@ export async function POST(req: NextRequest) {
         }
 
         const entryBuffer = entry.getData();
+        if (entryBuffer.length > MAX_SINGLE_FILE_SIZE) {
+          return NextResponse.json(
+            {
+              error: `Archive rejected: Decompressed file "${safeFileName}" exceeds single-file size limit (${MAX_SINGLE_FILE_SIZE / (1024 * 1024)} MB)`,
+            },
+            { status: 400 }
+          );
+        }
+
+        actualTotalUncompressedSize += entryBuffer.length;
+        if (actualTotalUncompressedSize > MAX_TOTAL_UNCOMPRESSED_SIZE) {
+          return NextResponse.json(
+            {
+              error: `Archive rejected: Exceeds total uncompressed size limit (${MAX_TOTAL_UNCOMPRESSED_SIZE / (1024 * 1024)} MB)`,
+            },
+            { status: 400 }
+          );
+        }
+
         const magicCheck = validateImageMagicBytes(entryBuffer);
         if (!magicCheck.valid) {
           return NextResponse.json(
@@ -121,11 +233,12 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        validatedUploads.push({ destPath: resolvedDest, data: entryBuffer });
+        validatedUploads.push({ destPath, data: entryBuffer });
       } else {
-        // Disallow arbitrary extra files in archive root or subdirectories
         return NextResponse.json(
-          { error: `Archive rejected: Unexpected entry "${entry.entryName}". Only "data.json" and "uploads/*" are permitted.` },
+          {
+            error: `Archive rejected: Unexpected entry "${entry.entryName}". Only "data.json" and "uploads/*" are permitted.`,
+          },
           { status: 400 }
         );
       }
@@ -140,15 +253,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Restore database in transaction
+    // 4. Restore database in transaction
     await prisma.$transaction(async (tx) => {
-      // 1. Clean existing records
       await tx.plantEvent.deleteMany();
       await tx.plantPhoto.deleteMany();
       await tx.plant.deleteMany();
       await tx.location.deleteMany();
 
-      // 2. Restore locations
       for (const loc of data.locations) {
         await tx.location.create({
           data: {
@@ -159,8 +270,8 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 3. Restore plants
       for (const p of data.plants) {
+        const safePlantImage = sanitizeStoredImageFilename(p.imagePath);
         await tx.plant.create({
           data: {
             id: p.id,
@@ -189,30 +300,35 @@ export async function POST(req: NextRequest) {
             lastFungus: p.lastFungus ? new Date(p.lastFungus) : null,
             lastPruned: p.lastPruned ? new Date(p.lastPruned) : null,
             lastRepotted: p.lastRepotted ? new Date(p.lastRepotted) : null,
-            imagePath: p.imagePath || null,
+            imagePath: safePlantImage,
             notes: p.notes || null,
             createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
             updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
-            events: p.events && p.events.length > 0 ? {
-              create: p.events.map((e: any) => ({
-                id: e.id,
-                type: e.type,
-                createdAt: e.createdAt ? new Date(e.createdAt) : new Date(),
-              })),
-            } : undefined,
-            photos: p.photos && p.photos.length > 0 ? {
-              create: p.photos.map((ph: any) => ({
-                id: ph.id,
-                imagePath: ph.imagePath,
-                note: ph.note || null,
-                createdAt: ph.createdAt ? new Date(ph.createdAt) : new Date(),
-              })),
-            } : undefined,
+            events:
+              p.events && p.events.length > 0
+                ? {
+                    create: p.events.map((e: any) => ({
+                      id: e.id,
+                      type: e.type,
+                      createdAt: e.createdAt ? new Date(e.createdAt) : new Date(),
+                    })),
+                  }
+                : undefined,
+            photos:
+              p.photos && p.photos.length > 0
+                ? {
+                    create: p.photos.map((ph: any) => ({
+                      id: ph.id,
+                      imagePath: sanitizeStoredImageFilename(ph.imagePath)!,
+                      note: ph.note || null,
+                      createdAt: ph.createdAt ? new Date(ph.createdAt) : new Date(),
+                    })),
+                  }
+                : undefined,
           },
         });
       }
 
-      // 4. Restore config if present
       if (data.config) {
         await tx.appConfig.upsert({
           where: { id: 1 },

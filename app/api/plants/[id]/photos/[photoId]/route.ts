@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { unlink } from "fs/promises";
-import { join } from "path";
 import { existsSync } from "fs";
 import { getUploadsDir } from "@/lib/storage";
+import { resolveSafeUploadPath } from "@/lib/security";
 
 export async function DELETE(
   req: NextRequest,
@@ -24,12 +24,14 @@ export async function DELETE(
       where: { id: params.photoId },
     });
 
-    // Clean up file if present
+    // Clean up file only when constrained inside the uploads directory
     try {
       const uploadsDir = getUploadsDir();
-      const filePath = join(uploadsDir, photo.imagePath);
-      if (existsSync(filePath)) {
+      const filePath = resolveSafeUploadPath(uploadsDir, photo.imagePath);
+      if (filePath && existsSync(filePath)) {
         await unlink(filePath);
+      } else if (!filePath) {
+        console.warn("Skipped physical deletion for unsafe photo.imagePath:", photo.imagePath);
       }
     } catch (e) {
       console.warn("Could not delete physical photo file:", e);
