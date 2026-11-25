@@ -43,16 +43,22 @@ ENV DATA_DIR="/app/data/uploads"
 
 RUN apk add --no-cache su-exec
 
-# Copy built application and required production dependencies
+# Copy Next.js standalone output (includes traced runtime node_modules: next, sharp, @img, adm-zip, @prisma/client)
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/CHANGELOG.md ./CHANGELOG.md
 COPY --from=builder /app/package.json ./package.json
 
-RUN mkdir -p /app/data/uploads /app/public /app/.next/cache && \
+# Copy Prisma schema, generated client, and CLI/engines strictly needed by entrypoint `prisma db push --skip-generate`
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+RUN mkdir -p /app/node_modules/.bin /app/data/uploads /app/public /app/.next/cache && \
+    chmod 0755 /app/node_modules/prisma/build/index.js && \
+    ln -sf ../prisma/build/index.js /app/node_modules/.bin/prisma && \
     chown -R node:node /app/.next/cache /app/data
 
 # Container boots as root only when host runtime does not force --user 1000 so
