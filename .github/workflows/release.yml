@@ -70,10 +70,38 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout tag for release notes
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Extract annotated tag release notes
+        id: tag_notes
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          obj_type="$(git for-each-ref --format='%(objecttype)' "refs/tags/${TAG_NAME}")"
+          notes=""
+          if [ "$obj_type" = "tag" ]; then
+            notes="$(git for-each-ref --format='%(contents)' "refs/tags/${TAG_NAME}")"
+          fi
+          line_count="$(printf '%s\n' "$notes" | wc -l)"
+          if [ -n "$notes" ] && [ "$line_count" -gt 1 ]; then
+            printf '%s\n' "$notes" > /tmp/release-notes.md
+            echo "has_notes=true" >> "$GITHUB_OUTPUT"
+            echo "body_path=/tmp/release-notes.md" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_notes=false" >> "$GITHUB_OUTPUT"
+            echo "body_path=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           name: Release ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: ${{ steps.tag_notes.outputs.body_path }}
+          generate_release_notes: ${{ steps.tag_notes.outputs.has_notes != 'true' }}
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
