@@ -2,17 +2,26 @@ Dockerfile
 .dockerignore
 node_modules
 npm-debug.log
+plantstack-logs.txt
 README.md
 .next
 .git
 .env
 .env.*
+*.pem
+*.key
 data/
+backups/
 prisma/*.db
 prisma/*.db-journal
+prisma/*.db-wal
+prisma/*.db-shm
+*.db.bak
 public/images/*
 !public/images/.keep
 !public/images/badges/
 !public/images/badges/**
+_Work/
 _work
+security-audit*/
 

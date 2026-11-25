@@ -11,22 +11,20 @@ import {
   sanitizeRedirectPath,
 } from "@/lib/auth";
 
-// Route prefixes (matched only at segment boundary) and root static files exempt from auth
-const PUBLIC_ROUTE_PREFIXES = [
-  "/_next",
-  "/api/auth",
+// Exact public endpoints and strictly anchored root icon/logo asset pattern
+const PUBLIC_EXACT_PATHS = new Set([
   "/login",
-];
+  "/api/auth/login",
+  "/api/auth/logout",
+  "/api/auth/status",
+  "/manifest.json",
+]);
+
+const PUBLIC_ASSET_PATTERN =
+  /^\/(favicon|icon|apple-touch-icon|logo)(-[a-zA-Z0-9._-]+)?\.(ico|png|svg|webp)$/;
 
 const BACKUP_MAX_CONTENT_LENGTH = 151 * 1024 * 1024; // 150 MB archive + multipart boundary overhead
 const IMAGE_UPLOAD_MAX_CONTENT_LENGTH = 11 * 1024 * 1024; // 10 MB image + multipart boundary overhead
-
-const PUBLIC_ASSET_BASES = [
-  "/favicon",
-  "/icon",
-  "/apple-touch-icon",
-  "/logo",
-];
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "DELETE", "PATCH"]);
 
@@ -38,25 +36,13 @@ const MAX_ATTEMPT_KEYS = 2000;
 const authAttempts = new Map<string, { count: number; resetAt: number }>();
 
 function isPublicPath(pathname: string): boolean {
-  if (
-    PUBLIC_ROUTE_PREFIXES.some(
-      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-    )
-  ) {
+  if (PUBLIC_EXACT_PATHS.has(pathname)) {
     return true;
   }
-  if (pathname === "/manifest.json") {
+  if (pathname.startsWith("/_next/static/")) {
     return true;
   }
-  if (!pathname.slice(1).includes("/")) {
-    return PUBLIC_ASSET_BASES.some(
-      (base) =>
-        pathname === base ||
-        pathname.startsWith(`${base}.`) ||
-        pathname.startsWith(`${base}-`)
-    );
-  }
-  return false;
+  return PUBLIC_ASSET_PATTERN.test(pathname);
 }
 
 function getEffectiveProtocol(request: NextRequest, trustProxy: boolean): string {
