@@ -141,16 +141,17 @@ Access the web dashboard at `http://<your-server-ip>:9666`.
 
 ### Access Control
 - **Open LAN Mode (Explicit Opt-In):** Docker Compose requires `PLANTSTACK_API_SECRET` to be explicitly declared in `.env` (or environment) to avoid accidental open deployments. Setting `PLANTSTACK_API_SECRET=""` explicitly keeps zero-login access on your private home network; Docker binds `0.0.0.0:9666` by default via `${PLANTSTACK_BIND_ADDR:-0.0.0.0}:9666:3000`.
-- **Reverse Proxy Lockdown:** If deploying behind Nginx, Caddy, or Traefik on the same machine, set `PLANTSTACK_BIND_ADDR=127.0.0.1` in `.env` (and configure `PLANTSTACK_TRUST_PROXY=true` / `PLANTSTACK_PUBLIC_ORIGIN=https://your-domain` if terminating TLS).
-- **Protected Mode:** Set `PLANTSTACK_API_SECRET="your_strong_password"`. Visiting the UI displays an elegant botanical lockscreen and issues a signed 30-day session cookie (compatible with both plain local HTTP and reverse-proxy HTTPS). Protected media under `/api/images/*` also requires authentication.
+- **Reverse Proxy Lockdown:** If deploying behind Nginx, Caddy, or Traefik on the same machine, set `PLANTSTACK_BIND_ADDR=127.0.0.1` in `.env`. Configure `PLANTSTACK_TRUST_PROXY=true` and/or `PLANTSTACK_PUBLIC_ORIGIN=https://your-domain` when terminating TLS — `PLANTSTACK_TRUST_PROXY=true` also controls whether `X-Forwarded-For` / `X-Real-IP` headers are trusted for IP-based rate-limiting (ignored by default to prevent spoofing).
+- **Protected Mode:** Set `PLANTSTACK_API_SECRET="your_strong_password"`. Visiting the UI displays an elegant botanical lockscreen and issues a signed, rotating 30-day session cookie (`v1.`, compatible with both plain local HTTP and reverse-proxy HTTPS). Protected media under `/api/images/*` also requires authentication. **Migration note:** Upgrading from older unsigned session cookies requires a one-time browser re-login.
 
 ### 🐳 Least-Privilege Runtime & SQLite Volume Self-Healing
 Early Docker setups often suffer from `attempt to write a readonly database` when upgrading from older root-owned volumes (`0644`/`0755`).
 - The startup entrypoint (`docker-entrypoint.sh`) operates with restrictive `umask 027`, repairs ownership/permissions solely on regular files and directories inside `/app/data` (`node:node`, `750`/`640`, never following symlinks or setting `777`), and then permanently drops root privileges via `su-exec node` before running Prisma or Node.js.
+- **Pre-Migration DB Snapshots:** Before `prisma db push` runs on container start, `docker-entrypoint.sh` automatically saves a backup copy of `/app/data/database.db` under `/app/data/backups/` and retains the latest 3 snapshots.
 - If an external container manager forces `--user 1000` over an existing root-owned host directory, the startup pre-check waits cleanly and prints least-privilege `chown 1000:1000` instructions instead of triggering a crash loop or granting `sudo`.
 
 ### Hardened Application Pipeline
-- **Strict Media Validation:** Uploads are checked against binary magic-byte signatures (JPEG, PNG, WebP) and size limits (10 MB per image).
+- **Strict Media Validation & EXIF Stripping:** Uploads are checked against binary magic-byte signatures (JPEG, PNG, WebP) and size limits (10 MB per image), automatically orientation-corrected (`sharp` `.rotate()`), and re-encoded to WebP with all EXIF/GPS metadata stripped, alongside reference-safe orphan cleanup and unattached upload quotas.
 - **Safe Archives:** Backup uploads support up to 150 MB (including plant photos) with pre-extraction central-directory checks, path-traversal protection, and zip-bomb thresholds.
 - **Security Headers & CSRF:** Enforced modern HTTP headers and origin/fetch-site checks for mutating requests.
 

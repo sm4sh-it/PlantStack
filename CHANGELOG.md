@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.9.0] - 2026-11-25
+### ⚠️ Breaking Changes & Migration Notes
+- **Scoped `?token=` Query Auth (`PLANTSTACK_STATUS_TOKEN`)**: Passing the master `PLANTSTACK_API_SECRET` in URL query parameters (`?token=`) is no longer accepted. Home Assistant, MagicMirror, and dashboard integrations using `?token=` must switch to `Authorization: Bearer` / `X-API-Key` headers or configure a dedicated read-only `PLANTSTACK_STATUS_TOKEN` (strictly scoped to `GET /api/plants/status`).
+- **One-Time Browser Re-Login**: Session cookies were upgraded to HMAC-signed, rotating `v1.` tokens with server-side logout revocation. Existing browser sessions are invalidated once after updating and require signing in again.
+- **Reverse Proxy Configuration**: Behind an HTTPS reverse proxy (Nginx, Caddy, Traefik), set `PLANTSTACK_TRUST_PROXY=true` and/or `PLANTSTACK_PUBLIC_ORIGIN=https://your-domain` so CSRF origin validation and forwarded client-IP rate limiting (`X-Forwarded-For` / `X-Real-IP`) work reliably.
+
+### Security
+- **Auth, Session & CSRF Hardening**: Signed rotating session tokens, dual-runtime logout revocation, constant-time secret comparison, hardened login redirect sanitization, authenticated `/api/images/*` delivery (`Cache-Control: private`), Origin/Fetch-Site CSRF protection, and login/API rate limiting.
+- **Media & Backup Hardening**: Automatic EXIF/GPS metadata stripping with orientation-preserving `.rotate()` WebP re-encoding (`sharp`), CSPRNG filenames, reference-safe orphan cleanup, upload quota/TTL limits, 150 MB backup upload cap (HTTP 413), and pre-extraction ZIP validation (`lib/zipPreflight.ts`).
+- **Container Least-Privilege & Pre-Migration Snapshots**: Removed `sudo`, `umask 000`, and `chmod -R 777`; `docker-entrypoint.sh` narrows `/app/data` repair to `node:node` (`750`/`640`), drops root via `su-exec node`, and saves up to 3 pre-migration SQLite snapshots under `/app/data/backups/`.
+- **Slim Docker Runner & Supply-Chain Hardening**: Trimmed runner image to Next.js standalone + Prisma runtime (`796 MB` -> `348 MB`), switched `Dockerfile` to `npm ci` with SHA256-pinned `node:22-alpine`, patched runtime dependencies (`next@15.5.29`, `sharp@0.35.5`, `adm-zip@0.6.1`, 0 prod `npm audit` vulnerabilities), added weekly Dependabot updates (`.github/dependabot.yml`), and hardened `.github/workflows/release.yml` (SHA-pinned actions, multi-arch build gate before release publish, `:latest` scoped to full releases).
+- **Defense-in-Depth**: Added `Content-Security-Policy-Report-Only`, tightened middleware public route boundaries, restricted verbose Prisma query logs to `NODE_ENV=development`, and required explicit `PLANTSTACK_API_SECRET` declaration in `docker-compose.yml` while keeping `${PLANTSTACK_BIND_ADDR:-0.0.0.0}:9666:3000` LAN default.
+
 ## [3.8.2] - 2026-09-23
 ### Added
 - **Photoshop AI Batch Automation Tool (`scripts/photoshop_batch_badges.jsx`)**: ExtendScript for 1-click batch background removal using Adobe Sensei AI. Flawlessly segments complex interior cutouts (e.g. circular anniversary wreath in `methusalem_t2` or scissor finger loops in `pruneMaster`) while preserving fine white enamel details.
