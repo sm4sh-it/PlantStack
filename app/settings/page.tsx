@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Save, Plus, Trash2, Loader2, Settings as SettingsIcon, Check, Edit2, X, CheckCircle2, Database, Download, Upload, Snowflake, LogOut, ShieldCheck } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 import { t } from "@/lib/i18n";
+import { SEASONAL_FACTOR_STEPS, SeasonalScope } from "@/lib/seasonal";
 
 type Location = { id: string; name: string };
 
@@ -14,7 +15,9 @@ export default function SettingsPage() {
   const [lang, setLang] = useState("en");
   const [gridCols, setGridCols] = useState(4);
   const [customTitle, setCustomTitle] = useState("");
-  const [winterDormancy, setWinterDormancy] = useState(false);
+  const [seasonalFactor, setSeasonalFactor] = useState<number>(0);
+  const [seasonalScope, setSeasonalScope] = useState<SeasonalScope>("winter");
+  const [pauseFertilizer, setPauseFertilizer] = useState<boolean>(true);
   const [authRequired, setAuthRequired] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -84,7 +87,15 @@ export default function SettingsPage() {
         if (conf.latitude !== null) setLat(conf.latitude.toString());
         if (conf.longitude !== null) setLon(conf.longitude.toString());
         if (conf.locationName) setLocName(conf.locationName);
-        if (conf.winterDormancyEnabled !== undefined) setWinterDormancy(conf.winterDormancyEnabled);
+        if (conf.winterDormancyFactor !== undefined && conf.winterDormancyFactor !== null) {
+          setSeasonalFactor(Number(conf.winterDormancyFactor));
+        } else if (conf.winterDormancyEnabled !== undefined) {
+          setSeasonalFactor(conf.winterDormancyEnabled ? 50 : 0);
+        }
+        if (conf.winterDormancyScope) setSeasonalScope(conf.winterDormancyScope);
+        if (conf.winterDormancyPauseFertilizer !== undefined) {
+          setPauseFertilizer(Boolean(conf.winterDormancyPauseFertilizer));
+        }
       }
       setLocations(loc);
     } catch (e) {
@@ -119,7 +130,10 @@ export default function SettingsPage() {
           latitude: lat ? parseFloat(lat) : null,
           longitude: lon ? parseFloat(lon) : null,
           locationName: locName || null,
-          winterDormancyEnabled: winterDormancy,
+          winterDormancyEnabled: seasonalFactor > 0,
+          winterDormancyFactor: seasonalFactor,
+          winterDormancyScope: seasonalScope,
+          winterDormancyPauseFertilizer: pauseFertilizer,
         })
       });
       showNotification(lang === 'de' ? "Einstellungen gespeichert!" : "Settings saved!");
@@ -361,26 +375,124 @@ export default function SettingsPage() {
               />
             </div>
 
-            {/* Winter Dormancy Toggle */}
-            <div className="pt-3 border-t border-border-hairline flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground mb-0.5">
-                  <Snowflake size={15} className="text-sky-600 dark:text-sky-400" />
-                  <span>{t('winterDormancyTitle', lang)}</span>
+            {/* Seasonal Watering Adjustment Slider */}
+            <div className="pt-4 border-t border-border-hairline space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <label
+                    htmlFor="seasonal-factor-range"
+                    className="flex items-center gap-1.5 text-xs font-bold text-foreground mb-0.5"
+                  >
+                    <Snowflake size={15} className="text-sky-600 dark:text-sky-400" aria-hidden="true" />
+                    <span>{t('winterDormancyTitle', lang)}</span>
+                  </label>
+                  <p className="text-[11px] text-text-muted max-w-md leading-relaxed">
+                    {t('winterDormancyDesc', lang)}
+                  </p>
                 </div>
-                <p className="text-[11px] text-text-muted max-w-md leading-relaxed">
-                  {t('winterDormancyDesc', lang)}
+                <span className="shrink-0 px-2.5 py-1 rounded-md text-xs font-bold tabular bg-surface-subtle border border-border-hairline text-foreground">
+                  {seasonalFactor === 0 ? t('seasonalOff', lang) : `+${seasonalFactor} %`}
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                <input
+                  id="seasonal-factor-range"
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={25}
+                  value={seasonalFactor}
+                  onChange={(e) => setSeasonalFactor(Number(e.target.value))}
+                  className="w-full accent-brand cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+                />
+                <div className="grid grid-cols-5 gap-1.5">
+                  {SEASONAL_FACTOR_STEPS.map((stepVal) => {
+                    const isSelected = seasonalFactor === stepVal;
+                    return (
+                      <button
+                        key={stepVal}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => setSeasonalFactor(stepVal)}
+                        className={`min-h-[44px] rounded-lg text-xs font-bold tabular border transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                          isSelected
+                            ? "bg-brand text-text-onBrand border-brand shadow-xs"
+                            : "bg-surface-subtle text-text-secondary border-border-hairline hover:bg-surface-elevated hover:text-foreground"
+                        }`}
+                      >
+                        {stepVal === 0 ? "0 %" : `+${stepVal} %`}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-text-secondary">
+                  {seasonalFactor === 0
+                    ? lang === "de"
+                      ? "Deaktiviert: Alle Gieß- und Düngeintervalle bleiben unverändert."
+                      : "Disabled: All watering and fertilizing intervals remain unchanged."
+                    : lang === "de"
+                    ? `Vorschau: +${seasonalFactor} % Gießintervall (z. B. 7 Tage → ${Math.round(7 * (1 + seasonalFactor / 100))} Tage)`
+                    : `Preview: +${seasonalFactor}% watering interval (e.g. 7 days → ${Math.round(7 * (1 + seasonalFactor / 100))} days)`}
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
-                <input
-                  type="checkbox"
-                  checked={winterDormancy}
-                  onChange={(e) => setWinterDormancy(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-surface-elevated border border-border-strong peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
-              </label>
+
+              {seasonalFactor > 0 && (
+                <div className="bg-surface-subtle border border-border-hairline rounded-xl p-4 space-y-4">
+                  <div className="space-y-2">
+                    <span className="block text-xs font-bold text-foreground">
+                      {t('seasonalScopeLabel', lang)}
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {(
+                        [
+                          { id: "winter", label: t('seasonalScopeWinter', lang) },
+                          { id: "extended", label: t('seasonalScopeExtended', lang) },
+                          { id: "always", label: t('seasonalScopeAlways', lang) },
+                        ] as const
+                      ).map((opt) => {
+                        const active = seasonalScope === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            aria-pressed={active}
+                            onClick={() => setSeasonalScope(opt.id)}
+                            className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-bold border transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                              active
+                                ? "bg-brand text-text-onBrand border-brand shadow-xs"
+                                : "bg-surface text-text-secondary border-border-hairline hover:text-foreground"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-border-hairline flex items-start justify-between gap-4">
+                    <div>
+                      <label htmlFor="seasonal-pause-fert" className="block text-xs font-bold text-foreground mb-0.5 cursor-pointer">
+                        {t('seasonalPauseFertLabel', lang)}
+                      </label>
+                      <p className="text-[11px] text-text-muted leading-relaxed">
+                        {t('seasonalPauseFertDesc', lang)}
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0 min-h-[44px]">
+                      <input
+                        id="seasonal-pause-fert"
+                        type="checkbox"
+                        checked={pauseFertilizer}
+                        onChange={(e) => setPauseFertilizer(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-surface-elevated border border-border-strong peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[11px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
 
             <button 

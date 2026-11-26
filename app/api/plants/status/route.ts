@@ -1,11 +1,29 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  applySeasonalAndWeatherAdjustments,
+  resolveSeasonalConfig,
+} from "@/lib/seasonal";
 
 export async function GET() {
   try {
-    const plants = await prisma.plant.findMany({
-      include: { location: true }
-    });
+    const [rawPlants, config] = await Promise.all([
+      prisma.plant.findMany({
+        where: { isArchived: false },
+        include: { location: true },
+      }),
+      prisma.appConfig.findUnique({ where: { id: 1 } }),
+    ]);
+
+    const seasonal = resolveSeasonalConfig(config);
+    const plants = rawPlants.map((p) =>
+      applySeasonalAndWeatherAdjustments(p, {
+        rainTier: config?.weatherRainTier || 0,
+        heatTier: config?.weatherHeatTier || 0,
+        frostWarning: Boolean(config?.weatherFrostWarning),
+        seasonal,
+      })
+    );
     const now = new Date();
     
     // Sort logic to match Dashboard: Overdue first

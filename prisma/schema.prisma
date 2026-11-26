@@ -29,10 +29,13 @@ model AppConfig {
   weatherHeatTier     Int       @default(0)
   weatherFrostWarning Boolean   @default(false)
   lastWeatherSync     DateTime?
-  badgesResetAt       DateTime?
-  winterDormancyEnabled Boolean @default(false)
+  badgesResetAt                 DateTime?
+  winterDormancyEnabled         Boolean   @default(false)
+  winterDormancyFactor          Int?
+  winterDormancyScope           String    @default("winter")
+  winterDormancyPauseFertilizer Boolean   @default(true)
 
-  updatedAt           DateTime  @updatedAt
+  updatedAt                     DateTime  @updatedAt
 }
 
 model Plant {

@@ -1,13 +1,24 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  normalizeSeasonalScope,
+  resolveSeasonalConfig,
+  snapSeasonalFactor,
+} from "@/lib/seasonal";
 
 export async function GET() {
   let config = await prisma.appConfig.findUnique({ where: { id: 1 } });
   if (!config) {
     config = await prisma.appConfig.create({ data: { id: 1 } });
   }
-  return NextResponse.json(config);
+  const resolved = resolveSeasonalConfig(config);
+  return NextResponse.json({
+    ...config,
+    winterDormancyFactor: resolved.factor,
+    winterDormancyScope: resolved.scope,
+    winterDormancyPauseFertilizer: resolved.pauseFertilizer,
+  });
 }
 
 export async function PUT(req: Request) {
@@ -70,9 +81,30 @@ export async function PUT(req: Request) {
         ? Boolean(data.onboardingSeen)
         : undefined;
 
+    const hasFactor = data.winterDormancyFactor !== undefined;
+    const hasEnabled = data.winterDormancyEnabled !== undefined;
+
+    const winterDormancyFactor = hasFactor
+      ? snapSeasonalFactor(data.winterDormancyFactor)
+      : hasEnabled
+      ? snapSeasonalFactor(undefined, Boolean(data.winterDormancyEnabled))
+      : undefined;
+
     const winterDormancyEnabled =
-      data.winterDormancyEnabled !== undefined
+      winterDormancyFactor !== undefined
+        ? winterDormancyFactor > 0
+        : hasEnabled
         ? Boolean(data.winterDormancyEnabled)
+        : undefined;
+
+    const winterDormancyScope =
+      data.winterDormancyScope !== undefined
+        ? normalizeSeasonalScope(data.winterDormancyScope)
+        : undefined;
+
+    const winterDormancyPauseFertilizer =
+      data.winterDormancyPauseFertilizer !== undefined
+        ? Boolean(data.winterDormancyPauseFertilizer)
         : undefined;
 
     const config = await prisma.appConfig.upsert({
@@ -86,6 +118,9 @@ export async function PUT(req: Request) {
         longitude,
         locationName,
         winterDormancyEnabled,
+        winterDormancyFactor,
+        winterDormancyScope,
+        winterDormancyPauseFertilizer,
       },
       create: {
         id: 1,
@@ -97,6 +132,9 @@ export async function PUT(req: Request) {
         longitude: longitude || null,
         locationName: locationName || null,
         winterDormancyEnabled: winterDormancyEnabled || false,
+        winterDormancyFactor: winterDormancyFactor ?? 0,
+        winterDormancyScope: winterDormancyScope || "winter",
+        winterDormancyPauseFertilizer: winterDormancyPauseFertilizer ?? true,
       },
     });
 

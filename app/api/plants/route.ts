@@ -2,6 +2,10 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sanitizeStoredImageFilename } from "@/lib/security";
+import {
+  applySeasonalAndWeatherAdjustments,
+  resolveSeasonalConfig,
+} from "@/lib/seasonal";
 
 export async function GET() {
   try {
@@ -80,58 +84,15 @@ export async function GET() {
       }
     }
 
-    const currentMonth = new Date().getMonth(); // 0 = Jan, 1 = Feb, ..., 10 = Nov, 11 = Dec
-    const isWinterSeason = currentMonth >= 10 || currentMonth <= 1;
-    const isWinterDormancyActive = Boolean(config?.winterDormancyEnabled && isWinterSeason);
-
-    const mappedPlants = plants.map(p => {
-      let mappedInterval = p.waterInterval;
-      let mappedFertilizer = p.fertilizerInterval;
-      
-      // Fallback for legacy plants that still have INDOOR/OUTDOOR
-      const effectivePlacement = p.placement === "Drinnen" && p.locationType === "OUTDOOR" ? "Draußen" : p.placement;
-
-      const heatTier2 = heatTier === 2;
-      const heatTier1 = heatTier === 1;
-
-      if (effectivePlacement === "Draußen") {
-        if (rainTier === 2) {
-           mappedInterval += 2; // Add 2 days to remaining interval
-        }
-        if (heatTier2) {
-           mappedInterval = Math.max(1, Math.floor(p.waterInterval * 0.3)); // Reduce by 70%
-        } else if (heatTier1) {
-           mappedInterval = Math.max(1, Math.floor(p.waterInterval * 0.6)); // Reduce by 40%
-        }
-      } 
-      else if (effectivePlacement === "Balkon") {
-        // Ignore rain completely
-        if (heatTier2) {
-           mappedInterval = Math.max(1, Math.floor(p.waterInterval * 0.3)); // Reduce by 70%
-        } else if (heatTier1) {
-           mappedInterval = Math.max(1, Math.floor(p.waterInterval * 0.6)); // Reduce by 40%
-        }
-      }
-
-      // Winter dormancy adjustment
-      let winterDormancy = false;
-      if (isWinterDormancyActive) {
-        winterDormancy = true;
-        // Extend water interval by 50%
-        mappedInterval = Math.round(mappedInterval * 1.5);
-        // Pause fertilizing during dormancy
-        mappedFertilizer = null;
-      }
-
-      return {
-        ...p,
-        frostWarning: (effectivePlacement === "Draußen" || effectivePlacement === "Balkon") ? frostWarning : false,
-        waterInterval: mappedInterval,
-        fertilizerInterval: mappedFertilizer,
-        originalFertilizerInterval: p.fertilizerInterval,
-        winterDormancy,
-      };
-    });
+    const seasonal = resolveSeasonalConfig(config);
+    const mappedPlants = plants.map((p) =>
+      applySeasonalAndWeatherAdjustments(p, {
+        rainTier,
+        heatTier,
+        frostWarning,
+        seasonal,
+      })
+    );
 
     return NextResponse.json(mappedPlants);
   } catch (error) {

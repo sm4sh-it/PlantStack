@@ -118,7 +118,12 @@ export default function PlantRow({
               <Sun size={12} className="text-amber-500 shrink-0" aria-label="Outdoor" />
             )}
             {(plant as any).winterDormancy && (
-              <Snowflake size={12} className="text-sky-500 shrink-0" aria-label={lang === "de" ? "Winterruhe" : "Dormancy"} />
+              <span
+                title={`${lang === "de" ? "Winterruhe" : "Dormancy"}${(plant as any).seasonalFactor ? ` (+${(plant as any).seasonalFactor} %)` : ""}`}
+                className="inline-flex items-center shrink-0"
+              >
+                <Snowflake size={12} className="text-sky-500 shrink-0" aria-label={lang === "de" ? "Winterruhe" : "Dormancy"} />
+              </span>
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-text-muted truncate">

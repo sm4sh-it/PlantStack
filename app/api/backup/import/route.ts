@@ -9,6 +9,7 @@ import {
   resolveSafeUploadPath,
 } from "@/lib/security";
 import { preflightZipCentralDirectory } from "@/lib/zipPreflight";
+import { normalizeSeasonalScope, snapSeasonalFactor } from "@/lib/seasonal";
 
 const MAX_ARCHIVE_FILES = 300;
 const MAX_BACKUP_UPLOAD_SIZE = 150 * 1024 * 1024; // 150 MB
@@ -331,6 +332,18 @@ export async function POST(req: NextRequest) {
         }
 
         if (data.config) {
+          const importedFactor = snapSeasonalFactor(
+            data.config.winterDormancyFactor,
+            Boolean(data.config.winterDormancyEnabled)
+          );
+          const importedScope = normalizeSeasonalScope(
+            data.config.winterDormancyScope
+          );
+          const importedPauseFert =
+            data.config.winterDormancyPauseFertilizer !== undefined
+              ? Boolean(data.config.winterDormancyPauseFertilizer)
+              : true;
+
           await tx.appConfig.upsert({
             where: { id: 1 },
             update: {
@@ -340,7 +353,10 @@ export async function POST(req: NextRequest) {
               latitude: data.config.latitude ?? null,
               longitude: data.config.longitude ?? null,
               locationName: data.config.locationName ?? null,
-              winterDormancyEnabled: Boolean(data.config.winterDormancyEnabled),
+              winterDormancyEnabled: importedFactor > 0,
+              winterDormancyFactor: importedFactor,
+              winterDormancyScope: importedScope,
+              winterDormancyPauseFertilizer: importedPauseFert,
             },
             create: {
               id: 1,
@@ -350,7 +366,10 @@ export async function POST(req: NextRequest) {
               latitude: data.config.latitude ?? null,
               longitude: data.config.longitude ?? null,
               locationName: data.config.locationName ?? null,
-              winterDormancyEnabled: Boolean(data.config.winterDormancyEnabled),
+              winterDormancyEnabled: importedFactor > 0,
+              winterDormancyFactor: importedFactor,
+              winterDormancyScope: importedScope,
+              winterDormancyPauseFertilizer: importedPauseFert,
             },
           });
         }

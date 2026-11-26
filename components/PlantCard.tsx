@@ -223,6 +223,7 @@ export default function PlantCard({
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-surface-subtle text-text-secondary">
                   <Snowflake size={10} className="text-sky-500 shrink-0" />
                   {lang === "de" ? "Winterruhe" : "Dormancy"}
+                  {(plant as any).seasonalFactor ? ` +${(plant as any).seasonalFactor}%` : ""}
                 </span>
               )}
             </div>
