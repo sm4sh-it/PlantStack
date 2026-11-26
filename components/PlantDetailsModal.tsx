@@ -604,63 +604,7 @@ export default function PlantDetailsModal({
     </div>
   );
 
-  // 4. Environment & Location (Cleane Überschrift ohne Klammern & 100% ohne weiße Rahmen)
-  const renderEnvironment = () => (
-    <div>
-      <div className="mb-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
-          {lang === "de" ? "Standort & Umwelt" : "Environment & Location"}
-        </span>
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <div className="p-3 rounded-xl bg-surface-subtle text-center">
-          <Sun className="w-4 h-4 text-care-sun mx-auto mb-1" />
-          <span className="text-[10px] font-bold uppercase text-text-muted">
-            {t("sunlight", lang)}
-          </span>
-          <p className="text-xs font-bold text-text-primary mt-0.5 truncate">
-            {['full_sun', 'partial_shade', 'shade'].includes(plant.sunlightInfo || "")
-              ? t(plant.sunlightInfo as any, lang as Locale)
-              : plant.sunlightInfo || (lang === "de" ? "Hell, indirekt" : "Bright, indirect")}
-          </p>
-        </div>
-
-        <div className="p-3 rounded-xl bg-surface-subtle text-center">
-          <Thermometer className="w-4 h-4 text-emerald-500 mx-auto mb-1" />
-          <span className="text-[10px] font-bold uppercase text-text-muted">
-            {t("temperature", lang)}
-          </span>
-          <p className="text-xs font-bold text-text-primary mt-0.5">
-            {extraInfo?.min_temp && extraInfo?.max_temp
-              ? `${extraInfo.min_temp}–${extraInfo.max_temp} °C`
-              : "18–24 °C"}
-          </p>
-        </div>
-
-        <div className="p-3 rounded-xl bg-surface-subtle text-center">
-          <CloudRain className="w-4 h-4 text-care-water mx-auto mb-1" />
-          <span className="text-[10px] font-bold uppercase text-text-muted">
-            {t("humidity", lang)}
-          </span>
-          <p className="text-xs font-bold text-text-primary mt-0.5">
-            {extraInfo?.min_env_humid ? `> ${extraInfo.min_env_humid} %` : "> 50 %"}
-          </p>
-        </div>
-
-        <div className="p-3 rounded-xl bg-surface-subtle text-center">
-          <Scissors className="w-4 h-4 text-brand mx-auto mb-1" />
-          <span className="text-[10px] font-bold uppercase text-text-muted">
-            {t("pruning", lang)}
-          </span>
-          <p className="text-xs font-bold text-text-primary mt-0.5 truncate">
-            {plant.pruningInfo || (lang === "de" ? "Nach Bedarf" : "As needed")}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
-  // 5. Notes (Schlanke typografische Zitatleiste)
+  // 4. Notes (Schlanke typografische Zitatleiste)
   const renderNotes = () => {
     if (!plant.notes) return null;
     return (
@@ -676,33 +620,139 @@ export default function PlantDetailsModal({
     );
   };
 
-  // 6. Botanical Insights (Ausführliche Wissens-Karten ohne Duplikate zur 4er-Kompaktleiste)
+  // 5. Botanische Hinweise (Vereinte Standort-, Klima- & Pflegehinweise ohne Button-Optik und ohne Duplikate)
   const renderBotanical = () => {
-    const hasBotanicalInfo = Boolean(
-      plant.wateringInfo ||
-      extraInfo?.pet_toxic !== undefined ||
-      extraInfo?.difficulty ||
-      extraInfo?.propagation ||
-      extraInfo?.sowing_indoors_month ||
-      extraInfo?.planting_month ||
-      extraInfo?.sowing_outdoors_month ||
-      (extraInfo?.good_neighbors && extraInfo.good_neighbors.length > 0) ||
-      (extraInfo?.bad_neighbors && extraInfo.bad_neighbors.length > 0) ||
-      (extraInfo?.min_light_lux && extraInfo?.max_light_lux) ||
-      (extraInfo?.min_soil_moist && extraInfo?.max_soil_moist && !plant.wateringInfo?.includes(String(extraInfo.min_soil_moist))) ||
-      (plant.pruningInfo && plant.pruningInfo.length > 15)
+    const isLegacyOpbSunlight = Boolean(
+      plant.sunlightInfo &&
+        (plant.sunlightInfo.includes("Lux") || plant.sunlightInfo.includes("°C"))
     );
+    const isRawSunlightEnum = ["full_sun", "partial_shade", "shade"].includes(
+      plant.sunlightInfo || ""
+    );
+    const hasLuxRange = Boolean(extraInfo?.min_light_lux && extraInfo?.max_light_lux);
+    const lightSpecValue = hasLuxRange
+      ? `${extraInfo.min_light_lux.toLocaleString()}–${extraInfo.max_light_lux.toLocaleString()} Lux`
+      : extraInfo?.min_light_lux
+        ? `> ${extraInfo.min_light_lux.toLocaleString()} Lux`
+        : isRawSunlightEnum
+          ? t(plant.sunlightInfo as any, lang as Locale)
+          : !isLegacyOpbSunlight && plant.sunlightInfo && plant.sunlightInfo.length <= 24
+            ? plant.sunlightInfo
+            : lang === "de"
+              ? "Hell, indirekt"
+              : "Bright, indirect";
 
-    if (!hasBotanicalInfo) return null;
+    // Nur vollständige Licht-/Standortbeschreibung anzeigen, wenn sie nicht bereits 1:1 im Spec-Wert steht
+    const descriptiveSunlight =
+      plant.sunlightInfo &&
+      !isLegacyOpbSunlight &&
+      !isRawSunlightEnum &&
+      plant.sunlightInfo !== lightSpecValue
+        ? plant.sunlightInfo
+        : isRawSunlightEnum && hasLuxRange
+          ? t(plant.sunlightInfo as any, lang as Locale)
+          : null;
+
+    const hasSoilRange = Boolean(extraInfo?.min_soil_moist && extraInfo?.max_soil_moist);
+    const isLegacyOpbWatering = Boolean(
+      plant.wateringInfo &&
+        hasSoilRange &&
+        plant.wateringInfo.includes(String(extraInfo.min_soil_moist))
+    );
+    const descriptiveWatering =
+      plant.wateringInfo && !isLegacyOpbWatering ? plant.wateringInfo : null;
+
+    const soilOrWaterSpecLabel = hasSoilRange
+      ? lang === "de"
+        ? "Bodenfeuchte"
+        : "Soil Moisture"
+      : t("water", lang);
+    const soilOrWaterSpecValue = hasSoilRange
+      ? `${extraInfo.min_soil_moist}–${extraInfo.max_soil_moist} %`
+      : `${plantData.waterInterval} ${t("days", lang)}`;
 
     return (
-      <div className="space-y-2.5 pt-2 border-t border-border-hairline">
-        <h4 className="text-xs font-bold text-text-primary flex items-center gap-1.5">
+      <div className="space-y-3 pt-2 border-t border-border-hairline">
+        <div className="flex items-center gap-1.5">
           <Leaf size={14} className="text-brand" />
-          <span>{lang === "de" ? "Botanische Hinweise" : "Botanical Insights"}</span>
-        </h4>
+          <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
+            {lang === "de" ? "Botanische Hinweise" : "Botanical Insights"}
+          </span>
+        </div>
 
+        {/* Flache, rein informative Kennzahlen-Leiste (bewusst ohne Button-/Karten-Optik) */}
+        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2.5 py-2.5 border-y border-border-hairline text-left">
+          <div className="space-y-0.5">
+            <dt className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+              <Sun size={12} className="text-care-sun shrink-0" />
+              <span>{t("sunlight", lang)}</span>
+            </dt>
+            <dd className="text-xs font-semibold text-text-primary tabular">
+              {lightSpecValue}
+            </dd>
+          </div>
+
+          <div className="space-y-0.5">
+            <dt className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+              <Thermometer size={12} className="text-emerald-500 shrink-0" />
+              <span>{t("temperature", lang)}</span>
+            </dt>
+            <dd className="text-xs font-semibold text-text-primary tabular">
+              {extraInfo?.min_temp !== undefined && extraInfo?.max_temp !== undefined
+                ? `${extraInfo.min_temp}–${extraInfo.max_temp} °C`
+                : "18–24 °C"}
+            </dd>
+          </div>
+
+          <div className="space-y-0.5">
+            <dt className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+              <CloudRain size={12} className="text-care-water shrink-0" />
+              <span>{t("humidity", lang)}</span>
+            </dt>
+            <dd className="text-xs font-semibold text-text-primary tabular">
+              {extraInfo?.min_env_humid ? `> ${extraInfo.min_env_humid} %` : "> 50 %"}
+            </dd>
+          </div>
+
+          <div className="space-y-0.5">
+            <dt className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+              <Droplet size={12} className="text-care-water shrink-0" />
+              <span>{soilOrWaterSpecLabel}</span>
+            </dt>
+            <dd className="text-xs font-semibold text-text-primary tabular">
+              {soilOrWaterSpecValue}
+            </dd>
+          </div>
+        </dl>
+
+        {/* Ergänzende Pflegetexte & Botanik-Details ohne Duplikate */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          {descriptiveSunlight && (
+            <div className="flex gap-2">
+              <Sun size={14} className="text-care-sun shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">
+                  {lang === "de" ? "Standort & Licht:" : "Light & Placement:"}
+                </span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
+                  {descriptiveSunlight}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {descriptiveWatering && (
+            <div className="flex gap-2">
+              <Droplet size={14} className="text-care-water shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-text-primary">{t("conditions", lang as Locale)}:</span>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
+                  {descriptiveWatering}
+                </p>
+              </div>
+            </div>
+          )}
+
           {extraInfo?.pet_toxic !== undefined && (
             <div className="flex gap-2">
               {extraInfo.pet_toxic ? (
@@ -716,8 +766,12 @@ export default function PlantDetailsModal({
                 </span>
                 <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
                   {extraInfo.pet_toxic
-                    ? (extraInfo.toxicity_notes || (lang === "de" ? "⚠️ Giftig für Katzen & Hunde" : "⚠️ Toxic to pets"))
-                    : (extraInfo.toxicity_notes || (lang === "de" ? "🐾 Ungiftig für Katzen & Hunde (ASPCA)" : "🐾 Non-toxic to pets"))}
+                    ? extraInfo.toxicity_notes ||
+                      (lang === "de" ? "⚠️ Giftig für Katzen & Hunde" : "⚠️ Toxic to pets")
+                    : extraInfo.toxicity_notes ||
+                      (lang === "de"
+                        ? "🐾 Ungiftig für Katzen & Hunde (ASPCA)"
+                        : "🐾 Non-toxic to pets")}
                 </p>
               </div>
             </div>
@@ -732,10 +786,16 @@ export default function PlantDetailsModal({
                 </span>
                 <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
                   {extraInfo.difficulty === "easy"
-                    ? (lang === "de" ? "Pflegeleicht (ideal für Einsteiger)" : "Easy (beginner-friendly)")
+                    ? lang === "de"
+                      ? "Pflegeleicht (ideal für Einsteiger)"
+                      : "Easy (beginner-friendly)"
                     : extraInfo.difficulty === "medium"
-                    ? (lang === "de" ? "Mittel (etwas Aufmerksamkeit nötig)" : "Medium (moderate care)")
-                    : (lang === "de" ? "Anspruchsvoll (für erfahrene Pflanzenfreunde)" : "Hard (experienced plant care)")}
+                      ? lang === "de"
+                        ? "Mittel (etwas Aufmerksamkeit nötig)"
+                        : "Medium (moderate care)"
+                      : lang === "de"
+                        ? "Anspruchsvoll (für erfahrene Pflanzenfreunde)"
+                        : "Hard (experienced plant care)"}
                 </p>
               </div>
             </div>
@@ -755,52 +815,16 @@ export default function PlantDetailsModal({
             </div>
           )}
 
-          {plant.wateringInfo && (
-            <div className="flex gap-2">
-              <Droplet size={14} className="text-care-water shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold text-text-primary">{t("conditions", lang as Locale)}:</span>
-                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">{plant.wateringInfo}</p>
-              </div>
-            </div>
-          )}
-
-          {extraInfo?.min_light_lux && extraInfo?.max_light_lux && (
-            <div className="flex gap-2">
-              <Sun size={14} className="text-care-sun shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold text-text-primary">
-                  {lang === "de" ? "Lichtstärke (Lux):" : "Light level (Lux):"}
-                </span>
-                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
-                  {extraInfo.min_light_lux.toLocaleString()} – {extraInfo.max_light_lux.toLocaleString()} Lux
-                </p>
-              </div>
-            </div>
-          )}
-
-          {extraInfo?.min_soil_moist && extraInfo?.max_soil_moist && !plant.wateringInfo?.includes(String(extraInfo.min_soil_moist)) && (
-            <div className="flex gap-2">
-              <Droplet size={14} className="text-care-water shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold text-text-primary">
-                  {lang === "de" ? "Bodenfeuchte:" : "Soil Moisture:"}
-                </span>
-                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
-                  {extraInfo.min_soil_moist} – {extraInfo.max_soil_moist} %
-                </p>
-              </div>
-            </div>
-          )}
-
-          {plant.pruningInfo && plant.pruningInfo.length > 15 && (
+          {plant.pruningInfo && (
             <div className="flex gap-2">
               <Scissors size={14} className="text-brand shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-text-primary">
                   {lang === "de" ? "Beschnitt & Schnitt:" : "Pruning details:"}
                 </span>
-                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">{plant.pruningInfo}</p>
+                <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
+                  {plant.pruningInfo}
+                </p>
               </div>
             </div>
           )}
@@ -1142,7 +1166,6 @@ export default function PlantDetailsModal({
               <>
                 {renderCareRoutines()}
                 {renderOccasionalCare()}
-                {renderEnvironment()}
                 {renderBotanical()}
                 {renderNotes()}
               </>
@@ -1172,7 +1195,6 @@ export default function PlantDetailsModal({
               {renderPlantIdentity(false)}
               {renderCareRoutines()}
               {renderOccasionalCare()}
-              {renderEnvironment()}
               {renderBotanical()}
               {renderNotes()}
               {renderCareLog()}

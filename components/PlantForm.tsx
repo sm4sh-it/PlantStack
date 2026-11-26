@@ -455,12 +455,14 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
             </div>
 
             {/* 2. Basisdaten (Pflanzenname & Vorlagen-Suche) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               {/* Name Input (44px) - Freier Rufname */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary">
-                  {lang === "de" ? "Pflanzenname *" : "Plant Name *"}
-                </label>
+                <div className="h-5 flex items-center">
+                  <label className="text-xs font-bold text-text-primary leading-none">
+                    {lang === "de" ? "Pflanzenname *" : "Plant Name *"}
+                  </label>
+                </div>
                 <input
                   required
                   type="text"
@@ -469,7 +471,7 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={lang === "de" ? "z. B. Monstera im Büro, Frieda..." : "e.g. Office Monstera..."}
                 />
-                <p className="text-[11px] text-text-muted">
+                <p className="text-[11px] text-text-muted px-0.5">
                   {lang === "de"
                     ? "Individueller Rufname oder Standort deiner Pflanze"
                     : "Custom nickname or location for your plant"}
@@ -478,15 +480,10 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
 
               {/* Plant Search & Preset Dropdown (44px) */}
               <div className="space-y-1.5 relative">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-text-primary">
+                <div className="h-5 flex items-center">
+                  <label className="text-xs font-bold text-text-primary leading-none">
                     {lang === "de" ? "Art / Vorlage finden (optional)" : "Species / Care Template (optional)"}
                   </label>
-                  {formData.scientificName && (
-                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                      {lang === "de" ? "Vorlage aktiv" : "Template active"}
-                    </span>
-                  )}
                 </div>
                 <div className="flex gap-2 relative">
                   <div className="relative flex-1">
@@ -537,7 +534,7 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                     type="button"
                     onClick={handleSearchOpenPlantbook}
                     disabled={searching || !formData.searchAlias.trim()}
-                    className="h-11 px-3.5 rounded-lg bg-surface-subtle hover:bg-brand hover:text-white border border-border-strong text-text-secondary hover:border-brand transition-colors shrink-0 flex items-center justify-center cursor-pointer disabled:opacity-50"
+                    className="h-11 w-11 rounded-lg bg-surface-subtle hover:bg-brand hover:text-white border border-border-strong text-text-secondary hover:border-brand transition-colors shrink-0 flex items-center justify-center cursor-pointer disabled:opacity-50"
                     title={lang === "de" ? "In Datenbank suchen" : "Search in Database"}
                   >
                     {searching ? <Loader2 size={17} className="animate-spin" /> : <Search size={17} />}
@@ -602,15 +599,16 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
 
                 {/* Friendly hint when no template found */}
                 {searchInfoMessage && !searching && (
-                  <p className="text-[11px] text-text-muted mt-1 px-1">
+                  <p className="text-[11px] text-text-muted px-0.5">
                     {searchInfoMessage}
                   </p>
                 )}
 
                 {/* Scientific Name Confirmation Badge */}
                 {formData.scientificName && (
-                  <p className="text-xs text-brand font-medium italic mt-1 px-1 flex items-center gap-1">
-                    <Check size={13} className="text-emerald-500" /> {formData.scientificName}
+                  <p className="text-[11px] text-brand font-medium italic px-0.5 flex items-center gap-1">
+                    <Check size={13} className="text-emerald-500 shrink-0" />
+                    <span className="truncate">{formData.scientificName}</span>
                   </p>
                 )}
               </div>
@@ -618,11 +616,11 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
 
             {/* 3. Standort & Umgebung Grid */}
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 {/* Left: Umgebung (Placement) */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-1 group relative">
-                    <label className="text-xs font-bold text-text-primary">
+                  <div className="h-5 flex items-center gap-1.5 group relative">
+                    <label className="text-xs font-bold text-text-primary leading-none">
                       {t("environmentAndRoom", lang)} *
                     </label>
                     <div className="relative flex items-center cursor-help">
@@ -657,9 +655,11 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
 
                 {/* Right: Raum (Location) */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-text-primary">
-                    {t("rooms", lang)} *
-                  </label>
+                  <div className="h-5 flex items-center">
+                    <label className="text-xs font-bold text-text-primary leading-none">
+                      {t("rooms", lang)} *
+                    </label>
+                  </div>
                   {addingLocation ? (
                     <div className="flex gap-1.5">
                       <input
@@ -726,10 +726,10 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                 </div>
               </div>
 
-              {/* Klassifizierung */}
+              {/* Klassifizierung (Bündig auf voller Formularbreite) */}
               <div className="space-y-1.5">
-                <div className="flex items-center gap-1 group relative">
-                  <label className="text-xs font-bold text-text-primary">
+                <div className="h-5 flex items-center gap-1.5 group relative">
+                  <label className="text-xs font-bold text-text-primary leading-none">
                     {t("classification", lang)} *
                   </label>
                   <div className="relative flex items-center cursor-help">
@@ -740,7 +740,7 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
                   </div>
                 </div>
 
-                <div className="flex bg-surface-subtle p-1 rounded-lg w-full md:w-1/2 h-11 border border-border-strong">
+                <div className="flex bg-surface-subtle p-1 rounded-lg w-full h-11 border border-border-strong">
                   {["Zierpflanze", "Nutzpflanze"].map((tVal) => (
                     <button
                       key={tVal}

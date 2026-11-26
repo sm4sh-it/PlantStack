@@ -439,15 +439,6 @@ export default function Dashboard() {
               <List size={15} />
             </button>
           </div>
-
-          {/* Add Plant Button */}
-          <button 
-            onClick={() => { setEditingPlant(null); setShowForm(true); }}
-            className="bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-lg shadow-xs active:scale-95 transition-all flex items-center gap-1.5 shrink-0 font-bold text-xs cursor-pointer"
-          >
-            <Plus size={16} />
-            <span className="hidden md:inline">{t('addPlant', lang)}</span>
-          </button>
         </div>
       </div>
 

@@ -18,6 +18,7 @@ import {
   PolarRadiusAxis,
   Radar,
   ReferenceLine,
+  LabelList,
 } from "recharts";
 import {
   Droplet,
@@ -37,7 +38,6 @@ import {
   Crown,
   Skull,
   MoonStar,
-  Activity,
   Castle,
   Home,
   Sprout,
@@ -337,16 +337,18 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
       {/* 2. Badge & Gamification Sektion */}
       <section className="bg-surface rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 border border-border-hairline card-elevation space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-text-primary">
-              <Trophy className="text-amber-500" size={20} />
-              {lang === "de" ? "Abzeichen & Meilensteine" : "Badges & Milestones"}
-            </h2>
-            <p className="text-xs text-text-muted mt-0.5">
-              {lang === "de"
-                ? "Schalte Stufen-Abzeichen frei und entdecke geheime botanische Kombinationen!"
-                : "Unlock tiered badges and discover secret botanical combinations!"}
-            </p>
+          <div className="flex items-center gap-3">
+            <StatHeaderPin src="/images/badges/stat_badges.webp" />
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-text-primary">
+                {lang === "de" ? "Abzeichen & Meilensteine" : "Badges & Milestones"}
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5">
+                {lang === "de"
+                  ? "Schalte Stufen-Abzeichen frei und entdecke geheime botanische Kombinationen!"
+                  : "Unlock tiered badges and discover secret botanical combinations!"}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -548,93 +550,153 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
         </div>
       </section>
 
-      {/* 3. Recharts-Diagramme: Horizontale Balken mit abgerundeten Enden & schwebenden Tooltips */}
+      {/* 3. Recharts-Diagramme: Schienen-Balken (Variante A) & direkte Werte */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
         {/* Most Thirsty Plants Bar Chart */}
         <div className="bg-surface p-5 sm:p-6 rounded-2xl md:rounded-3xl border border-border-hairline card-elevation h-96 flex flex-col">
-          <h3 className="text-sm sm:text-base font-bold text-text-primary mb-4">
-            {t("theThirstyOnes", lang)}
-          </h3>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <StatHeaderPin src="/images/badges/stat_thirsty.webp" size="sm" />
+              <h3 className="text-sm sm:text-base font-bold text-text-primary truncate">
+                {t("theThirstyOnes", lang)}
+              </h3>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-care-water-bg text-care-water shrink-0">
+              Top 5
+            </span>
+          </div>
           <div className="flex-1 w-full min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={thirstyData}
-                layout="vertical"
-                margin={{ top: 0, right: 15, left: 40, bottom: 0 }}
-              >
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "currentColor" }}
-                  className="text-xs text-text-secondary font-medium"
-                  width={110}
-                />
-                <Tooltip cursor={{ fill: "var(--border-hairline)" }} content={<CustomBarTooltip />} />
-                <Bar dataKey="watered" fill="var(--care-water)" radius={[0, 6, 6, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
+            {thirstyData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={thirstyData}
+                  layout="vertical"
+                  margin={{ top: 4, right: 44, left: 6, bottom: 4 }}
+                >
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    axisLine={false}
+                    tickLine={false}
+                    width={128}
+                    tick={(props: any) => <ChartBarTick {...props} />}
+                  />
+                  <Tooltip cursor={{ fill: "var(--border-hairline)" }} content={<CustomBarTooltip />} />
+                  <Bar
+                    dataKey="watered"
+                    fill="var(--care-water)"
+                    background={{ fill: "var(--bg-surface-subtle)", radius: 6 }}
+                    radius={[6, 6, 6, 6]}
+                    barSize={20}
+                  >
+                    <LabelList
+                      dataKey="watered"
+                      position="right"
+                      formatter={(val: any) => `${val}×`}
+                      style={{ fill: "var(--care-water)", fontSize: 11, fontWeight: 700 }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-text-muted italic">
+                {lang === "de" ? "Noch keine Gießdaten vorhanden." : "No watering data yet."}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Top Origins Bar Chart */}
         <div className="bg-surface p-5 sm:p-6 rounded-2xl md:rounded-3xl border border-border-hairline card-elevation h-96 flex flex-col">
-          <h3 className="text-sm sm:text-base font-bold text-text-primary mb-4">
-            {t("topOrigins", lang)}
-          </h3>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <StatHeaderPin src="/images/badges/stat_origins.webp" size="sm" />
+              <h3 className="text-sm sm:text-base font-bold text-text-primary truncate">
+                {t("topOrigins", lang)}
+              </h3>
+            </div>
+            {uniqueOriginsCount > 0 && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-subtle text-brand shrink-0 tabular">
+                {uniqueOriginsCount} {lang === "de" ? "Regionen" : "Regions"}
+              </span>
+            )}
+          </div>
           <div className="flex-1 w-full min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={stats.topOrigins}
-                layout="vertical"
-                margin={{ top: 0, right: 15, left: 70, bottom: 0 }}
-              >
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "currentColor" }}
-                  className="text-xs text-text-secondary font-medium"
-                  width={90}
-                />
-                <Tooltip cursor={{ fill: "var(--border-hairline)" }} content={<CustomOriginTooltip />} />
-                <Bar dataKey="value" fill="var(--brand)" radius={[0, 6, 6, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
+            {stats.topOrigins.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={stats.topOrigins}
+                  layout="vertical"
+                  margin={{ top: 4, right: 40, left: 6, bottom: 4 }}
+                >
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    axisLine={false}
+                    tickLine={false}
+                    width={120}
+                    tick={(props: any) => <ChartBarTick {...props} />}
+                  />
+                  <Tooltip cursor={{ fill: "var(--border-hairline)" }} content={<CustomOriginTooltip />} />
+                  <Bar
+                    dataKey="value"
+                    fill="var(--brand)"
+                    background={{ fill: "var(--bg-surface-subtle)", radius: 6 }}
+                    radius={[6, 6, 6, 6]}
+                    barSize={20}
+                  >
+                    <LabelList
+                      dataKey="value"
+                      position="right"
+                      style={{ fill: "var(--brand)", fontSize: 11, fontWeight: 700 }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-text-muted italic">
+                {lang === "de" ? "Noch keine Herkunftsdaten hinterlegt." : "No origin data available yet."}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* 4. Garden Vibe & Matrix */}
+      {/* 4. Garden Vibe & Matrix (Ruhige Geometrie, konturfreie Typografie) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*]:focus:outline-none">
         {/* Scatter Matrix */}
         <section className="bg-surface rounded-2xl md:rounded-3xl p-5 sm:p-6 border border-border-hairline card-elevation aspect-square flex flex-col relative overflow-hidden">
-          <h2 className="text-sm sm:text-base font-bold text-text-primary mb-4 z-10 relative">
-            {t("survivalCoordinates", lang)}
-          </h2>
+          <div className="flex items-center gap-2.5 mb-3 z-10 relative">
+            <StatHeaderPin src="/images/badges/stat_coordinates.webp" size="sm" />
+            <h2 className="text-sm sm:text-base font-bold text-text-primary">
+              {t("survivalCoordinates", lang)}
+            </h2>
+          </div>
           <div className="flex-1 w-full min-h-0 relative z-0">
             <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <ScatterChart margin={{ top: 24, right: 24, bottom: 24, left: 24 }}>
                 <XAxis type="number" dataKey="x" domain={[0, 4]} hide />
                 <YAxis type="number" dataKey="y" domain={[0, 30]} hide />
                 <ZAxis range={[60, 60]} />
                 <ReferenceLine x={2} stroke="currentColor" strokeDasharray="3 3" className="opacity-15" />
                 <ReferenceLine y={15} stroke="currentColor" strokeDasharray="3 3" className="opacity-15" />
                 <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: "3 3" }} />
-                <Scatter name="Plants" data={stats.matrixData} fill="var(--brand)" />
+                <Scatter
+                  name="Plants"
+                  data={stats.matrixData}
+                  shape={<ScatterPointDot />}
+                />
               </ScatterChart>
             </ResponsiveContainer>
 
-            {/* Edge Labels */}
-            <div className="absolute top-2 w-full text-center text-[10px] text-text-muted font-bold uppercase tracking-wider pointer-events-none leading-tight">
-              {t("waterJunkie", lang)}
+            {/* Clean Borderless Edge Labels */}
+            <div className="absolute top-1.5 w-full text-center text-[10px] text-text-muted font-bold uppercase tracking-wider pointer-events-none leading-tight">
+              {t("waterJunkie", lang).replace(/\n/g, " ")}
             </div>
-            <div className="absolute bottom-2 w-full text-center text-[10px] text-text-muted font-bold uppercase tracking-wider pointer-events-none leading-tight">
-              {t("cactusVibes", lang)}
+            <div className="absolute bottom-1.5 w-full text-center text-[10px] text-text-muted font-bold uppercase tracking-wider pointer-events-none leading-tight">
+              {t("cactusVibes", lang).replace(/\n/g, " ")}
             </div>
             <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-text-muted font-bold uppercase tracking-wider whitespace-nowrap origin-center pointer-events-none">
               {t("shadeDweller", lang)}
@@ -647,9 +709,12 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
 
         {/* Radar Chart */}
         <section className="bg-surface rounded-2xl md:rounded-3xl p-5 sm:p-6 border border-border-hairline card-elevation aspect-square flex flex-col relative overflow-hidden">
-          <h2 className="text-sm sm:text-base font-bold text-text-primary mb-4">
-            {t("theGardenVibe", lang)}
-          </h2>
+          <div className="flex items-center gap-2.5 mb-3">
+            <StatHeaderPin src="/images/badges/stat_vibe.webp" size="sm" />
+            <h2 className="text-sm sm:text-base font-bold text-text-primary">
+              {t("theGardenVibe", lang)}
+            </h2>
+          </div>
           <div className="flex-1 w-full min-h-0 relative z-0">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart
@@ -682,100 +747,75 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
                   className="text-text-secondary font-semibold tracking-wide"
                 />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar name="Vibe" dataKey="A" stroke="var(--brand)" strokeWidth={2} fill="var(--brand)" fillOpacity={0.3} />
+                <Radar
+                  name="Vibe"
+                  dataKey="A"
+                  stroke="var(--brand)"
+                  strokeWidth={2}
+                  fill="var(--brand)"
+                  fillOpacity={0.28}
+                  dot={false}
+                  activeDot={{ r: 4, fill: "var(--brand)", stroke: "var(--surface)", strokeWidth: 1.5 }}
+                />
               </RadarChart>
             </ResponsiveContainer>
           </div>
         </section>
       </div>
 
-      {/* 5. Activities & Monatsübersicht (Strikte Pflege-Farbkontinuität & Soft-Fills) */}
+      {/* 5. Activities & Monatsübersicht (Strikte Pflege-Farbkontinuität, ohne Kreise & ohne Emojis) */}
       <section className="bg-surface rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 border border-border-hairline card-elevation space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold flex items-center gap-2 text-text-primary">
-              <Activity className="text-brand" size={20} />
-              {t("activities", lang)}
-            </h2>
-            <p className="text-xs text-text-muted mt-0.5">
-              {lang === "de"
-                ? "Pflegeaktivitäten im Monats- und Jahresverlauf"
-                : "Care actions over the current month and year"}
-            </p>
+          <div className="flex items-center gap-3">
+            <StatHeaderPin src="/images/badges/stat_activities.webp" />
+            <div>
+              <h2 className="text-lg font-bold text-text-primary">
+                {t("activities", lang)}
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5">
+                {lang === "de"
+                  ? "Pflegeaktivitäten im Monats- und Jahresverlauf"
+                  : "Care actions over the current month and year"}
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 text-xs font-semibold bg-surface-subtle px-3.5 py-2 rounded-xl border border-border-hairline tabular">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold bg-surface-subtle px-3.5 py-2 rounded-xl border border-border-hairline tabular">
             <span className="text-text-muted">{t("yearlyTotal", lang)}</span>
-            <span className="text-care-water font-bold">{stats.eventSummary.yearWater} 💧</span>
-            <span className="text-care-fertilizer font-bold">{stats.eventSummary.yearFertilize} 🧪</span>
-            <span className="text-care-bug font-bold">{stats.eventSummary.yearBug || 0} 🌿</span>
-            <span className="text-care-fungus font-bold">{stats.eventSummary.yearFungus || 0} ✨</span>
-            <span className="text-brand font-bold">{stats.eventSummary.yearCreate} 🌱</span>
-            <span className="text-text-muted">{stats.eventSummary.yearArchive} 💀</span>
+            {[
+              { key: "water", value: stats.eventSummary.yearWater, title: t("water", lang), color: "text-care-water", icon: <Droplet size={13} /> },
+              { key: "fert", value: stats.eventSummary.yearFertilize, title: t("fertilize", lang), color: "text-care-fertilizer", icon: <FlaskConical size={13} /> },
+              { key: "bug", value: stats.eventSummary.yearBug || 0, title: t("bugTreatment", lang), color: "text-care-bug", icon: <BugOff size={13} /> },
+              { key: "fungus", value: stats.eventSummary.yearFungus || 0, title: t("fungusTreatment", lang), color: "text-care-fungus", icon: <SprayCan size={13} /> },
+              { key: "create", value: stats.eventSummary.yearCreate, title: lang === "de" ? "Neu gepflanzt" : "New planted", color: "text-brand", icon: <Sprout size={13} /> },
+              { key: "archive", value: stats.eventSummary.yearArchive, title: lang === "de" ? "Archiviert" : "Archived", color: "text-text-muted", icon: <Ghost size={13} /> },
+            ].map((item) => (
+              <span key={item.key} className={`inline-flex items-center gap-1 ${item.color} font-bold`} title={item.title}>
+                {item.value}
+                {item.icon}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Monatskacheln mit 100% borderless Soft-Fills */}
+        {/* Monatskacheln: 100% borderless Soft-Fills mit direkten Icons ohne Kreisrahmen */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {/* Wasser */}
-          <div className="p-4 bg-care-water-bg rounded-xl">
-            <p className="text-xs text-care-water font-semibold mb-1 flex items-center gap-1">
-              <Droplet size={13} /> {t("wateredMonth", lang)}
-            </p>
-            <p className="text-2xl font-extrabold tabular text-care-water">
-              {stats.eventSummary.monthWater}
-            </p>
-          </div>
-
-          {/* Dünger */}
-          <div className="p-4 bg-care-fertilizer-bg rounded-xl">
-            <p className="text-xs text-care-fertilizer font-semibold mb-1 flex items-center gap-1">
-              <FlaskConical size={13} /> {t("fertilizedMonth", lang)}
-            </p>
-            <p className="text-2xl font-extrabold tabular text-care-fertilizer">
-              {stats.eventSummary.monthFertilize}
-            </p>
-          </div>
-
-          {/* Bekämpfen */}
-          <div className="p-4 bg-care-bug-bg rounded-xl">
-            <p className="text-xs text-care-bug font-semibold mb-1 flex items-center gap-1">
-              <BugOff size={13} /> {lang === "de" ? "Bekämpft (Monat)" : "Pest (Month)"}
-            </p>
-            <p className="text-2xl font-extrabold tabular text-care-bug">
-              {stats.eventSummary.monthBug || 0}
-            </p>
-          </div>
-
-          {/* Pilzschutz */}
-          <div className="p-4 bg-care-fungus-bg rounded-xl">
-            <p className="text-xs text-care-fungus font-semibold mb-1 flex items-center gap-1">
-              <SprayCan size={13} /> {lang === "de" ? "Pilzschutz (Monat)" : "Fungus (Month)"}
-            </p>
-            <p className="text-2xl font-extrabold tabular text-care-fungus">
-              {stats.eventSummary.monthFungus || 0}
-            </p>
-          </div>
-
-          {/* Neu eingepflanzt */}
-          <div className="p-4 bg-brand-subtle rounded-xl">
-            <p className="text-xs text-brand font-semibold mb-1 flex items-center gap-1">
-              <Leaf size={13} /> {t("newPlantedMonth", lang)}
-            </p>
-            <p className="text-2xl font-extrabold tabular text-brand">
-              {stats.eventSummary.monthCreate}
-            </p>
-          </div>
-
-          {/* Archiviert */}
-          <div className="p-4 bg-surface-subtle rounded-xl">
-            <p className="text-xs text-text-muted font-semibold mb-1 flex items-center gap-1">
-              <Ghost size={13} /> {t("archivedMonth", lang)}
-            </p>
-            <p className="text-2xl font-extrabold tabular text-text-secondary">
-              {stats.eventSummary.monthArchive}
-            </p>
-          </div>
+          {[
+            { key: "water", label: t("wateredMonth", lang), value: stats.eventSummary.monthWater, bg: "bg-care-water-bg", labelColor: "text-care-water", valueColor: "text-care-water", icon: <Droplet size={13} /> },
+            { key: "fert", label: t("fertilizedMonth", lang), value: stats.eventSummary.monthFertilize, bg: "bg-care-fertilizer-bg", labelColor: "text-care-fertilizer", valueColor: "text-care-fertilizer", icon: <FlaskConical size={13} /> },
+            { key: "bug", label: lang === "de" ? "Bekämpft (Monat)" : "Pest (Month)", value: stats.eventSummary.monthBug || 0, bg: "bg-care-bug-bg", labelColor: "text-care-bug", valueColor: "text-care-bug", icon: <BugOff size={13} /> },
+            { key: "fungus", label: lang === "de" ? "Pilzschutz (Monat)" : "Fungus (Month)", value: stats.eventSummary.monthFungus || 0, bg: "bg-care-fungus-bg", labelColor: "text-care-fungus", valueColor: "text-care-fungus", icon: <SprayCan size={13} /> },
+            { key: "create", label: t("newPlantedMonth", lang), value: stats.eventSummary.monthCreate, bg: "bg-brand-subtle", labelColor: "text-brand", valueColor: "text-brand", icon: <Leaf size={13} /> },
+            { key: "archive", label: t("archivedMonth", lang), value: stats.eventSummary.monthArchive, bg: "bg-surface-subtle", labelColor: "text-text-muted", valueColor: "text-text-secondary", icon: <Ghost size={13} /> },
+          ].map((tile) => (
+            <div key={tile.key} className={`p-4 ${tile.bg} rounded-xl`}>
+              <p className={`text-xs ${tile.labelColor} font-semibold mb-1.5 flex items-center gap-1.5`}>
+                <span className="shrink-0">{tile.icon}</span>
+                <span className="truncate">{tile.label}</span>
+              </p>
+              <p className={`text-2xl font-extrabold tabular ${tile.valueColor}`}>{tile.value}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -788,6 +828,63 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
         />
       )}
     </div>
+  );
+}
+
+function StatHeaderPin({ src, size = "md" }: { src: string; size?: "sm" | "md" }) {
+  const dim = size === "sm" ? "w-8 h-8 sm:w-9 sm:h-9" : "w-9 h-9 sm:w-10 sm:h-10";
+  return (
+    <div className={`${dim} relative shrink-0 select-none`} aria-hidden="true">
+      <Image
+        src={src}
+        alt=""
+        width={48}
+        height={48}
+        className="w-full h-full object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.2)]"
+      />
+    </div>
+  );
+}
+
+function ChartBarTick({
+  x = 0,
+  y = 0,
+  payload,
+}: {
+  x?: number;
+  y?: number;
+  payload?: { value: string };
+}) {
+  const label = payload?.value || "";
+  const truncated = label.length > 16 ? `${label.slice(0, 15)}…` : label;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={-8}
+        y={0}
+        dy={4}
+        textAnchor="end"
+        fill="var(--text-secondary)"
+        className="text-xs font-medium"
+      >
+        {truncated}
+      </text>
+    </g>
+  );
+}
+
+function ScatterPointDot({ cx, cy }: { cx?: number; cy?: number }) {
+  if (typeof cx !== "number" || typeof cy !== "number") return null;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={5}
+      fill="var(--brand)"
+      stroke="var(--surface)"
+      strokeWidth={1.5}
+    />
   );
 }
 
@@ -842,21 +939,21 @@ const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI"];
 
 function getTierStyle(level: number, isMax: boolean = false) {
   if (isMax) {
-    return "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30";
+    return "bg-amber-500/15 text-amber-600 dark:text-amber-400";
   }
   switch (level) {
     case 1:
-      return "bg-amber-900/10 text-amber-700 dark:text-amber-500 border-amber-700/20";
+      return "bg-amber-900/10 text-amber-700 dark:text-amber-500";
     case 2:
-      return "bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-400/25";
+      return "bg-slate-500/10 text-slate-600 dark:text-slate-300";
     case 3:
-      return "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30";
+      return "bg-amber-500/15 text-amber-600 dark:text-amber-400";
     case 4:
-      return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+      return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
     case 5:
-      return "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30";
+      return "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400";
     default:
-      return "bg-brand-subtle text-brand border-brand/20";
+      return "bg-brand-subtle text-brand";
   }
 }
 
@@ -1021,7 +1118,7 @@ function BadgeInspectionModal({
             <p className="text-[11px] text-text-muted mb-2">
               {badge.nextTier.desc}
             </p>
-            <div className="w-full bg-surface h-2 rounded-full overflow-hidden border border-border-hairline/40">
+            <div className="w-full bg-surface h-2 rounded-full overflow-hidden">
               <div
                 className="bg-brand h-full rounded-full transition-all duration-500"
                 style={{ width: `${badge.progress.percent}%` }}
@@ -1121,9 +1218,9 @@ function TieredBadgeCard({
             onInspect?.(modalData);
           }
         }}
-        className="p-4 rounded-xl flex flex-col items-center text-center relative bg-surface-subtle transition-all hover-lift group border border-border-hairline cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className="p-4 rounded-xl flex flex-col items-center text-center relative bg-surface-subtle transition-all hover-lift group cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
-        <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-md z-10 bg-surface text-text-muted border border-border-hairline shadow-2xs">
+        <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-md z-10 bg-surface text-text-muted shadow-2xs">
           {lang === "de" ? "Stufe I Ziel" : "Tier I Goal"}
         </span>
 
@@ -1137,7 +1234,7 @@ function TieredBadgeCard({
               className="w-full h-full object-contain filter grayscale contrast-125 opacity-35 transition-all duration-300 group-hover:opacity-55"
             />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-6 h-6 rounded-full bg-surface flex items-center justify-center shadow-xs border border-border-hairline">
+              <div className="w-6 h-6 rounded-full bg-surface flex items-center justify-center shadow-xs">
                 <Lock size={12} className="text-text-muted" />
               </div>
             </div>
@@ -1153,14 +1250,14 @@ function TieredBadgeCard({
         <p className="text-[10px] text-text-muted leading-tight mt-0.5">{desc}</p>
 
         {/* Progress Bar to unlock Stufe I */}
-        <div className="w-full mt-2.5 pt-2 border-t border-border-hairline/60">
+        <div className="w-full mt-2.5 pt-2 border-t border-border-hairline">
           <div className="flex items-center justify-between text-[9px] text-text-muted font-medium mb-1">
             <span>{lang === "de" ? "Fortschritt" : "Progress"}</span>
             <span className="font-mono tabular font-bold text-brand">
               {progress.current}/{progress.max}
             </span>
           </div>
-          <div className="w-full bg-surface h-1.5 rounded-full overflow-hidden border border-border-hairline/30">
+          <div className="w-full bg-surface h-1.5 rounded-full overflow-hidden">
             <div
               className="bg-brand h-full rounded-full transition-all duration-500"
               style={{ width: `${progress.percent}%` }}
@@ -1190,11 +1287,11 @@ function TieredBadgeCard({
           onInspect?.(modalData);
         }
       }}
-      className="p-4 rounded-xl flex flex-col items-center text-center relative bg-surface-subtle transition-all hover-lift group border border-border-hairline cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      className="p-4 rounded-xl flex flex-col items-center text-center relative bg-surface-subtle transition-all hover-lift group cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >
       {/* Tier Badge Pill */}
       <span
-        className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-md z-10 border shadow-2xs ${tierStyle} flex items-center gap-0.5`}
+        className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-md z-10 shadow-2xs ${tierStyle} flex items-center gap-0.5`}
       >
         {isMaxLevel ? (
           <>
@@ -1228,7 +1325,7 @@ function TieredBadgeCard({
 
       {/* Level-Up Progress to Next Tier or Mastery Celebration */}
       {nextTier ? (
-        <div className="w-full mt-2.5 pt-2 border-t border-border-hairline/60">
+        <div className="w-full mt-2.5 pt-2 border-t border-border-hairline">
           <div className="flex items-center justify-between text-[9px] text-text-muted font-medium mb-1">
             <span className="truncate pr-1">
               {lang === "de"
@@ -1239,7 +1336,7 @@ function TieredBadgeCard({
               {progress.current}/{progress.max}
             </span>
           </div>
-          <div className="w-full bg-surface h-1.5 rounded-full overflow-hidden border border-border-hairline/30">
+          <div className="w-full bg-surface h-1.5 rounded-full overflow-hidden">
             <div
               className="bg-brand h-full rounded-full transition-all duration-500"
               style={{ width: `${progress.percent}%` }}
@@ -1247,7 +1344,7 @@ function TieredBadgeCard({
           </div>
         </div>
       ) : (
-        <div className="w-full mt-2.5 pt-2 border-t border-border-hairline/60 flex items-center justify-center">
+        <div className="w-full mt-2.5 pt-2 border-t border-border-hairline flex items-center justify-center">
           <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-md bg-amber-500/10 flex items-center gap-1">
             <Sparkles size={11} className="text-amber-500" />
             {lang === "de" ? "Meisterstufe erreicht" : "Mastery Reached"}
@@ -1303,7 +1400,7 @@ function BadgeCard({
             onInspect?.(mysteryData);
           }
         }}
-        className="p-4 rounded-xl flex flex-col items-center text-center bg-surface-subtle/60 opacity-80 hover:opacity-100 transition-all duration-300 group hover-lift relative cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand border border-border-hairline/40"
+        className="p-4 rounded-xl flex flex-col items-center text-center bg-surface-subtle/60 opacity-80 hover:opacity-100 transition-all duration-300 group hover-lift relative cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
         {imageSrc ? (
           <div className="w-14 h-14 sm:w-16 sm:h-16 mb-2 flex items-center justify-center transition-transform group-hover:scale-105 duration-300">
@@ -1364,7 +1461,7 @@ function BadgeCard({
             onInspect?.(teaserData);
           }
         }}
-        className="p-4 rounded-xl flex flex-col items-center text-center relative bg-surface-subtle transition-all hover-lift group cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand border border-border-hairline"
+        className="p-4 rounded-xl flex flex-col items-center text-center relative bg-surface-subtle transition-all hover-lift group cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
         <span
           className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.2 rounded z-10 ${
@@ -1385,7 +1482,7 @@ function BadgeCard({
               className="w-full h-full object-contain filter grayscale contrast-125 opacity-35 transition-all duration-300 group-hover:opacity-55"
             />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-6 h-6 rounded-full bg-surface flex items-center justify-center shadow-xs border border-border-hairline">
+              <div className="w-6 h-6 rounded-full bg-surface flex items-center justify-center shadow-xs">
                 <Lock size={12} className="text-text-muted" />
               </div>
             </div>
@@ -1456,7 +1553,7 @@ function BadgeCard({
           onInspect?.(unlockedData);
         }
       }}
-      className="p-4 rounded-xl flex flex-col items-center text-center transition-all bg-surface-subtle hover-lift group cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand relative border border-border-hairline"
+      className="p-4 rounded-xl flex flex-col items-center text-center transition-all bg-surface-subtle hover-lift group cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand relative"
     >
       {imageSrc ? (
         <div

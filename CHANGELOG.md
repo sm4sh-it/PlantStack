@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.9.2] - 2026-11-26
+### Added
+- **Seasonal Watering Adjustment (`lib/seasonal.ts`, `app/settings/page.tsx`)**: Replaced the fixed winter dormancy toggle with a configurable seasonal watering slider (Nov–Feb adjustment factor) persisted in `AppConfig`.
+- **Cached WebP Thumbnails & Bulk Media Optimizer (`/api/settings/optimize-images`, `lib/imageClient.ts`)**: Added client-side photo compression before upload, automatic max-1400px WebP resizing with `ETag` caching, cached thumbnail serving for cards/lists/modal strips, and a one-click optimizer for existing uploads in Settings.
+- **Statistics Section Header Pins (`public/images/badges/stat_*.webp`)**: Added 6 matching Cloisonné enamel header pins across Badges & Milestones, The Thirsty Ones, Top Origins, Survival Coordinates, The Garden Vibe, and Activities.
+
+### Changed & Improved
+- **Statistics Visual Polish & Zero-Outline Fix (`components/StatisticsClient.tsx`)**: Added full-width background tracks (`--bg-surface-subtle`) and direct value labels to horizontal bar charts, replaced system emojis in the yearly activity summary with Lucide icons, and removed inner `border-border-hairline` / invalid `/40` modifiers on badge, teaser, and mystery cards to eliminate bright fallback outlines in dark mode.
+- **Dashboard & Modal Cleanup (`app/page.tsx`, `components/PlantForm.tsx`, `components/PlantDetailsModal.tsx`)**: Removed the duplicate header "Add Plant" button (keeping the dock `+` action), aligned form label spacing, and refined the studio details layout.
+
 ## [3.9.1] - 2026-11-26
 ### Added
 - **Compact Dashboard List View (`components/PlantRow.tsx`, `app/page.tsx`)**: Added a `[Grid | List]` view toggle (`localStorage`-persisted) with slim rows, thumbnail, room badge, 1-click watering, and dynamic secondary care pills (fertilize, pest, fungus) rendered only when due or overdue.
