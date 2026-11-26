@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { t } from "@/lib/i18n";
+import { compressImageForUpload } from "@/lib/imageClient";
 
 type PlantFormProps = {
   initialData?: Plant & { location?: Location; locationType?: string; pruningInfo?: string | null };
@@ -267,15 +268,27 @@ export default function PlantForm({ initialData, lang, onSave, onCancel }: Plant
     let uploadedImagePath = formData.imagePath;
     if (imageFile) {
       const uploadData = new FormData();
-      uploadData.append("file", imageFile);
+      const preparedFile = await compressImageForUpload(imageFile);
+      uploadData.append("file", preparedFile);
       try {
         const upRes = await fetch("/api/upload", { method: "POST", body: uploadData });
-        const upData = await upRes.json();
+        const upData = await upRes.json().catch(() => ({}));
+        if (!upRes.ok) {
+          setErrorMessage(
+            upData.error ||
+              (lang === "de" ? "Foto-Upload fehlgeschlagen" : "Photo upload failed")
+          );
+          setLoading(false);
+          return;
+        }
         if (upData.filename) {
           uploadedImagePath = upData.filename;
         }
       } catch (err) {
         console.error("Upload failed", err);
+        setErrorMessage(lang === "de" ? "Foto-Upload fehlgeschlagen" : "Photo upload failed");
+        setLoading(false);
+        return;
       }
     }
 

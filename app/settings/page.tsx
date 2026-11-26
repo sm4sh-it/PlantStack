@@ -98,7 +98,7 @@ export default function SettingsPage() {
         });
         setMediaError(null);
       } else {
-        const activeLang = conf?.language || lang;
+        const activeLang = conf?.language || "en";
         setMediaError(
           activeLang === "de"
             ? "Medien-Status konnte nicht geladen werden."

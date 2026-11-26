@@ -35,6 +35,7 @@ import Image from "next/image";
 import { t, Locale } from "@/lib/i18n";
 import { cropsData } from "@/lib/crops";
 import { getDaysLeft } from "@/lib/plantCare";
+import { compressImageForUpload } from "@/lib/imageClient";
 
 type PlantDetailsModalProps = {
   plant: Plant & { location?: Location };
@@ -132,14 +133,15 @@ export default function PlantDetailsModal({
   const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append("file", file);
-    if (photoNote.trim()) {
-      formData.append("note", photoNote.trim());
-    }
 
     setUploadingPhoto(true);
     try {
+      const preparedFile = await compressImageForUpload(file);
+      const formData = new FormData();
+      formData.append("file", preparedFile);
+      if (photoNote.trim()) {
+        formData.append("note", photoNote.trim());
+      }
       const res = await fetch(`/api/plants/${plant.id}/photos`, {
         method: "POST",
         body: formData,
@@ -930,7 +932,7 @@ export default function PlantDetailsModal({
               onClick={() => setSelectedPhoto(photo)}
             >
               <Image
-                src={`/api/images/${photo.imagePath}`}
+                src={`/api/images/${photo.imagePath}?variant=thumb`}
                 alt={photo.note || "Plant photo"}
                 fill
                 sizes="96px"
