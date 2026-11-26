@@ -25,6 +25,18 @@ export async function GET(
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
+  const etag = `"${fileStat.size}-${Math.floor(fileStat.mtimeMs)}"`;
+  const ifNoneMatch = request.headers.get("if-none-match");
+  if (ifNoneMatch === etag) {
+    return new NextResponse(null, {
+      status: 304,
+      headers: {
+        ETag: etag,
+        "Cache-Control": "private, max-age=604800, stale-while-revalidate=86400",
+      },
+    });
+  }
+
   const stream = createReadStream(filePath) as any;
 
   // Simple extension-based content type matching
@@ -39,7 +51,8 @@ export async function GET(
       "Content-Type": contentType,
       "Content-Length": fileStat.size.toString(),
       "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "private, no-cache, must-revalidate",
+      ETag: etag,
+      "Cache-Control": "private, max-age=604800, stale-while-revalidate=86400",
     },
   });
 }

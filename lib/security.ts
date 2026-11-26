@@ -4,6 +4,10 @@ import sharp from "sharp";
 
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 export const MAX_IMAGE_INPUT_PIXELS = 268402689; // ~268 MP pixel limit against image bombs
+export const MAX_IMAGE_DIMENSION = 1400;
+export const THUMB_IMAGE_DIMENSION = 480;
+export const WEBP_QUALITY = 80;
+export const THUMB_WEBP_QUALITY = 75;
 export const ALLOWED_IMAGE_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -80,15 +84,22 @@ export function validateUploadedImage(
 }
 
 /**
- * Decodes an uploaded image, applies EXIF orientation via .rotate(), and re-encodes
- * as WebP (which strips EXIF, GPS, IPTC, and XMP metadata by default).
+ * Decodes an uploaded image, applies EXIF orientation via .rotate(), scales down
+ * to at most MAX_IMAGE_DIMENSION px on the longest side, and re-encodes as WebP
+ * (which strips EXIF, GPS, IPTC, and XMP metadata by default).
  */
 export async function sanitizeAndEncodeImage(
   input: Buffer
 ): Promise<{ buffer: Buffer; ext: "webp" }> {
   const output = await sharp(input, { limitInputPixels: MAX_IMAGE_INPUT_PIXELS })
     .rotate()
-    .webp({ quality: 85 })
+    .resize({
+      width: MAX_IMAGE_DIMENSION,
+      height: MAX_IMAGE_DIMENSION,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({ quality: WEBP_QUALITY })
     .toBuffer();
 
   if (!output || output.length === 0) {
@@ -96,6 +107,28 @@ export async function sanitizeAndEncodeImage(
   }
 
   return { buffer: output, ext: "webp" };
+}
+
+/**
+ * Generates a small WebP thumbnail buffer for grid and list views.
+ */
+export async function encodeThumbnailImage(input: Buffer | string): Promise<Buffer> {
+  const output = await sharp(input, { limitInputPixels: MAX_IMAGE_INPUT_PIXELS })
+    .rotate()
+    .resize({
+      width: THUMB_IMAGE_DIMENSION,
+      height: THUMB_IMAGE_DIMENSION,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({ quality: THUMB_WEBP_QUALITY })
+    .toBuffer();
+
+  if (!output || output.length === 0) {
+    throw new Error("Encoded thumbnail buffer is empty");
+  }
+
+  return output;
 }
 
 /**
