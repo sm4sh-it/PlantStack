@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from "fs";
 import { lstat, readdir, unlink } from "fs/promises";
-import { join } from "path";
+import { join, resolve, sep } from "path";
 import prisma from "@/lib/prisma";
 import { resolveSafeUploadPath, sanitizeStoredImageFilename } from "@/lib/security";
 
@@ -8,6 +8,40 @@ export const ORPHAN_UPLOAD_TTL_MS = 60 * 60 * 1000; // 1 hour
 export const MAX_UNATTACHED_UPLOADS = 25;
 export const MAX_UPLOADS_FILE_COUNT = 1000;
 export const MAX_UPLOADS_DIR_BYTES = 500 * 1024 * 1024; // 500 MB
+
+export function getThumbsDir(): string {
+  const thumbsDir = join(getUploadsDir(), ".thumbs");
+  if (!existsSync(thumbsDir)) {
+    mkdirSync(thumbsDir, { recursive: true });
+  }
+  return thumbsDir;
+}
+
+export function resolveSafeThumbPath(filename: string | null | undefined): string | null {
+  const safeName = sanitizeStoredImageFilename(filename);
+  if (!safeName) return null;
+
+  const thumbsDir = getThumbsDir();
+  const resolvedBase = resolve(thumbsDir);
+  const resolvedTarget = resolve(resolvedBase, `${safeName}.webp`);
+  if (!resolvedTarget.startsWith(resolvedBase + sep)) {
+    return null;
+  }
+  return resolvedTarget;
+}
+
+export async function removeCachedThumb(filename: string | null | undefined): Promise<void> {
+  const thumbPath = resolveSafeThumbPath(filename);
+  if (!thumbPath) return;
+  try {
+    const st = await lstat(thumbPath);
+    if (st.isFile()) {
+      await unlink(thumbPath);
+    }
+  } catch {
+    // Ignore missing cached thumbnail
+  }
+}
 
 export function getUploadsDir(): string {
   // If explicitly configured via environment variable (e.g. inside Docker)
@@ -107,6 +141,7 @@ export async function unlinkUnusedImages(
     } catch {
       // Ignore missing files (ENOENT) or concurrent cleanup
     }
+    await removeCachedThumb(name);
   }
 }
 

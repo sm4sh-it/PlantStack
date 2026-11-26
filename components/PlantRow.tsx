@@ -87,7 +87,7 @@ export default function PlantRow({
             <Image src="/Bohni.png" alt="Bohni" fill sizes="40px" className="object-cover" />
           ) : plant.imagePath ? (
             <Image
-              src={`/api/images/${plant.imagePath}`}
+              src={`/api/images/${plant.imagePath}?variant=thumb`}
               alt={plant.name}
               fill
               sizes="40px"

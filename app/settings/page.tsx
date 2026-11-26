@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Save, Plus, Trash2, Loader2, Settings as SettingsIcon, Check, Edit2, X, CheckCircle2, Database, Download, Upload, Snowflake, LogOut, ShieldCheck } from "lucide-react";
+import { Save, Plus, Trash2, Loader2, Settings as SettingsIcon, Check, Edit2, X, CheckCircle2, Database, Download, Upload, Snowflake, LogOut, ShieldCheck, Image as ImageIcon } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 import { t } from "@/lib/i18n";
 import { SEASONAL_FACTOR_STEPS, SeasonalScope } from "@/lib/seasonal";
@@ -24,6 +24,16 @@ export default function SettingsPage() {
   // Backup & Restore state
   const [restoringBackup, setRestoringBackup] = useState(false);
   const backupFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Media optimization state
+  const [mediaStats, setMediaStats] = useState<{ fileCount: number; totalBytes: number } | null>(null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [optimizingImages, setOptimizingImages] = useState(false);
+  const [optimizeResult, setOptimizeResult] = useState<{
+    scanned: number;
+    optimized: number;
+    savedBytes: number;
+  } | null>(null);
 
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
@@ -68,16 +78,32 @@ export default function SettingsPage() {
 
   const fetchData = async () => {
     try {
-      const [confRes, locRes, authRes] = await Promise.all([
+      const [confRes, locRes, authRes, mediaRes] = await Promise.all([
         fetch("/api/settings"),
         fetch("/api/locations"),
         fetch("/api/auth/status").catch(() => null),
+        fetch("/api/settings/optimize-images").catch(() => null),
       ]);
       const conf = await confRes.json();
       const loc = await locRes.json();
       if (authRes && authRes.ok) {
         const authData = await authRes.json();
         setAuthRequired(Boolean(authData.authRequired));
+      }
+      if (mediaRes && mediaRes.ok) {
+        const mediaData = await mediaRes.json();
+        setMediaStats({
+          fileCount: Number(mediaData.fileCount || 0),
+          totalBytes: Number(mediaData.totalBytes || 0),
+        });
+        setMediaError(null);
+      } else {
+        const activeLang = conf?.language || lang;
+        setMediaError(
+          activeLang === "de"
+            ? "Medien-Status konnte nicht geladen werden."
+            : "Could not load media status."
+        );
       }
       
       if (conf) {
@@ -141,6 +167,49 @@ export default function SettingsPage() {
       console.error(e);
     } finally {
       setSavingConfig(false);
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(0)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleOptimizeImages = async () => {
+    setOptimizingImages(true);
+    setMediaError(null);
+    setOptimizeResult(null);
+    try {
+      const res = await fetch("/api/settings/optimize-images", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Optimization failed");
+      }
+      setMediaStats({
+        fileCount: Number(data.fileCount || 0),
+        totalBytes: Number(data.totalBytes || 0),
+      });
+      setOptimizeResult({
+        scanned: Number(data.scanned || 0),
+        optimized: Number(data.optimized || 0),
+        savedBytes: Number(data.savedBytes || 0),
+      });
+      showNotification(
+        lang === "de"
+          ? `${data.optimized} Fotos optimiert (${formatBytes(Number(data.savedBytes || 0))} gespart)`
+          : `Optimized ${data.optimized} photos (saved ${formatBytes(Number(data.savedBytes || 0))})`
+      );
+    } catch (err) {
+      console.error("Optimize images error:", err);
+      setMediaError(
+        lang === "de"
+          ? "Optimierung fehlgeschlagen. Bitte erneut versuchen."
+          : "Optimization failed. Please try again."
+      );
+    } finally {
+      setOptimizingImages(false);
     }
   };
 
@@ -694,6 +763,60 @@ export default function SettingsPage() {
                 </label>
               </div>
             </div>
+          </div>
+
+          {/* Media Storage & Existing Photo Optimization */}
+          <div className="mt-4 p-5 bg-surface-subtle border border-border-hairline rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                <ImageIcon size={15} className="text-brand" aria-hidden="true" />
+                <span>{t('mediaOptimizationTitle', lang)}</span>
+              </h3>
+              <p className="text-[11px] text-text-secondary max-w-md leading-relaxed">
+                {t('mediaOptimizationDesc', lang)}
+              </p>
+              {mediaStats === null && !mediaError && (
+                <p className="text-[11px] text-text-muted">
+                  {lang === 'de' ? 'Medien-Status wird geladen...' : 'Loading media status...'}
+                </p>
+              )}
+              {mediaStats !== null && (
+                <p className="text-[11px] font-semibold text-foreground tabular">
+                  {mediaStats.fileCount === 0
+                    ? lang === 'de'
+                      ? 'Noch keine hochgeladenen Fotos vorhanden.'
+                      : 'No uploaded photos yet.'
+                    : lang === 'de'
+                    ? `Aktuell gespeichert: ${mediaStats.fileCount} Fotos (${formatBytes(mediaStats.totalBytes)})`
+                    : `Currently stored: ${mediaStats.fileCount} photos (${formatBytes(mediaStats.totalBytes)})`}
+                </p>
+              )}
+              {mediaError && (
+                <p className="text-[11px] font-semibold text-urgency-overdue" role="alert">
+                  {mediaError}
+                </p>
+              )}
+              {optimizeResult && (
+                <p className="text-[11px] font-semibold text-status-success">
+                  {optimizeResult.optimized > 0
+                    ? lang === 'de'
+                      ? `Fertig: ${optimizeResult.optimized} von ${optimizeResult.scanned} Fotos optimiert (${formatBytes(optimizeResult.savedBytes)} gespart).`
+                      : `Done: optimized ${optimizeResult.optimized} of ${optimizeResult.scanned} photos (saved ${formatBytes(optimizeResult.savedBytes)}).`
+                    : lang === 'de'
+                    ? `Alle ${optimizeResult.scanned} Fotos sind bereits optimal.`
+                    : `All ${optimizeResult.scanned} photos are already optimized.`}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleOptimizeImages}
+              disabled={optimizingImages || mediaStats === null || mediaStats.fileCount === 0}
+              className="min-h-[44px] inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-text-onBrand px-4 py-2.5 rounded-lg text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              {optimizingImages ? <Loader2 size={15} className="animate-spin" aria-hidden="true" /> : <ImageIcon size={15} aria-hidden="true" />}
+              <span>{optimizingImages ? t('optimizingImages', lang) : t('optimizeImagesBtn', lang)}</span>
+            </button>
           </div>
         </section>
 

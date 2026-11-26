@@ -80,7 +80,7 @@ export default function ArchivePage() {
             <div key={plant.id} className="bg-surface rounded-2xl border border-border-hairline card-elevation overflow-hidden flex flex-col grayscale opacity-85 hover:grayscale-0 hover:opacity-100 transition-all duration-300 hover-lift">
               <div className="h-48 relative bg-surface-subtle flex items-center justify-center overflow-hidden">
                 {plant.imagePath ? (
-                  <Image src={`/api/images/${plant.imagePath}`} alt={plant.name} fill className="object-cover" />
+                  <Image src={`/api/images/${plant.imagePath}?variant=thumb`} alt={plant.name} fill className="object-cover" />
                 ) : (
                   <Ghost className="w-16 h-16 text-text-muted/30" />
                 )}

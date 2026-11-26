@@ -98,7 +98,7 @@ export default function PlantCard({
           />
         ) : plant.imagePath ? (
           <Image
-            src={`/api/images/${plant.imagePath}`}
+            src={`/api/images/${plant.imagePath}?variant=thumb`}
             alt={plant.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
