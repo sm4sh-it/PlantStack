@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.9.3] - 2026-11-28
+### Added
+- **Bidirectional Alphabetical Sorting (`app/page.tsx`, `lib/i18n.ts`)**: Upgraded alphabetical sort to toggle between `A-Z` (`ArrowDownAZ`) and `Z-A` (`ArrowDownZA`) on repeated clicks with locale-aware sorting (`localeCompare`).
+
+### Changed & Improved
+- **Unified Mobile-First Dashboard Toolbar (`app/page.tsx`, `lib/i18n.ts`)**: Consolidated search, filter chips, sort controls, and grid/list toggle into a single responsive toolbar without horizontal scrolling, tightening mobile spacing so plants appear higher on screen.
+- **Contextual Batch-Watering Banner (`app/page.tsx`)**: Moved the conditional "Water all due" action out of the header controls into a slim single-row banner above the toolbar, cleanly separating care actions from display controls.
+- **Hybrid Icon Sort Bar & Dynamic Environment Filters (`app/page.tsx`)**: Added semantic Lucide icons (`Clock`, `Map`, `ArrowDownAZ`/`ArrowDownZA`) showing icon plus active label on mobile and full labels on desktop; `Indoor` and `Outdoor` filter chips now render dynamically only when both plant types exist (with automatic filter reset).
+- **WCAG AA Contrast & Accessibility Polish (`app/page.tsx`)**: Updated active filter and watering buttons to semantic `text-text-onBrand` and `bg-status-warning` tokens for reliable light/dark contrast, added `sr-only` search label, `aria-pressed` states, and `aria-hidden="true"` on decorative icons.
+- **Statistics Section Header Pins (`components/StatisticsClient.tsx`, `public/images/badges/stat_activities.webp`, `stat_badges.webp`)**: Enlarged `StatHeaderPin` display dimensions (`w-11`/`w-14` up to `sm:w-12`/`sm:w-16`, `80x80` image size) and refreshed the `stat_activities.webp` and `stat_badges.webp` enamel pin assets.
+
 ## [3.9.2] - 2026-11-26
 ### Added
 - **Seasonal Watering Adjustment (`lib/seasonal.ts`, `app/settings/page.tsx`)**: Replaced the fixed winter dormancy toggle with a configurable seasonal watering slider (Nov–Feb adjustment factor) persisted in `AppConfig`.

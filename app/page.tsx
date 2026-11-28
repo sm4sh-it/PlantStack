@@ -6,11 +6,17 @@ import PlantRow from "@/components/PlantRow";
 import PlantForm from "@/components/PlantForm";
 import PlantDetailsModal from "@/components/PlantDetailsModal";
 import ConfirmModal from "@/components/ConfirmModal";
-import { Plus, Search, X, Droplets, LayoutGrid, List } from "lucide-react";
+import { Plus, Search, X, Droplets, LayoutGrid, List, Clock, Map as MapIcon, ArrowDownAZ, ArrowDownZA } from "lucide-react";
 import { Plant, Location } from "@prisma/client";
 import { t } from "@/lib/i18n";
 
 type PlantWithLocation = Plant & { location?: Location };
+
+const isIndoorPlant = (p: PlantWithLocation) =>
+  p.placement === "Drinnen" && p.locationType !== "OUTDOOR";
+
+const isOutdoorPlant = (p: PlantWithLocation) =>
+  p.placement === "Draußen" || p.placement === "Balkon" || p.locationType === "OUTDOOR";
 
 function getRandomPlantQuote(plantCount: number, lang: string): string {
   const quotesDe = {
@@ -51,6 +57,7 @@ export default function Dashboard() {
   const [detailsPlant, setDetailsPlant] = useState<PlantWithLocation | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [sortMode, setSortMode] = useState<"interval" | "location" | "alphabetical">("interval");
+  const [alphaDir, setAlphaDir] = useState<"asc" | "desc">("asc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -314,15 +321,35 @@ export default function Dashboard() {
     return plants.filter(p => addD(new Date(p.lastWatered), p.waterInterval) <= now).length;
   }, [plants]);
 
+  const hasIndoorAndOutdoor = useMemo(
+    () => plants.some(isIndoorPlant) && plants.some(isOutdoorPlant),
+    [plants]
+  );
+
+  useEffect(() => {
+    if (!hasIndoorAndOutdoor && (filterMode === "indoor" || filterMode === "outdoor")) {
+      setFilterMode("all");
+    }
+  }, [hasIndoorAndOutdoor, filterMode]);
+
+  const handleAlphabeticalSort = () => {
+    if (sortMode === "alphabetical") {
+      setAlphaDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortMode("alphabetical");
+      setAlphaDir("asc");
+    }
+  };
+
   const filteredPlants = useMemo(() => {
     let list = plants;
 
     if (filterMode === "due") {
       list = list.filter(isPlantDue);
     } else if (filterMode === "indoor") {
-      list = list.filter(p => p.placement === "Drinnen" && p.locationType !== "OUTDOOR");
+      list = list.filter(isIndoorPlant);
     } else if (filterMode === "outdoor") {
-      list = list.filter(p => p.placement === "Draußen" || p.placement === "Balkon" || p.locationType === "OUTDOOR");
+      list = list.filter(isOutdoorPlant);
     }
 
     if (searchQuery.trim()) {
@@ -350,10 +377,16 @@ export default function Dashboard() {
     };
 
     if (sortMode === "interval") return [...filteredPlants].sort((a, b) => getScore(a) - getScore(b));
-    if (sortMode === "alphabetical") return [...filteredPlants].sort((a, b) => a.name.localeCompare(b.name));
-    
+    if (sortMode === "alphabetical") {
+      return [...filteredPlants].sort((a, b) =>
+        alphaDir === "asc"
+          ? a.name.localeCompare(b.name, lang)
+          : b.name.localeCompare(a.name, lang)
+      );
+    }
+
     return [...filteredPlants].sort((a, b) => getScore(a) - getScore(b));
-  }, [filteredPlants, sortMode]);
+  }, [filteredPlants, sortMode, alphaDir, lang]);
 
   const locationGroups = useMemo(() => {
     if (sortMode !== "location") return null;
@@ -373,96 +406,75 @@ export default function Dashboard() {
   };
   const gridClass = gridClassMap[gridCols] || gridClassMap[4];
 
+  const alphaLabel = sortMode === "alphabetical" && alphaDir === "desc" ? t("za", lang) : t("az", lang);
+  const alphaTitle =
+    sortMode !== "alphabetical"
+      ? t("sortAz", lang)
+      : alphaDir === "asc"
+        ? t("sortAzActive", lang)
+        : t("sortZaActive", lang);
+
   return (
     <div className="pb-24">
       {/* Dashboard Top Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight mb-1 text-foreground">{customTitle || t('myJungle', lang)}</h1>
-          <p className="text-sm text-text-muted">{getRandomPlantQuote(plants.length, lang)}</p>
-        </div>
-        
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-          {/* Batch Water Button */}
-          {dueWaterCount > 0 && (
-            <button
-              onClick={handleBatchWater}
-              disabled={batchWatering}
-              className="bg-care-water-bg hover:bg-care-water text-care-water hover:text-white px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 font-bold text-xs active:scale-95 disabled:opacity-50 cursor-pointer"
-              title={t('waterAllDue', lang)}
-            >
-              <Droplets size={16} />
-              <span>{t('waterAllDue', lang)} ({dueWaterCount})</span>
-            </button>
-          )}
-
-          {/* Sort Segments */}
-          <div className="flex bg-surface-subtle border border-border-hairline rounded-lg p-1 shrink-0">
-            <button 
-              onClick={() => setSortMode("alphabetical")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${sortMode === "alphabetical" ? "bg-surface shadow-xs text-brand font-bold" : "text-text-muted hover:text-foreground"}`}
-            >
-              {t('az', lang)}
-            </button>
-            <button 
-              onClick={() => setSortMode("location")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${sortMode === "location" ? "bg-surface shadow-xs text-brand font-bold" : "text-text-muted hover:text-foreground"}`}
-            >
-              {t('rooms', lang)}
-            </button>
-            <button 
-              onClick={() => setSortMode("interval")}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${sortMode === "interval" ? "bg-surface shadow-xs text-brand font-bold" : "text-text-muted hover:text-foreground"}`}
-            >
-              {t('timeline', lang)}
-            </button>
-          </div>
-
-          {/* View Mode Toggle (Grid / List) */}
-          <div className="flex bg-surface-subtle border border-border-hairline rounded-lg p-1 shrink-0" role="group" aria-label={lang === "de" ? "Ansicht wechseln" : "Switch view"}>
-            <button
-              onClick={() => handleViewModeChange("grid")}
-              aria-label={t("viewGrid", lang)}
-              aria-pressed={viewMode === "grid"}
-              title={t("viewGrid", lang)}
-              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === "grid" ? "bg-surface shadow-xs text-brand" : "text-text-muted hover:text-foreground"}`}
-            >
-              <LayoutGrid size={15} />
-            </button>
-            <button
-              onClick={() => handleViewModeChange("list")}
-              aria-label={t("viewList", lang)}
-              aria-pressed={viewMode === "list"}
-              title={t("viewList", lang)}
-              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === "list" ? "bg-surface shadow-xs text-brand" : "text-text-muted hover:text-foreground"}`}
-            >
-              <List size={15} />
-            </button>
-          </div>
-        </div>
+      <div className="mb-3 md:mb-5">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-0.5 text-foreground">
+          {customTitle || t("myJungle", lang)}
+        </h1>
+        <p className="text-xs sm:text-sm text-text-muted">
+          {getRandomPlantQuote(plants.length, lang)}
+        </p>
       </div>
 
-      {/* Search & Filter Bar */}
+      {/* Contextual Batch Watering Banner */}
+      {dueWaterCount > 0 && (
+        <div className="mb-3 md:mb-4 flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-care-water-bg border border-care-water/25">
+          <div className="flex items-center gap-2 min-w-0 text-xs sm:text-sm font-semibold text-care-water">
+            <Droplets size={16} className="shrink-0" aria-hidden="true" />
+            <span className="truncate">
+              {dueWaterCount === 1
+                ? t("plantNeedsWaterSingle", lang)
+                : t("plantsNeedWaterPlural", lang).replace("{n}", dueWaterCount.toString())}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleBatchWater}
+            disabled={batchWatering}
+            title={t("waterAllDue", lang)}
+            className="shrink-0 px-3 py-1.5 min-h-[36px] rounded-lg bg-care-water hover:opacity-90 text-text-onBrand text-xs font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {dueWaterCount === 1 ? t("water", lang) : t("waterAllShort", lang)}
+          </button>
+        </div>
+      )}
+
+      {/* Unified Search, Filter, Sort & View Toolbar */}
       {plants.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between mb-6 bg-surface p-2.5 rounded-xl border border-border-hairline card-elevation">
+        <div className="mb-4 md:mb-6 bg-surface p-2 sm:p-2.5 rounded-xl border border-border-hairline card-elevation flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-2.5">
           {/* Search Input */}
-          <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <div className="relative flex-1 min-w-0">
+            <label htmlFor="dashboard-plant-search" className="sr-only">
+              {t("searchPlaceholder", lang)}
+            </label>
+            <Search size={15} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
             <input
+              id="dashboard-plant-search"
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder={t('searchPlaceholder', lang)}
+              placeholder={t("searchPlaceholder", lang)}
               className="w-full h-10 pl-8 pr-10 bg-surface-subtle border border-border-hairline rounded-lg text-xs text-foreground placeholder:text-text-muted outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
             />
             {searchQuery ? (
-              <button 
+              <button
+                type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground p-0.5 cursor-pointer"
+                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] flex items-center justify-center text-text-muted hover:text-foreground cursor-pointer"
                 aria-label={t("clearFilters", lang)}
               >
-                <X size={14} />
+                <X size={14} aria-hidden="true" />
               </button>
             ) : (
               <kbd className="hidden md:inline-flex items-center justify-center absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-text-muted bg-surface border border-border-hairline rounded pointer-events-none">
@@ -471,58 +483,183 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Filter Chips */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide shrink-0">
-            <button
-              onClick={() => setFilterMode("all")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
-                filterMode === "all"
-                  ? "bg-brand text-white font-bold shadow-xs"
-                  : "bg-surface-subtle text-text-muted hover:text-foreground"
-              }`}
-            >
-              {t('filterAll', lang)} ({plants.length})
-            </button>
+          {/* Filter, Sort & View Controls */}
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-2.5 lg:shrink-0">
+            {/* Filter Chips */}
+            <div role="group" aria-label={t("filterPlants", lang)} className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFilterMode("all")}
+                aria-pressed={filterMode === "all"}
+                className={`min-h-[36px] md:min-h-[34px] px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  filterMode === "all"
+                    ? "bg-brand text-text-onBrand font-bold shadow-xs"
+                    : "bg-surface-subtle text-text-secondary hover:text-foreground hover:bg-surface-hover"
+                }`}
+              >
+                {t("filterAll", lang)} ({plants.length})
+              </button>
 
-            <button
-              onClick={() => setFilterMode("due")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer ${
-                filterMode === "due"
-                  ? "bg-amber-500 text-white shadow-xs font-bold"
-                  : dueCount > 0
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
-                    : "bg-surface-subtle text-text-muted hover:text-foreground"
-              }`}
-            >
-              <span>{t('filterDue', lang)}</span>
-              {dueCount > 0 && (
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${filterMode === "due" ? "bg-white/20 text-white" : "bg-amber-500/20 text-amber-700 dark:text-amber-300"}`}>
-                  {dueCount}
-                </span>
+              <button
+                type="button"
+                onClick={() => setFilterMode("due")}
+                aria-pressed={filterMode === "due"}
+                className={`min-h-[36px] md:min-h-[34px] px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-all inline-flex items-center gap-1 cursor-pointer ${
+                  filterMode === "due"
+                    ? "bg-status-warning text-text-onBrand shadow-xs font-bold"
+                    : dueCount > 0
+                      ? "bg-status-warning-bg text-status-warning hover:bg-status-warning/20"
+                      : "bg-surface-subtle text-text-secondary hover:text-foreground hover:bg-surface-hover"
+                }`}
+              >
+                <span>{t("filterDue", lang)}</span>
+                {dueCount > 0 && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold tabular ${
+                      filterMode === "due"
+                        ? "bg-black/15 text-text-onBrand"
+                        : "bg-status-warning/15 text-status-warning"
+                    }`}
+                  >
+                    {dueCount}
+                  </span>
+                )}
+              </button>
+
+              {hasIndoorAndOutdoor && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setFilterMode("indoor")}
+                    aria-pressed={filterMode === "indoor"}
+                    className={`min-h-[36px] md:min-h-[34px] px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                      filterMode === "indoor"
+                        ? "bg-brand-subtle text-brand font-bold ring-1 ring-brand-border"
+                        : "bg-surface-subtle text-text-secondary hover:text-foreground hover:bg-surface-hover"
+                    }`}
+                  >
+                    {t("filterIndoor", lang)}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFilterMode("outdoor")}
+                    aria-pressed={filterMode === "outdoor"}
+                    className={`min-h-[36px] md:min-h-[34px] px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                      filterMode === "outdoor"
+                        ? "bg-brand-subtle text-brand font-bold ring-1 ring-brand-border"
+                        : "bg-surface-subtle text-text-secondary hover:text-foreground hover:bg-surface-hover"
+                    }`}
+                  >
+                    {t("filterOutdoor", lang)}
+                  </button>
+                </>
               )}
-            </button>
+            </div>
 
-            <button
-              onClick={() => setFilterMode("indoor")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
-                filterMode === "indoor"
-                  ? "bg-brand-subtle text-brand font-bold"
-                  : "bg-surface-subtle text-text-muted hover:text-foreground"
-              }`}
-            >
-              {t('filterIndoor', lang)}
-            </button>
+            {/* Sort & View Cluster */}
+            <div className="flex items-center justify-between md:justify-end gap-2 shrink-0">
+              {/* Sort Segmented Control */}
+              <div
+                role="group"
+                aria-label={t("sortPlants", lang)}
+                className="flex items-center gap-0.5 bg-surface-subtle border border-border-hairline rounded-lg p-1 shrink-0"
+              >
+                <button
+                  type="button"
+                  onClick={() => setSortMode("interval")}
+                  aria-pressed={sortMode === "interval"}
+                  title={t("timeline", lang)}
+                  aria-label={t("timeline", lang)}
+                  className={`min-h-[38px] min-w-[38px] md:min-h-[32px] md:min-w-0 inline-flex items-center justify-center gap-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                    sortMode === "interval"
+                      ? "bg-surface shadow-xs text-brand font-bold px-2.5"
+                      : "text-text-secondary hover:text-foreground px-2 md:px-2.5"
+                  }`}
+                >
+                  <Clock size={15} aria-hidden="true" className="shrink-0" />
+                  <span className={sortMode === "interval" ? "inline" : "hidden md:inline"}>
+                    {t("timeline", lang)}
+                  </span>
+                </button>
 
-            <button
-              onClick={() => setFilterMode("outdoor")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
-                filterMode === "outdoor"
-                  ? "bg-brand-subtle text-brand font-bold"
-                  : "bg-surface-subtle text-text-muted hover:text-foreground"
-              }`}
-            >
-              {t('filterOutdoor', lang)}
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setSortMode("location")}
+                  aria-pressed={sortMode === "location"}
+                  title={t("rooms", lang)}
+                  aria-label={t("rooms", lang)}
+                  className={`min-h-[38px] min-w-[38px] md:min-h-[32px] md:min-w-0 inline-flex items-center justify-center gap-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                    sortMode === "location"
+                      ? "bg-surface shadow-xs text-brand font-bold px-2.5"
+                      : "text-text-secondary hover:text-foreground px-2 md:px-2.5"
+                  }`}
+                >
+                  <MapIcon size={15} aria-hidden="true" className="shrink-0" />
+                  <span className={sortMode === "location" ? "inline" : "hidden md:inline"}>
+                    {t("rooms", lang)}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAlphabeticalSort}
+                  aria-pressed={sortMode === "alphabetical"}
+                  title={alphaTitle}
+                  aria-label={alphaTitle}
+                  className={`min-h-[38px] min-w-[38px] md:min-h-[32px] md:min-w-0 inline-flex items-center justify-center gap-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                    sortMode === "alphabetical"
+                      ? "bg-surface shadow-xs text-brand font-bold px-2.5"
+                      : "text-text-secondary hover:text-foreground px-2 md:px-2.5"
+                  }`}
+                >
+                  {sortMode === "alphabetical" && alphaDir === "desc" ? (
+                    <ArrowDownZA size={15} aria-hidden="true" className="shrink-0" />
+                  ) : (
+                    <ArrowDownAZ size={15} aria-hidden="true" className="shrink-0" />
+                  )}
+                  <span className={sortMode === "alphabetical" ? "inline" : "hidden md:inline"}>
+                    {alphaLabel}
+                  </span>
+                </button>
+              </div>
+
+              {/* View Mode Toggle (Grid / List) */}
+              <div
+                role="group"
+                aria-label={t("switchView", lang)}
+                className="flex items-center gap-0.5 bg-surface-subtle border border-border-hairline rounded-lg p-1 shrink-0"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("grid")}
+                  aria-label={t("viewGrid", lang)}
+                  aria-pressed={viewMode === "grid"}
+                  title={t("viewGrid", lang)}
+                  className={`min-h-[38px] min-w-[38px] md:min-h-[32px] md:min-w-[32px] inline-flex items-center justify-center rounded-md transition-all cursor-pointer ${
+                    viewMode === "grid"
+                      ? "bg-surface shadow-xs text-brand"
+                      : "text-text-secondary hover:text-foreground"
+                  }`}
+                >
+                  <LayoutGrid size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("list")}
+                  aria-label={t("viewList", lang)}
+                  aria-pressed={viewMode === "list"}
+                  title={t("viewList", lang)}
+                  className={`min-h-[38px] min-w-[38px] md:min-h-[32px] md:min-w-[32px] inline-flex items-center justify-center rounded-md transition-all cursor-pointer ${
+                    viewMode === "list"
+                      ? "bg-surface shadow-xs text-brand"
+                      : "text-text-secondary hover:text-foreground"
+                  }`}
+                >
+                  <List size={15} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

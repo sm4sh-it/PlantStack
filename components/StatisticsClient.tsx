@@ -832,14 +832,14 @@ export default function StatisticsClient({ plants, badges, tieredBadges, stats }
 }
 
 function StatHeaderPin({ src, size = "md" }: { src: string; size?: "sm" | "md" }) {
-  const dim = size === "sm" ? "w-8 h-8 sm:w-9 sm:h-9" : "w-9 h-9 sm:w-10 sm:h-10";
+  const dim = size === "sm" ? "w-11 h-11 sm:w-12 sm:h-12" : "w-14 h-14 sm:w-16 sm:h-16";
   return (
     <div className={`${dim} relative shrink-0 select-none`} aria-hidden="true">
       <Image
         src={src}
         alt=""
-        width={48}
-        height={48}
+        width={80}
+        height={80}
         className="w-full h-full object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.2)]"
       />
     </div>
